@@ -3,8 +3,8 @@
 	url = https://github.com/bnb-chain/bsc-genesis-contract.git
 [submodule "external/bsc"]
 	path = external/bsc
-	url = https://github.com/bnb-chain/bsc.git
+	url = https://github.com/will-2012/bsc.git
 	shallow = true
 [submodule "external/alto"]
 	path = external/alto
-	url = https://github.com/pimlicolabs/alto.git
+	url = https://github.com/will-2012/alto.git

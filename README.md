@@ -7,6 +7,8 @@
 - `one-box/`：本地开发链的配置模板、内部脚本、测试、文档和运行数据。
 - `tools/one-box`：开发链的统一入口。
 
+BSC 和 Alto 分别使用 [will-2012/bsc](https://github.com/will-2012/bsc) 和 [will-2012/alto](https://github.com/will-2012/alto) fork，便于维护实验改动；submodule 仍锁定具体 commit。
+
 ```bash
 git submodule update --init
 ./tools/one-box doctor
