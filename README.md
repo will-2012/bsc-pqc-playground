@@ -28,3 +28,5 @@ git submodule update --init
 ```
 
 合约说明见 [contract 文档](contract/README.md)。当前验证的是 ECDSA 智能账户链路，为后续 PQ 实验提供基线。
+
+本机密码学性能对比见 [tools/crypto-bench](tools/crypto-bench/README.md)，实验报告保存在 `docs/crypto-bench/`。

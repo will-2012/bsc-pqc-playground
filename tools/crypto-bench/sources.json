@@ -1,0 +1,44 @@
+{
+  "openssl": {
+    "repository": "https://github.com/openssl/openssl",
+    "version": "OpenSSL 3.6.3",
+    "commit": "aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f",
+    "url": "https://codeload.github.com/openssl/openssl/tar.gz/aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f",
+    "sha256": "5107bc26b739daed3b2e5cc1586ab85ab01ba5c15388509f635a9fe82c1edb34",
+    "public_vectors": {
+      "fixture": "testdata/standard.tsv",
+      "sha256": "52c9b0c0eaa3d748661899767491d75401dec29ff45c15e2dff65328ebf658df",
+      "source": "OpenSSL test/recipes/30-test_evp_data/{evppkey_ml_dsa_sigver.txt,evppkey_slh_dsa_sigver.txt}; ACVP-derived Pure vectors: 2 valid + 6 invalid each for ML44/SLH SHA2 128s/128f"
+    }
+  },
+  "secp256k1": {
+    "repository": "https://github.com/bitcoin-core/secp256k1",
+    "version": "libsecp256k1 v0.7.0",
+    "commit": "a660a4976efe880bae7982ee410b9e0dc59ac983",
+    "url": "https://codeload.github.com/bitcoin-core/secp256k1/tar.gz/a660a4976efe880bae7982ee410b9e0dc59ac983",
+    "sha256": "a685f43d0b97741631ec2073476382b492bf53bb3669f459efc25c90dc58fceb"
+  },
+  "mldsa": {
+    "repository": "https://github.com/pq-code-package/mldsa-native",
+    "version": "mldsa-native v2.0.0",
+    "commit": "834a90d5e846ffa1e1611bd24e160bb2e9b86d35",
+    "url": "https://codeload.github.com/pq-code-package/mldsa-native/tar.gz/834a90d5e846ffa1e1611bd24e160bb2e9b86d35",
+    "sha256": "7a9ab4d55912c2ab8f5d5de3b2123b5155b45ba1c848788c4aff90b62eaf0e4c"
+  },
+  "falcon-neon": {
+    "repository": "https://github.com/GMUCERG/FALCON_NEON",
+    "version": "Falcon-512 ARMv8 NEON",
+    "commit": "1d2670077d14de81a9b66b4c6494a67256342cd2",
+    "url": "https://codeload.github.com/GMUCERG/FALCON_NEON/tar.gz/1d2670077d14de81a9b66b4c6494a67256342cd2",
+    "sha256": "12241d78a6ecb23b5ac747e0823e3baa1cd09b8a8482db4460b379cb202b8c70",
+    "public_kat": {
+      "source": {
+        "commit": "a7e15616737074581cf1da94479769a90abd0dc9",
+        "url": "https://raw.githubusercontent.com/bcgit/bc-test-data/a7e15616737074581cf1da94479769a90abd0dc9/pqc/crypto/falcon/falcon512-KAT.rsp",
+        "sha256": "dd75c946fdedef4ec46a2bee7e10c65c9126f1a839b9ced6921fd45f7354b5cd",
+        "selected_public_tsv_sha256": "da1cfe1ed3d68616c6953e38f3b497e21ce48157c7e3d0a05b120e5a155fadf1"
+      },
+      "fixture_sha256": "da1cfe1ed3d68616c6953e38f3b497e21ce48157c7e3d0a05b120e5a155fadf1"
+    }
+  }
+}
