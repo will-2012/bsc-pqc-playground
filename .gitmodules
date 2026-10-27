@@ -1,0 +1,7 @@
+[submodule "external/genesis-contracts"]
+	path = external/genesis-contracts
+	url = https://github.com/bnb-chain/bsc-genesis-contract.git
+[submodule "external/bsc"]
+	path = external/bsc
+	url = https://github.com/bnb-chain/bsc.git
+	shallow = true

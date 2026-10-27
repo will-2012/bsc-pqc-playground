@@ -1,0 +1,13 @@
+/one-box/.runtime/
+# 本地密钥即使误放到运行目录之外，也不提交。
+/one-box/**/runtime/
+/one-box/**/keystore/
+/one-box/**/nodekey
+/one-box/**/password.txt
+/one-box/**/private/
+/one-box/**/secrets/
+/one-box/**/*.key
+/one-box/**/*.pem
+__pycache__/
+*.pyc
+.DS_Store

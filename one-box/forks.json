@@ -1,0 +1,6 @@
+{
+  "bsc_version": "1.8.1",
+  "latest": "jenner",
+  "passed": ["shanghai", "kepler", "feynman", "feynmanFix", "cancun", "haber", "haberFix", "bohr", "pascal", "prague"],
+  "recent": ["lorentz", "maxwell", "fermi", "osaka", "mendel", "pasteur", "jenner"]
+}

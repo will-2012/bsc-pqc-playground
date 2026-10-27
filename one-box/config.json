@@ -1,0 +1,15 @@
+{
+  "chain_id": 714,
+  "validators": 3,
+  "test_accounts": 5,
+  "validator_balance_bnb": 1000000,
+  "test_balance_bnb": 10000,
+  "rpc_port": 19545,
+  "p2p_port": 32311,
+  "gas_limit": 70000000,
+  "gas_price_wei": 1000000000,
+  "cache_mb": 256,
+  "breathe_seconds": 600,
+  "passed_fork_delay_seconds": 60,
+  "latest_fork_delay_seconds": 90
+}

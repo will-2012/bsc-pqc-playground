@@ -1,0 +1,21 @@
+[Eth]
+NetworkId = $chain_id
+SyncMode = "full"
+[Eth.Miner]
+GasCeil = $gas_limit
+GasPrice = $gas_price_wei
+[Eth.TxPool]
+PriceLimit = $gas_price_wei
+[Node]
+IPCPath = "geth.ipc"
+HTTPHost = "127.0.0.1"
+HTTPPort = $rpc_port
+HTTPVirtualHosts = ["localhost", "127.0.0.1"]
+HTTPModules = ["eth", "net", "web3", "txpool", "debug", "parlia"]
+InsecureUnlockAllowed = true
+[Node.P2P]
+MaxPeers = $max_peers
+NoDiscovery = true
+ListenAddr = "127.0.0.1:$p2p_port"
+StaticNodes = $peers
+TrustedNodes = $peers
