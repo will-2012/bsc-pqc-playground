@@ -67,6 +67,8 @@ def build():
     command(["patch", "--batch", "--forward", "-p1", "-i", patch], log, WORK)
     timeout_patch = BOX / "patches/alto-timeout.patch"
     command(["patch", "--batch", "--forward", "-p1", "-i", timeout_patch], log, WORK)
+    slh_patch = BOX / "patches/alto-slh-v2.patch"
+    command(["patch", "--batch", "--forward", "-p1", "-i", slh_patch], log, WORK)
     # Do not run upstream prepare or the unrelated e2e workspaces.
     command(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"], log, WORK, timeout=900)
     command(["pnpm", "--filter", "@pimlico/alto", "build:esm"], log, WORK, timeout=300)
@@ -81,6 +83,7 @@ def build():
         "source_commit": command(["git", "rev-parse", "HEAD"], cwd=SOURCE).strip(),
         "version": package["version"], "localhost_patch_sha256": digest(patch),
         "timeout_patch_sha256": digest(timeout_patch),
+        "slh_v2_patch_sha256": digest(slh_patch),
     })
     print("Built Alto from submodule and compiled ERC-4337 contracts", flush=True)
 
@@ -109,11 +112,14 @@ def rpc(env, method):
 
 
 def start(env):
-    load(env)
+    _, chain_config = load(env)
     if process(env):
         status(env)
         return
     config = settings(env)
+    if chain_config.get("pq_precompile"):
+        config["max-bundle-size"] = 1
+        write(env / "bundler/config.json", config)
     with socket.socket() as sock:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(("127.0.0.1", config["port"]))
@@ -121,6 +127,8 @@ def start(env):
     child_env = {k: v for k, v in os.environ.items()
                  if not k.startswith(("ALTO_", "SENTRY_", "OTEL_"))}
     child_env["DOTENV_CONFIG_PATH"] = os.devnull
+    if chain_config.get("pq_precompile"):
+        child_env["ALTO_LOCAL_PRECOMPILE_V2"] = "1"
     if config.get("timeout"):
         child_env["ALTO_LOCAL_TRACE_TIMEOUT"] = f'{config["timeout"]}ms'
         child_env["ALTO_LOCAL_RPC_TIMEOUT"] = str(config["timeout"])

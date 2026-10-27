@@ -1,0 +1,270 @@
+{
+  "checkedAt": "2026-10-27T06:59:05.945245+00:00",
+  "rounds": 5,
+  "rows": [
+    {
+      "round": 1,
+      "name": "SLHV2ECRecover",
+      "iterations": 40878,
+      "nsPerOp": 30395.0,
+      "wallNsPerOp": 29769.0,
+      "threadNsPerOp": 29117.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 1,
+      "name": "SLHV2Valid",
+      "iterations": 2871,
+      "nsPerOp": 405860.0,
+      "wallNsPerOp": 406359.0,
+      "threadNsPerOp": 404111.0,
+      "bytesPerOp": 226512,
+      "allocsPerOp": 5451
+    },
+    {
+      "round": 1,
+      "name": "SLHV2Invalid",
+      "iterations": 3030,
+      "nsPerOp": 412888.0,
+      "wallNsPerOp": 413768.0,
+      "threadNsPerOp": 412026.0,
+      "bytesPerOp": 226504,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 1,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2853,
+      "nsPerOp": 417708.0,
+      "wallNsPerOp": 418631.0,
+      "threadNsPerOp": 416516.0,
+      "bytesPerOp": 228512,
+      "allocsPerOp": 5501
+    },
+    {
+      "round": 2,
+      "name": "SLHV2Valid",
+      "iterations": 2934,
+      "nsPerOp": 408625.0,
+      "wallNsPerOp": 409274.0,
+      "threadNsPerOp": 406957.0,
+      "bytesPerOp": 226512,
+      "allocsPerOp": 5451
+    },
+    {
+      "round": 2,
+      "name": "SLHV2Invalid",
+      "iterations": 2840,
+      "nsPerOp": 410948.0,
+      "wallNsPerOp": 411713.0,
+      "threadNsPerOp": 409850.0,
+      "bytesPerOp": 226507,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 2,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2839,
+      "nsPerOp": 418636.0,
+      "wallNsPerOp": 419594.0,
+      "threadNsPerOp": 416783.0,
+      "bytesPerOp": 228516,
+      "allocsPerOp": 5501
+    },
+    {
+      "round": 2,
+      "name": "SLHV2ECRecover",
+      "iterations": 42189,
+      "nsPerOp": 29396.0,
+      "wallNsPerOp": 28461.0,
+      "threadNsPerOp": 28290.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 3,
+      "name": "SLHV2Invalid",
+      "iterations": 2930,
+      "nsPerOp": 414541.0,
+      "wallNsPerOp": 415542.0,
+      "threadNsPerOp": 413429.0,
+      "bytesPerOp": 226507,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 3,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2784,
+      "nsPerOp": 418059.0,
+      "wallNsPerOp": 418786.0,
+      "threadNsPerOp": 416428.0,
+      "bytesPerOp": 228518,
+      "allocsPerOp": 5501
+    },
+    {
+      "round": 3,
+      "name": "SLHV2ECRecover",
+      "iterations": 42162,
+      "nsPerOp": 29040.0,
+      "wallNsPerOp": 28270.0,
+      "threadNsPerOp": 28078.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 3,
+      "name": "SLHV2Valid",
+      "iterations": 2919,
+      "nsPerOp": 413858.0,
+      "wallNsPerOp": 414868.0,
+      "threadNsPerOp": 412492.0,
+      "bytesPerOp": 226507,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 4,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2863,
+      "nsPerOp": 420884.0,
+      "wallNsPerOp": 421803.0,
+      "threadNsPerOp": 419840.0,
+      "bytesPerOp": 228516,
+      "allocsPerOp": 5501
+    },
+    {
+      "round": 4,
+      "name": "SLHV2ECRecover",
+      "iterations": 41664,
+      "nsPerOp": 30156.0,
+      "wallNsPerOp": 29014.0,
+      "threadNsPerOp": 28789.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 4,
+      "name": "SLHV2Valid",
+      "iterations": 3003,
+      "nsPerOp": 413276.0,
+      "wallNsPerOp": 414154.0,
+      "threadNsPerOp": 411764.0,
+      "bytesPerOp": 226504,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 4,
+      "name": "SLHV2Invalid",
+      "iterations": 2888,
+      "nsPerOp": 422943.0,
+      "wallNsPerOp": 434560.0,
+      "threadNsPerOp": 421735.0,
+      "bytesPerOp": 226508,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 5,
+      "name": "SLHV2ECRecover",
+      "iterations": 41460,
+      "nsPerOp": 29812.0,
+      "wallNsPerOp": 28751.0,
+      "threadNsPerOp": 28543.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 5,
+      "name": "SLHV2Valid",
+      "iterations": 2846,
+      "nsPerOp": 410982.0,
+      "wallNsPerOp": 411897.0,
+      "threadNsPerOp": 409133.0,
+      "bytesPerOp": 226508,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 5,
+      "name": "SLHV2Invalid",
+      "iterations": 2912,
+      "nsPerOp": 409701.0,
+      "wallNsPerOp": 410284.0,
+      "threadNsPerOp": 407115.0,
+      "bytesPerOp": 226507,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 5,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2905,
+      "nsPerOp": 412041.0,
+      "wallNsPerOp": 412987.0,
+      "threadNsPerOp": 410913.0,
+      "bytesPerOp": 228514,
+      "allocsPerOp": 5501
+    }
+  ],
+  "summary": {
+    "SLHV2ECRecover": {
+      "medianUs": 29.812,
+      "maxUs": 30.395,
+      "wallMedianUs": 28.751,
+      "threadMedianUs": 28.543
+    },
+    "SLHV2Valid": {
+      "medianUs": 410.982,
+      "maxUs": 413.858,
+      "wallMedianUs": 411.897,
+      "threadMedianUs": 409.133
+    },
+    "SLHV2Invalid": {
+      "medianUs": 412.888,
+      "maxUs": 422.943,
+      "wallMedianUs": 413.768,
+      "threadMedianUs": 412.026
+    },
+    "SLHV2ZeroSignature": {
+      "medianUs": 418.059,
+      "maxUs": 420.884,
+      "wallMedianUs": 418.786,
+      "threadMedianUs": 416.516
+    }
+  },
+  "measurement": "process CPU including Go GC; thread CPU and wall recorded separately; GOMAXPROCS=1, GC enabled",
+  "pricing": {
+    "ecRecoverGas": 3000,
+    "worstMeasuredUs": 422.943,
+    "margin": 1.25,
+    "recommendedGas": 54000,
+    "roundingGas": 1000,
+    "selectedGas": 60000,
+    "selection": "round empirical quote upward to 10000 gas; experimental price, not a proven worst-case bound",
+    "basis": "max measured SLH Run sample / median ECRECOVER Run * 3000 * 1.25"
+  },
+  "environment": {
+    "CGO_CFLAGS": "-O2 -g",
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOARM64": "v8.0",
+    "GOFLAGS": "",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.4"
+  },
+  "fixtureSha256": "21a5afabb8babd24acfb263f33b9dee9d45db2ae26818556177d81cf70e9e6ff",
+  "sources": {
+    "one-box/precompile/slh_v2_disabled.go": "dc48585df189184a473498068ee42cf013dbb69bec8c4712ea7db5d19b183013",
+    "one-box/precompile/dependency.json": "4e856d6c39f038ad8f18509e46f6d8b87b87c5795b49d8e58e0970e0150490cd",
+    "one-box/precompile/slh_v2_bench_test.go": "64b7f5953697cd54298a8580ab21b872b4ab6ddf1bb025759963cc7be78b392f",
+    "one-box/precompile/slh_v2_disabled_test.go": "8dd4ad5015d99c1ffd11534805c186add2fba0cfc2672290fb981084447fd68e",
+    "one-box/precompile/slh_v2.go": "96b07c0d9e299cf6be5a511d8f7c81a1db487563a1b6ab2014be49e1e70ff2ab",
+    "one-box/precompile/slh_v2_test.go": "0139bff9e33a1fae149f2d2054043609452d419c49d6e15f52b8fba48323bbc4",
+    "one-box/precompile/testdata/slh_v2.json": "21a5afabb8babd24acfb263f33b9dee9d45db2ae26818556177d81cf70e9e6ff"
+  },
+  "dependency": {
+    "module": "github.com/trailofbits/go-slh-dsa",
+    "version": "v0.1.0",
+    "commit": "0b3b31f8a1266e290326771384d2324c84d8a7bb",
+    "sum": "h1:2JVntrSjm8lYfwICtyC/eDZjmGUsZvx47qMvzDmVZH4=",
+    "goModSum": "h1:g0SMcIUgLR3AgK15UN7LPOwnDss9cjgpC906/IgzvGw="
+  },
+  "logSha256": "ff5b467a0e52a269067d0a7cf1b996c6c4aa5347a31612a1ac2d8f88797cb719"
+}

@@ -1,0 +1,22 @@
+--- a/src/rpc/validation/BundlerCollectorTracerV07.ts
++++ b/src/rpc/validation/BundlerCollectorTracerV07.ts
+@@ -313,7 +313,7 @@
+                 const addrHex = toHex(address)
+                 const addressInt = Number.parseInt(addrHex)
+                 // this.debug.push(`isPrecompiled address=${addrHex} addressInt=${addressInt}`)
+-                return addressInt > 0 && addressInt < 10
++                return (addressInt > 0 && addressInt < 10) || (addressInt === 257 && Number("ALTO_LOCAL_PRECOMPILE_V2") === 1)
+             }
+ 
+             // [OP-041]
+--- a/src/rpc/validation/tracer.ts
++++ b/src/rpc/validation/tracer.ts
+@@ -106,7 +106,7 @@
+         // .replace(/\n\s*\n/g, '\n')
+         .replace(/\b(?:const|let)\b/g, "")
+     // console.log('== tracer source',ret.split('\n').map((line,index)=>`${index}: ${line}`).join('\n'))
+-    return ret
++    return ret.replaceAll("ALTO_LOCAL_PRECOMPILE_V2", process.env.ALTO_LOCAL_PRECOMPILE_V2 === "1" ? "1" : "0")
+ }
+ 
+ function tracer2string(options: TraceOptions): TraceOptions {

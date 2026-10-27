@@ -29,9 +29,9 @@ git submodule update --init
 ./tools/one-box down
 ```
 
-合约说明见 [contract 文档](contract/README.md)。ECDSA 基线与 SLH-DSA PQ 智能账户链路均保留。
+合约说明见 [contract 文档](contract/README.md)。合约和钱包按 `common/`、`v1/`、`v2/` 组织：公共实现复用，版本差异独立。保留 ECDSA 基线，以及两个互不替换的 SLH-DSA profile：v1 为 Solidity 验签（默认），v2 为新增预编译。
 
-运行 PQ 全链路（Solidity 验签，无新增 PQ 预编译）：
+运行 v1 PQ 全链路（Solidity 验签）：
 
 ```bash
 ./tools/one-box bundler build
@@ -42,5 +42,7 @@ git submodule update --init
 ```
 
 创建、转账、扩展版本和运行数据说明见 [PQ 钱包文档](erc4337-wallet/README.md)。
+
+v2 的独立客户端构建和环境准备见 [one-box](one-box/README.md#v2-预编译实验环境)。[链路报告](docs/chain-bench/README.md) 对比 v1 / v2 / 原生 EOA 的完整交易 gas，并记录预编译性能与定价。
 
 本机密码学性能对比见 [tools/crypto-bench](tools/crypto-bench/README.md)，实验报告保存在 `docs/crypto-bench/`。

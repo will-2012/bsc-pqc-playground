@@ -1,0 +1,20 @@
+--- a/core/vm/evm.go
++++ b/core/vm/evm.go
+@@ -184,7 +184,7 @@
+ 		jumpDests:   newMapJumpDests(),
+ 		arena:       newArena(),
+ 	}
+-	evm.precompiles = activePrecompiledContracts(evm.chainRules)
++	evm.precompiles = v2Precompiles(chainConfig, evm.chainRules, activePrecompiledContracts(evm.chainRules))
+ 
+ 	// Select the jump table for the current fork.
+ 	switch {
+@@ -242,7 +242,7 @@
+ // This method is only used through RPC calls.
+ // It is not thread-safe.
+ func (evm *EVM) SetPrecompiles(precompiles PrecompiledContracts) {
+-	evm.precompiles = precompiles
++	evm.precompiles = v2Precompiles(evm.chainConfig, evm.chainRules, precompiles)
+ }
+ 
+ // SetJumpDestCache configures the analysis cache.

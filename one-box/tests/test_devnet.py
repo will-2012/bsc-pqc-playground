@@ -30,6 +30,23 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate(self.cfg)
 
+    def test_v2_is_an_explicit_optional_extension(self):
+        validate(self.cfg)
+        self.assertNotIn("pq_precompile", self.cfg)
+        self.cfg["pq_precompile"] = 1
+        validate(self.cfg)
+        self.assertNotIn("pq_precompile", MUTABLE)
+        self.cfg["pq_precompile"] = 2
+        with self.assertRaises(ValueError):
+            validate(self.cfg)
+
+    def test_v2_health_rejects_a_client_without_the_precompile(self):
+        with patch.object(devnet, "rpc", return_value="0x"):
+            with self.assertRaisesRegex(RuntimeError, "missing the v2 SLH precompile"):
+                devnet.check_precompile(self.cfg, 0)
+        with patch.object(devnet, "rpc", return_value="0x" + "00" * 31 + "01"):
+            devnet.check_precompile(self.cfg, 0)
+
     def test_chain_and_key_changes_require_new_genesis(self):
         self.assertFalse({"chain_id", "validators", "test_accounts", "test_balance_bnb"} & MUTABLE)
         self.cfg["chain_id"] = 56

@@ -1,6 +1,11 @@
 # ERC-4337 PQ 钱包
 
-本地实验钱包：随机生成 PQ 密钥，通过 Alto 和 EntryPoint 创建智能账户，再发送 BNB 或调用合约。当前提供 `slh-dsa-v1`：EntryPoint v0.7、PQAccount v1、SLH-DSA-SHA2-128s，使用 Solidity 完整验签，不新增 PQ 预编译。
+本地实验钱包：随机生成 PQ 密钥，通过 Alto 和 EntryPoint 创建智能账户，再发送 BNB 或调用合约。两版均使用 EntryPoint v0.7 和 SLH-DSA-SHA2-128s：
+
+| profile | 验签方式 | 本地环境 |
+| --- | --- | --- |
+| `slh-dsa-v1`，默认 | Solidity 完整验签 | 原 `devnet`，不需要新增预编译 |
+| `slh-dsa-v2` | adapter 调用原生预编译 | 独立 `devnet-v2`，显式启用实验客户端 |
 
 ## 使用
 
@@ -32,21 +37,32 @@
 
 ## 版本与扩展
 
-入口支持显式指定版本：
+入口支持 `--version v1/v2`，默认 v1。原 `--profile slh-dsa-v1/slh-dsa-v2` 保持兼容；同时指定时必须一致，否则拒绝执行：
 
 ```bash
-./tools/erc4337-wallet create devnet --profile slh-dsa-v1
+./tools/erc4337-wallet create devnet --version v1
 ```
 
 | 文件 | 职责 |
 | --- | --- |
-| `wallet.mjs` | 环境校验、本地充值、部署记录、账户保存、准备与提交操作、等待收据 |
-| `profiles/slh-dsa-v1.mjs` | 密钥与签名算法、工厂/账户 ABI、调用编码、EntryPoint 版本、合约部署顺序 |
-| `profiles/index.mjs` | 显式注册允许的 profile；未知版本直接拒绝 |
+| `common/wallet.mjs` | 环境校验、本地充值、部署记录、账户保存、准备与提交操作、等待收据 |
+| `common/slh-dsa.mjs` | 两版共享的 SLH 密钥、签名、账户 ABI 与操作编码 |
+| `v1/profile.mjs`、`v2/profile.mjs` | 版本身份、验证器部署选择及版本特有检查 |
+| `profiles.mjs` | 显式注册允许的 profile；未知版本直接拒绝 |
 | `cli.mjs` | 创建、转账、部署和验收入口 |
-| `test.mjs` | 当前 profile 的密码学和全链路验收 |
+| `common/test.mjs` | 当前 profile 的密码学和全链路验收 |
 
-新增算法或合约版本时，增加一个 profile 模块并注册，提供现有适配器中的接口；同时增加相应合约和验收用例。通用的钱包流程与 bench 继续复用。需要不同 EntryPoint 版本时，环境也必须部署匹配版本；当前 one-box 部署的是 v0.7。
+v2 在完成 [环境准备](../one-box/README.md#v2-预编译实验环境) 后显式选择：
+
+```bash
+./tools/erc4337-wallet create devnet-v2 --version v2
+./tools/erc4337-wallet transfer devnet-v2 <id> <接收地址> 0.01 --version v2
+./tools/erc4337-wallet test devnet-v2 --version v2
+```
+
+v1、v2 复用 common 中的密钥生成、签名、账户和工厂逻辑。v2 替换验证器，并在部署前向所有验证者探测真实预编译；若所选环境未启用 v2 或仍使用普通客户端，则拒绝部署。`contractVersion=2` 表示新的合约配置，不表示 PQAccount 源码被修改。
+
+新增算法或合约版本时，增加 `v3/` 等版本目录及 profile 模块，并在 `profiles.mjs` 中注册，提供现有适配器中的接口；同时增加相应合约和验收用例。通用的钱包流程与 bench 继续复用。需要不同 EntryPoint 版本时，环境也必须部署匹配版本；当前 one-box 部署的是 v0.7。
 
 每条账户记录绑定 profile、合约版本、创世 hash、EntryPoint、公钥和工厂地址。加载时检查这些标识和确定性地址，不自动把旧账户转换成新算法。合约不可升级；切换 profile 是新建账户，既有账户的迁移需要另行设计。部署时同时检查链上代码和原部署交易，拒绝把新编译产物与旧合约混用。
 

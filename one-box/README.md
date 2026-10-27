@@ -105,7 +105,7 @@ one-box/
 └── .runtime/                密钥、构建、数据库和日志；不提交
 ```
 
-当前提供 BSC 开发链、ECDSA 智能账户基线和 SLH-DSA PQ 智能账户。PQ 账户采用 Solidity 验签，不新增 PQ 预编译。出块、BLS 投票和 P2P 仍使用 BSC 原有机制。
+当前提供 BSC 开发链、ECDSA 智能账户基线和 SLH-DSA PQ 智能账户。默认 v1 采用 Solidity 验签；v2 在独立环境显式增加 PQ 预编译。出块、BLS 投票和 P2P 仍使用 BSC 原有机制。
 
 ## Alto Bundler 与 ERC-4337
 
@@ -143,7 +143,7 @@ Bundler 默认地址：`http://127.0.0.1:14337`。默认参数在 [`bundler.json
 
 ### 构建与适配
 
-构建时将 Alto 的固定 Git 提交解包到 `one-box/.runtime/build/alto/`，应用 [`alto-localhost.patch`](patches/alto-localhost.patch) 和 [`alto-timeout.patch`](patches/alto-timeout.patch)，再按上游锁文件构建。前者将监听地址改为 `127.0.0.1`；后者允许本地配置更长的 RPC 和 trace 超时，供 Solidity PQ 验签使用。`safe-mode` 保持开启，仍执行签名、opcode 和 storage 模拟检查。ESM 包标记沿用上游发布流程；构建记录保存源码提交和两个补丁的 hash。
+构建时将 Alto 的固定 Git 提交解包到 `one-box/.runtime/build/alto/`，应用 [`alto-localhost.patch`](patches/alto-localhost.patch) 、[`alto-timeout.patch`](patches/alto-timeout.patch) 和带环境开关的 [`alto-slh-v2.patch`](patches/alto-slh-v2.patch)，再按上游锁文件构建。前者将监听地址改为 `127.0.0.1`；后者允许本地配置更长的 RPC 和 trace 超时，供 Solidity PQ 验签使用。`safe-mode` 保持开启，仍执行签名、opcode 和 storage 模拟检查。ESM 包标记沿用上游发布流程；构建记录保存源码提交和各补丁的 hash。
 
 修改 Alto 源码后，先在 submodule 内提交，再执行 `bundler build`；构建记录保存实际提交和补丁校验值。重建共享 Alto 前需要停止本仓库所有环境中的 Bundler。
 
@@ -172,7 +172,7 @@ Bundler 默认地址：`http://127.0.0.1:14337`。默认参数在 [`bundler.json
 
 版本选择、适配原因和实测范围见 [ERC-4337 验收记录](docs/erc4337-verification.md)。
 
-### PQ 智能账户
+### v1 PQ 智能账户
 
 `./tools/one-box bundler up --pq` 在当前环境合并 [`pq-bundler.json`](pq-bundler.json) 的实验预算；已运行时使用 `bundler restart --pq`。公共默认配置不变，当前环境的配置会持久保存。
 
@@ -190,3 +190,29 @@ python3 one-box/tests/smoke.py                     # 在运行中的 devnet 上�
 真实网络检查结果分别保存在当前环境的 `health.json` 和 `smoke-result.json`，包含本次区块、最终性高度和交易 hash。
 
 已完成的本机测试和适用边界见[开发链验收记录](docs/devnet-verification.md)。
+
+## v2 预编译实验环境
+
+v1 的默认客户端、配置、合约和 `slh-dsa-v1` profile 保留。v2 显式构建实验客户端，并使用新的命名环境，避免更换 v1 的二进制、密钥和数据库：
+
+```bash
+./tools/one-box bundler build
+./tools/one-box build --v2
+./tools/one-box --name devnet-v2 init --v2   # 仅首次；自动生成新密钥
+./tools/one-box --name devnet-v2 bundler up --port 14347
+./tools/erc4337-wallet test devnet-v2 --version v2
+./tools/chain-bench/run devnet-v2 3 --version v2 --ecdsa-baseline
+./tools/one-box --name devnet-v2 down
+```
+
+已有环境跳过 `init`，直接 `bundler up`；端口配置会保留。构建共享 Alto 前应停止所有环境中的 Bundler。
+
+`build --v2` 从固定 BSC submodule 提交解包到 `.runtime/build/v2/bsc/`，应用 `patches/bsc-slh-v2.patch`，复制 `precompile/v2/` 中的代码，并按 `dependency.json` 的固定版本和校验和加载 Go SLH 库；不会改动 submodule 或原 `build/geth`。构建过程执行预编译单元测试及上游标准验签向量，保存二进制、源码和依赖记录。
+
+v2 二进制带 `pqprecompile` 构建标签；仅 chain ID 714、Parlia、Jenner 后启用 `0x0101`，排除 UBT。普通构建仍不启用该扩展。EVM 构建和 RPC `SetPrecompiles` 使用相同的启用条件，公共分叉 map 和预热地址表保持原样。当前实验不支持通过 RPC 自定义覆盖来重定位或禁用此地址。
+
+`init --v2` 在默认配置上增加整数标记 `pq_precompile=1`，并将默认 RPC/P2P 端口各加 10；自定义 `--config` 时使用文件中的端口。此标记属于建链选择，不能通过 `config` 在线切换。重启和 reset 沿用该环境配置。实际运行文件仍在 `.runtime/<环境名>/bin/geth`，更新同类客户端使用现有 `upgrade --binary` 流程。
+
+Alto 根据当前环境标记启用 `alto-slh-v2.patch` 的 stateless 预编译识别，仍保持 `safe-mode`。v2 每个 bundle 最多一个操作，便于比较单笔交易 gas；不需要 v1 的 `--pq` 高预算配置。`--pq` 是 Bundler 预算，`--v2` 是客户端与环境选择，两者含义不同。
+
+本地 gas 价格为固定 60,000 gas。原生性能、输入 ABI、完整交易成本和限制见 [链路报告](../docs/chain-bench/README.md)。所有密钥、构建副本、运行日志及临时测量仍位于被 Git 忽略的 `.runtime/`。

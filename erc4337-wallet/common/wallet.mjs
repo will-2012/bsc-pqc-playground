@@ -4,7 +4,7 @@ import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {Wallet} from 'ethers';
-import {getProfile, DEFAULT_PROFILE} from './profiles/index.mjs';
+import {getProfile, DEFAULT_PROFILE} from '../profiles.mjs';
 import {
   bytesToHex, createPublicClient, createWalletClient, defineChain,
   encodeDeployData, http, keccak256, parseEther,
@@ -13,7 +13,7 @@ import {privateKeyToAccount} from 'viem/accounts';
 import {createBundlerClient, getUserOperationHash} from 'viem/account-abstraction';
 
 process.umask(0o077);
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 export function write(p, data) {
   fs.mkdirSync(path.dirname(p), {recursive: true, mode: 0o700});
@@ -62,6 +62,7 @@ async function wait(ctx, hash) {
 export function artifact(name) { return read(path.join(ROOT, `contract/out/${name}.sol/${name}.json`)); }
 
 export async function deployment(ctx) {
+  if (ctx.profile.probe) await ctx.profile.probe(ctx);
   const p = path.join(ctx.dir, 'deployment.json');
   const d = fs.existsSync(p) ? read(p) : {genesisHash: ctx.manifest.genesis_hash, chainId: ctx.chain.id,
     entryPoint: ctx.base.entryPoint, profile: ctx.profile.id, contractVersion: ctx.profile.contractVersion,
@@ -142,16 +143,20 @@ export async function submit(ctx, operation) {
   const hash = await ctx.bundler.sendUserOperation(operation);
   assert.equal(hash, expected);
   const receipt = await ctx.bundler.waitForUserOperationReceipt({hash, timeout: 180000});
+  const outer = await ctx.client.getTransactionReceipt({hash: receipt.receipt.transactionHash});
   const result = {userOperationHash: hash, transactionHash: receipt.receipt.transactionHash,
     success: receipt.success, transactionStatus: receipt.receipt.status,
     blockHash: receipt.receipt.blockHash, blockNumber: receipt.receipt.blockNumber,
     actualGasUsed: receipt.actualGasUsed, actualGasCost: receipt.actualGasCost,
-    outerTransactionGas: receipt.receipt.gasUsed, verificationGasLimit: operation.verificationGasLimit,
+    outerTransactionGas: outer.gasUsed, outerGasPrice: outer.effectiveGasPrice,
+    outerTransactionCost: outer.gasUsed * outer.effectiveGasPrice,
+    verificationGasLimit: operation.verificationGasLimit,
     signatureBytes: (operation.signature.length - 2) / 2,
     packedUserOperationBytes: (ctx.profile.encodedOperation(operation).length - 2) / 2};
   write(path.join(ctx.dir, 'receipts', `${hash}.json`), result);
   assert.equal(receipt.success, true, `UserOperation execution failed: ${hash}; receipt saved`);
   assert.equal(receipt.receipt.status, 'success');
+  assert.equal(outer.status, 'success');
   return result;
 }
 

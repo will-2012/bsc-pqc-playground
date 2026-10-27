@@ -1,18 +1,18 @@
-import {context, createAccount, deployment, transfer} from './wallet.mjs';
+import {context, createAccount, deployment, transfer} from './common/wallet.mjs';
 import {isAddress, parseEther} from 'viem';
 import {parseArgs} from 'node:util';
-import {DEFAULT_PROFILE} from './profiles/index.mjs';
+import {selectProfile} from './profiles.mjs';
 
 try {
-  const {values, positionals} = parseArgs({allowPositionals: true, options: {profile: {type: 'string', default: DEFAULT_PROFILE}}});
+  const {values, positionals} = parseArgs({allowPositionals: true, options: {profile: {type: 'string'}, version: {type: 'string'}}});
   const [action, name = 'devnet', id, to, amount] = positionals;
-  if (!['deploy', 'create', 'transfer', 'test'].includes(action)) throw new Error('Usage: wallet deploy|create|test <env>; wallet transfer <env> <id> <to> <BNB> [--profile <name>]');
+  if (!['deploy', 'create', 'transfer', 'test'].includes(action)) throw new Error('Usage: wallet deploy|create|test <env>; wallet transfer <env> <id> <to> <BNB> [--version v1|v2] [--profile <name>]');
   if (positionals.length > (action === 'transfer' ? 5 : 2)) throw new Error('Unexpected extra arguments');
   if (action === 'transfer' && (!id || !isAddress(to) || !amount)) throw new Error('Expected account id, recipient address and amount in BNB');
-  const ctx = await context(name, values.profile);
+  const ctx = await context(name, selectProfile(values));
   let result;
   if (action === 'test') {
-    result = await (await import('./test.mjs')).test(ctx);
+    result = await (await import('./common/test.mjs')).test(ctx);
   } else {
     const d = await deployment(ctx);
     if (action === 'deploy') result = d;

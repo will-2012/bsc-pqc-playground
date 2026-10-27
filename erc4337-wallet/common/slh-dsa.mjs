@@ -22,7 +22,7 @@ export async function smartAccount(ctx, identity) {
   assert.equal(address.toLowerCase(), identity.address.toLowerCase());
   let stub;
   const unsupported = async () => { throw new Error('Only ERC-4337 UserOperation signing is supported'); };
-  return toSmartAccount({client: ctx.client, entryPoint: {address: d.entryPoint, version: profile.entryPointVersion},
+  return toSmartAccount({client: ctx.client, entryPoint: {address: d.entryPoint, version: ctx.profile.entryPointVersion},
     getAddress: async () => address,
     getFactoryArgs: async () => ({factory: d.factory, factoryData: encodeFunctionData({abi: factoryAbi,
       functionName: 'createAccount', args: [publicKey, salt]})}),
@@ -34,7 +34,7 @@ export async function smartAccount(ctx, identity) {
     getStubSignature: async () => stub ||= bytesToHex(slh.sign(new Uint8Array(32), secretKey)),
     signUserOperation: async op => {
       const hash = getUserOperationHash({chainId: ctx.chain.id, entryPointAddress: d.entryPoint,
-        entryPointVersion: profile.entryPointVersion, userOperation: {...op, sender: address}});
+        entryPointVersion: ctx.profile.entryPointVersion, userOperation: {...op, sender: address}});
       const signature = slh.sign(hexToBytes(hash), secretKey);
       assert(slh.verify(signature, hexToBytes(hash), hexToBytes(publicKey)), 'Local signature verification failed');
       return bytesToHex(signature);
@@ -42,13 +42,8 @@ export async function smartAccount(ctx, identity) {
   });
 }
 
-export const profile = {
-  id: 'slh-dsa-v1', algorithm: 'SLH-DSA-SHA2-128s', entryPointVersion: '0.7',
-  contractVersion: 1,
-  contracts: ctx => [
-    ['verifier', 'SLHDSA128s', []],
-    ['factory', 'PQAccountFactory', [ctx.base.entryPoint, ctx.deployment.verifier]],
-  ],
+export const slhProfile = {
+  entryPointVersion: '0.7', algorithm: 'SLH-DSA-SHA2-128s',
   keygen() {
     const keys = slh.keygen();
     const result = {publicKey: bytesToHex(keys.publicKey), secretKey: bytesToHex(keys.secretKey)};

@@ -58,8 +58,10 @@ def command(args, log=None, cwd=ROOT, timeout=300):
 
 def validate(cfg):
     expected = set(read(ROOT / "one-box/config.json"))
-    if set(cfg) != expected or any(type(v) is not int for v in cfg.values()):
-        raise ValueError("Configuration must contain exactly the integer fields in one-box/config.json")
+    if set(cfg) not in (expected, expected | {"pq_precompile"}) or any(type(v) is not int for v in cfg.values()):
+        raise ValueError("Configuration must contain the integer fields in one-box/config.json, plus optional pq_precompile")
+    if cfg.get("pq_precompile", 0) not in (0, 1):
+        raise ValueError("pq_precompile must be 0 (v1) or 1 (v2)")
     if cfg["chain_id"] != 714:
         raise ValueError("This profile uses BSC Rialto system-contract bytecode: chain_id must be 714")
     if not 3 <= cfg["validators"] <= 7 or not 1 <= cfg["test_accounts"] <= 100:
@@ -148,13 +150,18 @@ def init(env, config_path):
     doctor()
     if env.exists():
         raise RuntimeError(f"Environment already exists: {env}. Use up/restart or explicit reset --yes")
-    if not (BUILD / "geth").exists():
-        build()
+    selected = BUILD / "v2/geth" if cfg.get("pq_precompile") else BUILD / "geth"
+    if not selected.exists():
+        if cfg.get("pq_precompile"):
+            from precompile import build as build_v2
+            build_v2()
+        else:
+            build()
     env.mkdir(mode=0o700, parents=True)
     (env / "logs").mkdir()
     (env / "bin").mkdir()
     binary = env / "bin/geth"
-    shutil.copy2(BUILD / "geth", binary)
+    shutil.copy2(selected, binary)
     info = binary_info(binary)
     write(env / "config.json", cfg)
     log = env / "logs/init.log"
@@ -288,6 +295,14 @@ def snapshot(env, cfg):
     return rows
 
 
+def check_precompile(cfg, i):
+    vector = read(BOX / "precompile/v2/testdata/slh_v2.json")[0]["input"]
+    result = rpc(cfg, i, "eth_call", [{"to": "0x0000000000000000000000000000000000000101",
+                                    "data": "0x" + vector, "gas": hex(1000000)}, "latest"])
+    if result != "0x" + "00" * 31 + "01":
+        raise RuntimeError(f"Node {i} is missing the v2 SLH precompile")
+
+
 def check(env):
     manifest, cfg = load(env)
     rows = snapshot(env, cfg)
@@ -304,6 +319,8 @@ def check(env):
             raise RuntimeError("Jenner PaymentLane system contract is missing")
         if rpc(cfg, i, "eth_chainId") != hex(cfg["chain_id"]):
             raise RuntimeError("Wrong chain id")
+        if cfg.get("pq_precompile"):
+            check_precompile(cfg, i)
         effective = json.loads(json.loads(attach(env, i, "JSON.stringify(admin.nodeInfo.protocols.eth.config)")))
         for fork in FORKS["passed"] + FORKS["recent"]:
             expected = forks["passed"] if fork in FORKS["passed"] + ["lorentz", "maxwell"] else forks["latest"]
@@ -465,11 +482,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--name", default="devnet", help="Local environment name")
     sub = parser.add_subparsers(dest="action", required=True)
-    for name in ("doctor", "build", "up", "down", "restart", "status", "check", "accounts"):
+    for name in ("doctor", "up", "down", "restart", "status", "check", "accounts"):
         sub.add_parser(name)
+    p = sub.add_parser("build")
+    p.add_argument("--v2", action="store_true", help="Build isolated experimental SLH precompile client")
     for name in ("init", "reset"):
         p = sub.add_parser(name)
         p.add_argument("--config", type=Path, default=ROOT / "one-box/config.json" if name == "init" else None)
+        if name == "init":
+            p.add_argument("--v2", action="store_true", help="Enable v2 client and shift default RPC/P2P ports by 10")
         if name == "reset":
             p.add_argument("--yes", action="store_true", help="Delete this environment, including its keys")
     p = sub.add_parser("config")
@@ -494,9 +515,19 @@ def main():
         if args.action == "doctor":
             doctor()
         elif args.action == "build":
-            build()
+            if args.v2:
+                from precompile import build as build_v2
+                build_v2()
+            else:
+                build()
         elif args.action == "init":
-            init(env, args.config.resolve())
+            cfg = read(args.config.resolve())
+            if args.v2:
+                cfg["pq_precompile"] = 1
+                if args.config.resolve() == (ROOT / "one-box/config.json").resolve():
+                    cfg["rpc_port"] += 10
+                    cfg["p2p_port"] += 10
+            init(env, cfg)
         elif args.action == "reset":
             if not args.yes:
                 raise RuntimeError("reset deletes this environment's keys and database; pass --yes explicitly")

@@ -7,12 +7,13 @@ import {slh_dsa_sha2_128s as slh} from '@noble/post-quantum/slh-dsa.js';
 import {bytesToHex, hexToBytes, createPublicClient, http, parseAbi, encodeFunctionData, parseEther} from 'viem';
 import {getUserOperationHash} from 'viem/account-abstraction';
 import {artifact, createAccount, deployment, loadIdentity, prepare, smartAccount, submit, write} from './wallet.mjs';
-import {getProfile} from './profiles/index.mjs';
+import {getProfile} from '../profiles.mjs';
 
 export async function test(ctx) {
-  assert.equal(ctx.profile.id, 'slh-dsa-v1', 'This test suite is specific to slh-dsa-v1');
+  assert(['slh-dsa-v1', 'slh-dsa-v2'].includes(ctx.profile.id), 'This suite covers the two SLH-DSA profiles');
   const d = await deployment(ctx);
-  const abi = artifact('SLHDSA128s').abi;
+  const verifierContract = ctx.profile.contracts(ctx).find(([label]) => label === 'verifier')[1];
+  const abi = artifact(verifierContract).abi;
   const verify = (pk, message, sig) => ctx.client.readContract({address: d.verifier, abi,
     functionName: 'verify', args: [pk, message, sig], gas: 16000000n});
   const {publicKey, secretKey} = slh.keygen();
