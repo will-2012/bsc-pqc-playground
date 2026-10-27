@@ -5,10 +5,11 @@
 | profile | 验签方式 | 本地环境 |
 | --- | --- | --- |
 | `slh-dsa-v1`，默认 | Solidity 完整验签 | 原 `devnet`，不需要新增预编译 |
-| `slh-dsa-v2` | SLH adapter 调用原生预编译 | 独立 `devnet-v2`，或 v3–v5 共同 PQ 分叉环境 |
-| `falcon-v3` | Falcon-512 原生预编译 | 独立 `devnet-v3`，或 v4/v5 环境 |
-| `mldsa-v4` | ML-DSA-44 原生预编译 | 独立 `devnet-v4`，或 v5 环境 |
-| `mldsa65-v5` | ML-DSA-65 原生预编译 | 独立 `devnet-v5` |
+| `slh-dsa-v2` | SLH adapter 调用原生预编译 | 独立 `devnet-v2`，或 v3–v6 共同 PQ 分叉环境 |
+| `falcon-v3` | Falcon-512 原生预编译 | 独立 `devnet-v3`，或 v4–v6 环境 |
+| `mldsa-v4` | ML-DSA-44 原生预编译 | 独立 `devnet-v4`，或 v5/v6 环境 |
+| `mldsa65-v5` | ML-DSA-65 原生预编译 | 独立 `devnet-v5`，或 v6 环境 |
+| `slh-dsa-v6` | SLH-DSA-SHA2-128f 原生预编译 | `devnet-v6` |
 
 ## 使用
 
@@ -40,7 +41,7 @@ SLH profile 的 `test` 额外需要支持 SLH-DSA 的 OpenSSL 3.5+，可用 `OPE
 
 ## 版本与扩展
 
-入口支持 `--version v1/v2/v3`，默认 v1。原 `--profile slh-dsa-v1/slh-dsa-v2` 保持兼容；同时指定时必须一致，否则拒绝执行：
+入口支持 `--version v1` 至 `v6`，默认 v1；也可用 `--profile` 选择已注册名称。两者同时指定时必须一致：
 
 ```bash
 ./tools/erc4337-wallet create devnet --version v1
@@ -49,8 +50,8 @@ SLH profile 的 `test` 额外需要支持 SLH-DSA 的 OpenSSL 3.5+，可用 `OPE
 | 文件 | 职责 |
 | --- | --- |
 | `common/wallet.mjs` | 环境校验、本地充值、部署记录、账户保存、准备与提交操作、等待收据 |
-| `common/slh-dsa.mjs` | 两版共享的 SLH 密钥、签名、账户 ABI 与操作编码 |
-| `v1/profile.mjs`、`v2/profile.mjs` | 版本身份、验证器部署选择及版本特有检查 |
+| `common/slh-dsa.mjs` | SLH 各版共用的参数化密钥、签名、账户 ABI 与操作编码 |
+| `v*/profile.mjs` | 版本身份、验证器部署选择及版本特有检查 |
 | `profiles.mjs` | 显式注册允许的 profile；未知版本直接拒绝 |
 | `cli.mjs` | 创建、转账、部署和验收入口 |
 | `common/test.mjs` | 当前 profile 的密码学和全链路验收 |
@@ -65,7 +66,7 @@ v2 在完成 [环境准备](../one-box/README.md#v2-预编译实验环境) 后�
 
 v1、v2 复用 common 中的密钥生成、签名、账户和工厂逻辑。v2 替换验证器，并在部署前向所有验证者探测真实预编译；若所选环境未启用 v2 或仍使用普通客户端，则拒绝部署。`contractVersion=2` 表示新的合约配置，不表示 PQAccount 源码被修改。
 
-新增算法或合约版本时，增加 `v6/` 等版本目录及 profile 模块，并在 `profiles.mjs` 中注册，提供现有适配器中的接口；同时增加相应合约和验收用例。通用的钱包流程与 bench 继续复用。需要不同 EntryPoint 版本时，环境也必须部署匹配版本；当前 one-box 部署的是 v0.7。
+新增算法或合约版本时，增加新的版本目录与 profile 模块，并在 `profiles.mjs` 中注册，提供现有适配器中的接口；同时增加相应合约和验收用例。通用的钱包流程与 bench 继续复用。需要不同 EntryPoint 版本时，环境也必须部署匹配版本；当前 one-box 部署的是 v0.7。
 
 每条账户记录绑定 profile、合约版本、创世 hash、EntryPoint、公钥和工厂地址。加载时检查这些标识和确定性地址，不自动把旧账户转换成新算法。合约不可升级；切换 profile 是新建账户，既有账户的迁移需要另行设计。部署时同时检查链上代码和原部署交易，拒绝把新编译产物与旧合约混用。
 
@@ -136,4 +137,4 @@ profile 为 `mldsa65-v5`，绑定 MLDSA65AccountFactory / MLDSA65Account / MLDSA
 ./tools/erc4337-wallet test devnet-v6 --version v6
 ```
 
-profile 为 `slh-dsa-v6`，公钥 32 bytes、私钥 64 bytes、签名 17,088 bytes。与 v1/v2 共用 Noble SLH 钱包适配流程，仅选择不同参数集与验证器；Pure 模式、空 context。账户目录、密钥和部署记录按 profile 隔离。128f 与 128s 均为类别 1；f 用更大的签名换取更快的签名生成。操作超过公共内存池常见的 8 KB 大小限制，本地联通不代表公共 Bundler 可直接接受。
+profile 为 `slh-dsa-v6`，公钥 32 bytes、私钥 64 bytes、签名 17,088 bytes。与 v1/v2 共用 Noble SLH 钱包适配流程，仅选择不同参数集与验证器；Pure 模式、空 context。账户目录、密钥和部署记录按 profile 隔离。128f 与 128s 均为类别 1；f 用更大的签名换取更快的签名生成。操作超过 ERC-7562 的 8,192 bytes 编码大小上限，本地联通不表示符合公共内存池规范。

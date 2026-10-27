@@ -92,7 +92,7 @@ def main():
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title><style>{css}</style></head>
 <body><header><div class="eyebrow">BSC PQC PLAYGROUND · LOCAL EXPERIMENT</div><h1>{title}</h1><p>SLH-DSA-SHA2-128s / 128f / Falcon-512 / ML-DSA-44 / ML-DSA-65 · Solidity 与原生预编译 · 2026-10-27</p>
 <div class="cards"><div class="card"><span>v6 SLH-128f 转账，平均外层 gas</span><strong>{transfer:,.0f} gas</strong><small>三笔实测，原生 EOA 为 21,000 gas</small></div><div class="card"><span>转账 gas 比同链 SLH-128s 增加</span><strong>{reduction:.2f}%</strong><small>同链、同 Bundler；各三笔样本</small></div><div class="card"><span>SLH-128f 预编译实验定价</span><strong>{price:,} gas</strong><small>五轮 CPU 测量；含余量与取整</small></div></div></header>
-<div class="layout"><nav aria-label="报告目录">{navigation}<a href="README.md">Markdown 源文档 ↗</a></nav><article>{body}<footer>由 README.md 和原始 JSON 自动生成，无外部资源依赖。更新后运行 <code>python3 tools/chain-bench/report.py</code>。</footer></article></div></body></html>'''
+<div class="layout"><nav aria-label="报告目录">{navigation}<a href="README.md">Markdown 源文档 ↗</a></nav><article>{body}<footer>正文来自 README.md，摘要卡片由归档 JSON 计算。更新后运行 <code>python3 tools/chain-bench/report.py</code>。</footer></article></div></body></html>'''
     (REPORT / 'report.html').write_text(page)
     print(REPORT / 'report.html')
 

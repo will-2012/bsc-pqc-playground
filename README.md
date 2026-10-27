@@ -47,10 +47,4 @@ v2 的独立客户端构建和环境准备见 [one-box](one-box/README.md#v2-预
 
 本机密码学性能对比见 [tools/crypto-bench](tools/crypto-bench/README.md)，实验报告保存在 `docs/crypto-bench/`。
 
-Falcon-512 v3 的预编译、共同 PQ 硬分叉、钱包与并发测试见 [HTML 对比报告](docs/chain-bench/report.html)；[运行步骤](tools/chain-bench/README.md#v3falcon-512-与同链对照)。
-
-ML-DSA-44 v4 沿用共同 PQ 硬分叉，新增预编译、独立账户和钱包 profile；[运行步骤](tools/chain-bench/README.md#v4ml-dsa-44)与[链路报告](docs/chain-bench/report.html)。
-
-ML-DSA-65 v5 使用类别 3 参数，独立账户与预编译，仍复用同一 PQ 分叉；[运行步骤](tools/chain-bench/README.md#v5ml-dsa-65-与-ml-dsa-44-同链对照)。
-
-SLH-DSA-SHA2-128f v6 复用 32-byte 公钥账户，新增同一 PQ 分叉下的预编译；[运行步骤](tools/chain-bench/README.md)与[同链对比](docs/chain-bench/report.html)。
+v2–v6 分别覆盖 SLH-128s、Falcon-512、ML-DSA-44、ML-DSA-65 和 SLH-128f。版本选择与同链复现见 [chain-bench](tools/chain-bench/README.md)，结果见 [HTML 报告](docs/chain-bench/report.html)。
