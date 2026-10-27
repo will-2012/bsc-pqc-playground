@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>以太坊抗量子路线：基础、演进与权衡</title>
+<style>
+:root{color-scheme:light;--ink:#243447;--muted:#596b7b;--line:#dce5ed;--blue:#185f9a;--soft:#eef5fb;--green:#16735b;--warm:#fff6e8}
+*{box-sizing:border-box}body{margin:0;background:#fafcfe;color:var(--ink);font:16px/1.85 system-ui,-apple-system,"PingFang SC",sans-serif}main{max-width:1120px;margin:auto;padding:48px 28px 72px}h1,h2,h3{line-height:1.45;color:#172f46}h1{font-size:34px;margin:12px 0}h2{font-size:25px;margin:52px 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line)}h3{font-size:19px;margin:26px 0 12px}p{margin:14px 0}a{color:var(--blue);text-underline-offset:3px}.meta,.caption{color:var(--muted);font-size:14px}.lead{font-size:19px}.callout{background:var(--soft);border-left:4px solid var(--blue);padding:16px 20px;margin:22px 0}.caution{background:var(--warm);border-left-color:#bd852d}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;font-size:15px;margin:18px 0}td,th{padding:12px 14px;border:1px solid var(--line);vertical-align:top;text-align:left}th{background:#edf3f8;white-space:nowrap}figure{margin:24px 0;padding:22px;background:#fff;border:1px solid var(--line);border-radius:10px}figcaption{font-size:14px;color:var(--muted);margin-top:12px}svg{display:block;width:100%;height:auto;min-width:680px}svg text{font-family:system-ui,-apple-system,"PingFang SC",sans-serif;fill:var(--ink)}.diagram{overflow:auto}.flow{display:flex;align-items:stretch;gap:12px;flex-wrap:wrap}.step{flex:1 1 170px;background:var(--soft);padding:16px;border:1px solid #c9ddee;border-radius:8px}.step strong{display:block;color:var(--blue)}.step span{font-size:14px;color:var(--muted)}.arrow{align-self:center;color:var(--blue);font-size:22px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{padding:18px;background:#fff;border:1px solid var(--line);border-radius:8px}.card h3{margin-top:0}.card p{font-size:15px}nav{display:flex;flex-wrap:wrap;gap:8px 20px;padding:16px 0;border-bottom:1px solid var(--line);font-size:14px}li{margin:8px 0}code{font-size:.9em;background:#eaf0f5;padding:2px 5px;border-radius:3px}details{margin:22px 0;padding:16px 20px;border:1px solid var(--line);background:#fff;border-radius:8px}summary{cursor:pointer;font-weight:600}.sources li{font-size:14px;overflow-wrap:anywhere}.tag{font-size:12px;border-radius:4px;background:#e7f1f9;color:var(--blue);padding:3px 7px}footer{margin-top:38px;color:var(--muted);font-size:14px}@media(max-width:720px){main{padding:24px 16px 48px}h1{font-size:27px}h2{font-size:22px}.cards{grid-template-columns:1fr}.arrow{display:none}figure{padding:12px}}@media print{body{background:#fff}main{max-width:none;padding:0}nav{display:none}h2{break-after:avoid}figure,table{break-inside:avoid}details{display:block}a{color:inherit}}
+</style>
+</head>
+<body><main>
+<header>
+<p class="meta">技术调研 · 核查日期：2026-10-27 · 研究路线与草案不等于主网升级承诺</p>
+<h1>以太坊抗量子路线：基础、演进与权衡</h1>
+<p class="lead">核心协议倾向以哈希密码学和证明聚合构建共同基础；账户保留算法选择与升级能力；网络认证与密钥协商按各自需求演进。</p>
+<div class="callout"><strong>以太坊希望改变的，不只是签名算法，而是验证方式。</strong>先采用适合抗量子设计的签名，再证明“大批签名都验证通过”，让全网验证聚合证明。它同时追求长期安全与扩容，但更大的原始数据、更重的证明生成和更复杂的迁移，都需要付出成本。<a href="#s1">[1]</a><a href="#s2">[2]</a></div>
+<nav aria-label="文档目录"><a href="#foundation">当前基础</a><a href="#quantum">量子风险</a><a href="#layers">分层演进</a><a href="#aggregation">证明聚合</a><a href="#tradeoffs">选型权衡</a><a href="#roadmap">路线与状态</a><a href="#bsc">对 BSC 的启发</a></nav>
+</header>
+<section id="foundation">
+<h2>1. 当前基础：椭圆曲线与哈希承担不同工作</h2>
+<p>如果只讨论主要密码学依赖，可以把当前以太坊概括为“<strong>椭圆曲线密码学＋哈希函数</strong>”。这是一张理解地图，不是完整的安全公式：共识规则、经济激励、网络条件、客户端实现和密钥管理同样影响安全。</p>
+<figure><div class="diagram"><svg viewBox="0 0 1000 330" role="img" aria-labelledby="curve-title curve-desc">
+<title id="curve-title">椭圆曲线基础与以太坊使用场景</title><desc id="curve-desc">secp256k1 支持 ECDSA 账户签名和执行层 RLPx 的 ECDH；BLS12-381 支持验证者 BLS 签名和 blob 的 KZG 承诺；BN254 支持部分应用的证明验证。</desc>
+<g fill="#edf5fc" stroke="#c5d9e9"><rect x="350" y="5" width="300" height="52" rx="9"/><rect x="70" y="112" width="220" height="52" rx="9"/><rect x="390" y="112" width="220" height="52" rx="9"/><rect x="710" y="112" width="220" height="52" rx="9"/></g>
+<g fill="none" stroke="#90a9bc" stroke-width="2"><path d="M500 57 V82 H180 V112 M500 82 V112 M500 82 H820 V112"/><path d="M180 164 V188 H100 V218 M180 188 H280 V218 M500 164 V188 H465 V218 M500 188 H650 V218 M820 164 V218"/></g>
+<g fill="#f6f9fc" stroke="#dce5ed"><rect x="15" y="218" width="170" height="85" rx="8"/><rect x="195" y="218" width="170" height="85" rx="8"/><rect x="380" y="218" width="170" height="85" rx="8"/><rect x="565" y="218" width="170" height="85" rx="8"/><rect x="755" y="218" width="225" height="85" rx="8"/></g>
+<g text-anchor="middle" font-size="17"><text x="500" y="38">椭圆曲线数学工具</text><text x="180" y="145">secp256k1</text><text x="500" y="145">BLS12-381</text><text x="820" y="145">BN254</text></g>
+<g text-anchor="middle" font-size="15"><text x="100" y="250">ECDSA 签名</text><text x="100" y="276">EOA 交易与授权</text><text x="280" y="250">ECDH 密钥协商</text><text x="280" y="276">执行层 RLPx 连接</text><text x="465" y="250">BLS 签名</text><text x="465" y="276">验证者签名与聚合</text><text x="650" y="250">KZG 承诺</text><text x="650" y="276">blob 数据一致性证明</text><text x="867" y="250">部分应用的 SNARK</text><text x="867" y="276">通过预编译进行链上验证</text></g>
+</svg></div><figcaption>图 1：共用曲线不等于共用协议。BLS 与 KZG 都使用 BLS12-381，但要证明的事情、密钥或设置的用途、验证规则各不相同。BN254 也不是所有零知识证明的基础。<a href="#s3">[3]</a><a href="#s4">[4]</a><a href="#s5">[5]</a><a href="#s6">[6]</a></figcaption></figure>
+<figure><div class="diagram"><svg viewBox="0 0 1000 230" role="img" aria-labelledby="hash-title hash-desc">
+<title id="hash-title">哈希函数与认证数据结构的关系</title><desc id="hash-desc">Keccak-256 用于交易哈希、地址派生和执行层认证树；SHA-256 用于共识层 SSZ Merkle 化。Merkle 树由哈希函数构建，并非另一种哈希算法。</desc>
+<g fill="#edf8f3" stroke="#c9e1d5"><rect x="330" y="5" width="340" height="48" rx="8"/><rect x="55" y="100" width="400" height="96" rx="8"/><rect x="545" y="100" width="400" height="96" rx="8"/></g>
+<path d="M500 53 V76 H255 V100 M500 76 H745 V100" fill="none" stroke="#7ba48d" stroke-width="2"/>
+<g text-anchor="middle"><text x="500" y="36" font-size="18">哈希函数：把数据映射为摘要</text><text x="255" y="132" font-size="18">Keccak-256</text><text x="255" y="163" font-size="15">交易哈希、地址派生、执行层认证树</text><text x="745" y="132" font-size="18">SHA-256</text><text x="745" y="163" font-size="15">共识层 SSZ Merkle 化等</text><text x="500" y="225" font-size="15">Merkle 树：由哈希构建的认证结构，用根摘要承诺数据，并支持局部证明</text></g>
+</svg></div><figcaption>图 2：哈希负责摘要与数据绑定；Merkle 证明说明数据与已知根一致，不会自行证明签名有效、交易合法或数据始终可下载。<a href="#s7">[7]</a><a href="#s8">[8]</a></figcaption></figure>
+<p><strong>ECDSA、BLS 和 KZG 是共享部分数学工具的不同设计。</strong>复用有实际收益：积累实现、测试和审计经验，将通用运算做成预编译，让多种上层协议受益。EIP-197 就明确提出，用基础曲线运算支持不同证明应用，减少每出现一种应用就修改底层协议的需要。代价是共同基础一旦受攻击，多个使用场景可能同时受影响。<a href="#s5">[5]</a></p>
+</section>
+<section id="quantum">
+<h2>2. 量子风险：共同数学基础形成共同风险</h2>
+<p><strong>足够强的容错量子计算机运行 Shor 算法，可以高效求解相关离散对数问题。</strong>这会破坏现有曲线签名、密钥协商和承诺的关键安全假设。它不是“所有密码学同时失效”：哈希面临的已知量子加速不同，需按原像、碰撞等具体任务及参数评估，不能统一用“安全减半”概括。<a href="#s9">[9]</a></p>
+<div class="scroll"><table><thead><tr><th>受影响机制</th><th>安全保证被破坏后意味着什么</th></tr></thead><tbody>
+<tr><td>ECDSA 账户签名</td><td>从已知公钥恢复私钥，伪造交易或授权，直接威胁资产控制权。</td></tr>
+<tr><td>BLS 验证者签名</td><td>伪造验证者消息，威胁共识与最终性；不代表可以绕过所有执行规则。</td></tr>
+<tr><td>KZG 数据承诺</td><td>破坏承诺与取值证明的可靠性，错误声明可能通过验证，影响依赖它的数据校验与抽样。</td></tr>
+<tr><td>依赖曲线的部分证明系统</td><td>破坏证明可靠性，虚假声明可能被接受；具体影响取决于证明系统与应用。</td></tr>
+<tr><td>ECDH 等网络机制</td><td>威胁相应连接的保密性或认证；执行层与共识层网络栈需分别迁移。</td></tr>
+</tbody></table></div>
+<p>因此需要逐层迁移，不能只把用户签名换掉，也不能认为“用户用了 PQ 钱包，底层链就已经抗量子”。</p>
+</section>
+<section id="layers">
+<h2>3. 演进图景：核心趋于共享，账户与网络保留选择</h2>
+<div class="cards">
+<div class="card"><span class="tag">共识层</span><h3>哈希签名＋证明聚合</h3><p>研究用 leanXMSS 一类哈希签名替代 BLS，再由 leanVM 等工具证明大量签名有效，恢复大规模验证者集合所需的聚合能力。<a href="#s1">[1]</a></p></div>
+<div class="card"><span class="tag">数据层</span><h3>抗量子的数据承诺</h3><p>Lean 愿景用基于哈希的承诺与证明替代 KZG 依赖。仍需结合编码、数据传播和抽样规则设计；把 Merkle 根放上链并不足以保证数据可用。<a href="#s2">[2]</a></p></div>
+<div class="card"><span class="tag">执行与账户层</span><h3>可编程授权与升级</h3><p>通过账户抽象、验证支持和迁移机制，让用户逐步更换签名；EIP-8141 探索原生账户抽象，EIP-8288 探索交易签名及证明聚合。两者目前均为草案。<a href="#s10">[10]</a><a href="#s11">[11]</a></p></div>
+</div>
+<p><strong>执行证明是另一条可复用的工作线。</strong>Lean execution 希望用执行正确性证明减少节点重复执行，可能与签名聚合共享部分哈希、证明及递归工具；这不表示所有任务已统一到同一个程序，也不表示 EVM 已被 leanVM 替换。<a href="#s2">[2]</a></p>
+<p><strong>P2P 不需要为了统一而强行使用哈希签名。</strong>身份认证解决“对方是谁”，密钥协商解决“双方怎样取得共享秘密”。后者不能靠签名算法替代；可以研究采用 ML-KEM 等抗量子密钥封装，并独立选择认证方案。这里是可能的选型空间，不是 Ethereum P2P 已确定采用 ML-KEM 的结论。<a href="#s6">[6]</a><a href="#s9">[9]</a></p>
+<div class="callout"><strong>更准确的概括：</strong>从“广泛依赖椭圆曲线与哈希”，走向“核心协议更多依赖适合抗量子的哈希构造与证明基础设施，外围按职责选型”。不要写成“ETH 安全＝哈希函数”：证明可靠性、参数、状态管理、实现与共识条件依然不可省略。</div>
+</section>
+<section id="aggregation">
+<h2>4. 为什么不能只比较 CPU 验签速度</h2>
+<p>BLS 可以把多份签名通过群运算合成一个签名。换成哈希签名后，Lean 研究的是另一种办法：<strong>不直接相加签名，而是证明“这些签名都验证通过”。</strong>聚合证明仍需绑定对应消息、公钥与签名者集合；计票权重和共识规则也必须正确处理。<a href="#s1">[1]</a><a href="#s12">[12]</a></p>
+<figure>
+<div class="flow"><div class="step"><strong>① 签名</strong><span>验证者或用户产生 PQ 签名</span></div><div class="arrow">→</div><div class="step"><strong>② 证明环境执行验签</strong><span>检查消息、公钥及签名的对应关系</span></div><div class="arrow">→</div><div class="step"><strong>③ 生成与递归聚合证明</strong><span>将多项验证结果合成可验证的声明</span></div><div class="arrow">→</div><div class="step"><strong>④ 全网验证证明</strong><span>按协议规则确认声明及其输入绑定</span></div></div>
+<figcaption>图 3：证明聚合改变验证与传播的组织方式，并非让原始签名的生成、输入传输和处理成本消失。</figcaption>
+</figure>
+<p>例如，一次验签在 CPU 上很快，并不意味着把它放进证明系统也便宜。证明器还要记录和约束运算、处理内存、哈希及输入。反过来，专门为证明环境设计的哈希签名，即使直接 CPU 验签不是最快，也可能在整条聚合链路上更合适。格签名同样可以被证明，谁更便宜要看实际构造和实现。</p>
+<p><strong>“哈希签名解决安全，证明聚合解决成本”可以作为记忆句，准确含义是：</strong>签名提供抗量子授权的基础，证明聚合尝试摊薄全网验证和数据成本。它不保证任意批量都能压得更小，也不保证证明生成更便宜。</p>
+<details><summary>leanVM 在这里是什么，和 EVM 有什么区别？</summary><p>EVM 定义合约如何执行；leanVM 是为可证明计算设计的最小虚拟机及证明工具，签名验证程序是它可以证明的任务。证明生成器和验证器承担不同工作，不要求每个节点重新生成证明。它也不是所有 Ethereum zkVM 的统称。</p><p>当前仓库自称 hash-based zkVM，但同时注明尚未生产就绪，形式化验证仍在进行，零知识功能在计划中。因此，证明“计算正确”不必然隐藏输入；本场景的重点是可验证计算与聚合，不是隐私。最终抗量子性还取决于证明、递归和最终验证的全链路，不能再用非抗量子的曲线证明封装后仍宣称端到端抗量子。<a href="#s13">[13]</a></p></details>
+</section>
+<section id="tradeoffs">
+<h2>5. 为什么偏向哈希，又为什么不全部统一</h2>
+<div class="scroll"><table><thead><tr><th>取舍</th><th>吸引力</th><th>必须接受或验证的成本</th></tr></thead><tbody>
+<tr><td>较保守的共同基础</td><td>哈希签名历史较久，可将多项核心机制建立在一组相对熟悉的安全假设上。</td><td>数学假设保守不代表实现天然可靠；证明系统、编码和参数仍要审查。不同哈希函数的成熟度也不能一概而论。</td></tr>
+<tr><td>签名与证明共同设计</td><td>针对证明环境优化哈希及验证流程，争取降低大批签名的证明成本。</td><td>专用构造可能不是 FIPS 205 标准 SLH-DSA，不能套用标准认证或直接引用另一参数集的大小与速度。</td></tr>
+<tr><td>共享证明基础设施</td><td>签名、执行、数据证明有机会复用实现、递归、验证与审计工具，同时服务扩容。</td><td>共享不等于所有协议完全相同；共同实现缺陷也可能扩大影响范围。</td></tr>
+<tr><td>将工作交给证明器</td><td>降低普通验证节点的重复工作与部分带宽开销。</td><td>证明延迟、内存、硬件成本及服务可用性成为约束；聚合角色若过于集中，还会影响准入、抗审查与及时出块。</td></tr>
+</tbody></table></div>
+<p><strong>这不是格密码与哈希密码的输赢。</strong>通用软件直接验签、共识层批量证明、用户钱包和密钥协商，优化目标不同。用户提供的研究文章最有价值的启发，是先确定验证环境，再比较整条系统的成本；其观点不等于 Ethereum 已通过的协议决定。<a href="#s14">[14]</a></p>
+<h3>共识层为什么考虑有状态签名？</h3>
+<p>有状态哈希签名要求签名者管理一次性密钥的使用位置，不能用同一叶子签署不同消息。它有机会换来较小的原始签名和较低的验证、证明成本。验证者已有持续运行、备份和防重复签名设施，因此比多设备普通钱包更适合承担这类运维要求，但复杂性并未消失。<a href="#s12">[12]</a></p>
+<div class="scroll"><table><thead><tr><th>使用方</th><th>倾向</th><th>主要约束</th></tr></thead><tbody>
+<tr><td>专业验证者</td><td>研究 leanXMSS 等有状态方案，再配合证明聚合</td><td>索引分配、故障转移、并发签名与备份恢复必须防止一次性密钥复用。</td></tr>
+<tr><td>多设备用户钱包</td><td>无状态签名通常更易管理；通过账户抽象保留选择</td><td>避免设备复制或恢复备份导致计数器回退；仍需考虑签名大小、计算与使用次数约束。</td></tr>
+</tbody></table></div>
+<p>“有状态”本身不会自动产生聚合能力。直接收益来自签名构造与参数，聚合能力来自证明系统；两者共同设计，才可能降低总成本。leanXMSS 也不应与标准 XMSS 或标准 SLH-DSA 视为同一个算法。</p>
+</section>
+<section id="roadmap">
+<h2>6. 路线与状态：先准备迁移，再切换，再扩大聚合</h2>
+<p>截至核查日，公开工作已包括研究论文、客户端原型、开发网互操作和协议草案。EF Protocol 在 2026 年 9 月提出以 <strong>2029 年 12 月</strong>为 L1 抗量子目标，并讨论完整路线与最低可行抗量子（MV-PQ）两种节奏。这是团队的规划目标，不是已通过治理的全网完成日期，更不表示届时所有存量账户和应用自动迁移。<a href="#s15">[15]</a></p>
+<div class="scroll"><table><thead><tr><th>阶段</th><th>要完成什么</th><th>如何理解当前状态</th></tr></thead><tbody>
+<tr><td>先准备密钥与验证能力</td><td>登记验证者 PQ 公钥，建立钱包、签名和验证支持。</td><td>EIP-8450 为草案：登记的是休眠密钥，本提案不会立即把共识职责切到 PQ 签名。<a href="#s12">[12]</a></td></tr>
+<tr><td>开放账户迁移路径</td><td>支持可编程授权、PQ 验证和可选择的账户迁移。</td><td>EIP-8141 为原生账户抽象草案；不能与已存在的 ERC-4337 合约方案视为同一实现。<a href="#s10">[10]</a></td></tr>
+<tr><td>引入 PQ 共识与实时证明</td><td>验证者逐步使用新签名，并把证明生成纳入严格的出块与网络时限。</td><td>Lean 组件和互操作测试正在推进；原型跑通不等于主网已切换。<a href="#s1">[1]</a><a href="#s13">[13]</a></td></tr>
+<tr><td>扩大聚合与数据层改造</td><td>聚合交易签名及证明，推进抗量子 blob 承诺与抽样。</td><td>EIP-8288 为草案，要求区块级递归 STARK；数据层方案还需继续研究与整合。<a href="#s11">[11]</a><a href="#s1">[1]</a></td></tr>
+</tbody></table></div>
+<p class="caption">上述阶段表示依赖关系，可并行推进，不是固定升级顺序。路线图中的 I*、J*、L*、M* 是规划标记；不同日期的资料对里程碑分配存在调整，不宜直接当成已确定的硬分叉名称和日期。</p>
+<details><summary>阅读研究文章时，特别避免三种误解</summary><ul>
+<li><strong>“聚合在内存池发生，所以无需协议升级”：</strong>不成立。EIP-8288 改变区块有效性条件，若采纳，需要协调协议升级；生成证明发生在链下不改变这一点。</li>
+<li><strong>“聚合后每个签名只剩几个 bytes，所以原始大小不再重要”：</strong>只能是特定批量、证明和计费方式下的摊销结果。签名仍需生成、送达证明器并处理，小批量和低负载也可能无法摊薄固定成本。</li>
+<li><strong>“哈希形证明就天然抗量子”：</strong>还必须检查参数、量子安全分析、递归过程和最终验证方式，不能只凭 STARK 或 zkVM 名称判断。</li>
+</ul></details>
+</section>
+<section id="bsc">
+<h2>7. 对 BSC 实验的启发</h2>
+<h3>长期：尽量兼容以太坊方向，逐层、逐步迁移</h3>
+<p>BSC 可持续跟踪以太坊在账户抽象、PQ 验证、签名聚合和数据承诺方面的进展，尽量复用成熟的接口、工具与实现，减少重复建设和生态适配成本。兼容不等于同步照搬：共识机制、验证者规模、出块时限与性能目标不同，需要分别验证方案是否适合 BSC。</p>
+<p>迁移也不必等待所有层同时完成。可以先建立账户层的 PQ 授权与迁移能力，再结合协议演进推进共识、数据和网络层改造。各层可并行研究、分阶段部署，但账户层完成改造不代表整条链已经抗量子。这是本项目的研究建议，不是 BSC 已确定的官方路线。</p>
+<h3>短期：用 ERC-4337 承载 PQ 智能账户，优先探索金库场景</h3>
+<p>在尚未具备适用的原生账户抽象能力时，可以先通过 ERC-4337 在合约层实现可编程授权：用户签署 UserOperation，由 Bundler 提交，EntryPoint 调用智能账户验证签名并执行操作。它不是简单“模拟 AA”，而是一条已有标准的账户抽象实现路径；无需先把所有普通账户的协议级签名统一替换。</p>
+<p><strong>高价值、低频支出的金库是值得优先验证的场景。</strong>项目储备资金、机构保管账户等更有动力承担 PQ 签名带来的数据与计算成本，也更容易为密钥管理和操作流程配置专门设施。可重点评估 ML-DSA-44 与 SLH-DSA-SHA2-128s：前者兼顾使用成本，后者提供基于哈希的安全假设；让使用方按保护目标选择，而不是要求所有账户立即迁移。</p>
+<p>本仓库已跑通相关账户的签名、创建和转账链路，但完整金库还需补足支出策略、密钥保管、恢复及安全审计。所有资产转出与权限变更路径都应纳入保护，不能留下仅凭传统签名即可绕过 PQ 校验的入口。</p>
+<div class="callout"><strong>实施边界：</strong>ERC-4337 本身不要求新增 PQ 预编译，但本实验的高效验签路径依赖修改后的 BSC 客户端；没有这些预编译的网络不能直接使用相应版本。合约内完整验签是另一条路径，代价更高。Bundler 外层交易及链的共识、网络机制仍需各自迁移，PQ 金库不能替代这些工作。</div>
+<p>下一步应围绕完整使用成本与授权安全继续验证，而不只比较单次验签。算法大小与计算成本见<a href="../crypto-bench/comparison.html">密码学基准</a>；预编译与 ERC-4337 操作费用见<a href="../chain-bench/report.html">链路报告</a>。未来若引入证明聚合，还需单独测量证明时间、大小、内存和端到端延迟。</p>
+</section>
+<details open><summary>资料与核查范围</summary>
+<p class="caption">优先依据 EF 研究与路线页面、EIP 原文及官方仓库。方案选择与时间均以 2026-10-27 核查结果为准；路线页面和草案会继续变化。本文示意图为本地绘制，不依赖外部图片或脚本。</p>
+<ol class="sources">
+<li id="s1"><a href="https://pq.ethereum.org/">EF Post-Quantum Ethereum</a>：分层研究方向与动态路线；不等于最终治理决定。</li>
+<li id="s2"><a href="https://blog.ethereum.org/2025/07/31/lean-ethereum">Justin Drake：lean Ethereum</a>，2025-07-31：愿景与哈希共同基础；原文明确为个人观点。</li>
+<li id="s3"><a href="https://eips.ethereum.org/EIPS/eip-2537">EIP-2537</a>：BLS12-381 通用曲线运算预编译。</li>
+<li id="s4"><a href="https://eips.ethereum.org/EIPS/eip-4844">EIP-4844</a>：blob、KZG 承诺与取值证明；其初始 blob 数量不是当前容量说明。</li>
+<li id="s5"><a href="https://eips.ethereum.org/EIPS/eip-197">EIP-197</a>：BN254 配对检查与证明验证，通用基础运算的复用动机。</li>
+<li id="s6"><a href="https://github.com/ethereum/devp2p/blob/master/rlpx.md">RLPx 规范</a>：执行层网络连接；不能据此概括共识层全部网络机制。</li>
+<li id="s7"><a href="https://ethereum.org/developers/docs/data-structures-and-encoding/patricia-merkle-trie/">Ethereum：Merkle Patricia Trie</a>：执行层认证结构。</li>
+<li id="s8"><a href="https://ethereum.org/developers/docs/data-structures-and-encoding/ssz/">Ethereum：SSZ</a>：共识层序列化与 Merkle 化。</li>
+<li id="s9"><a href="https://www.rfc-editor.org/info/rfc9958/">RFC 9958：Post-Quantum Cryptography for Engineers</a>：量子威胁、签名与密钥协商的区别。</li>
+<li id="s10"><a href="https://eips.ethereum.org/EIPS/eip-8141">EIP-8141：Frame Transaction</a>：原生账户抽象；核查时为 Draft。</li>
+<li id="s11"><a href="https://eips.ethereum.org/EIPS/eip-8288">EIP-8288：In-mempool signature and proof aggregation</a>：递归 STARK 与区块有效性；核查时为 Draft。</li>
+<li id="s12"><a href="https://eips.ethereum.org/EIPS/eip-8450">EIP-8450：Post-Quantum Validator Key Registry</a>：登记休眠 leanXMSS 密钥、叶子复用与运维要求；核查时为 Draft。</li>
+<li id="s13"><a href="https://github.com/leanEthereum/leanVM">leanVM 官方仓库</a>：用途、原型状态及尚未完成的工作。</li>
+<li id="s14"><a href="https://ethresear.ch/t/post-quantum-lattice-or-hash-based-one-question-two-right-answers/26003">Post-Quantum Lattice or Hash-Based: One Question, Two Right Answers</a>：用户指定的讨论文章；本文采用其系统视角，对协议状态与部分推论另行核查。</li>
+<li id="s15"><a href="https://blog.ethereum.org/2026/09/07/protocol-priorities">EF Protocol：Current and Emerging Priorities</a>，2026-09-07：2029 年目标、MV-PQ 与不同实施节奏。</li>
+</ol></details>
+<footer>阅读重点：核心协议追求保守且可共享的密码学基础；证明聚合承担扩容任务；账户与网络按需求保留选择。路线的价值在于系统设计，是否可用仍要由安全分析、实现和端到端测量确认。</footer>
+</main></body></html>
