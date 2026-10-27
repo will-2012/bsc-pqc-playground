@@ -216,13 +216,25 @@ NOTES=[
     '本地 v6；与 128s 对照签名大小和耗时。',
 ]
 def render(data):
+    foundations = {
+        'ECDSA-secp256k1': ('椭圆曲线离散对数问题', False),
+        'Falcon-512': ('NTRU 格上的短向量问题', True),
+        'ML-DSA-44': ('模格问题（Module-LWE / Module-SIS）', True),
+        'ML-DSA-65': ('模格问题（Module-LWE / Module-SIS）', True),
+        'SLH-DSA-SHA2-128s': ('哈希函数（SHA-2）与 Merkle 树', True),
+        'SLH-DSA-SHA2-128f': ('哈希函数（SHA-2）与 Merkle 树', True),
+    }
     def cell(item,op,baseline):
         label='baseline' if baseline else f'{item[op]["ecdsa_ratio"]:,.2f} 倍 baseline'
         return f'{item[op]["cpu_us"]:,.2f} us, {label}'
     rows='';details=''
     for i,item in enumerate(data['summary']):
         sig=f'{item["signature_min_bytes"]:,}' if item['signature_min_bytes']==item['signature_max_bytes'] else f'{item["signature_min_bytes"]:,}–{item["signature_max_bytes"]:,}'
-        rows+=f'<tr><td>{item["algorithm"]}</td><td>{item["private_key_bytes"]:,} bytes</td><td>{item["public_key_bytes"]:,} bytes</td><td>{sig} bytes</td><td>{cell(item,"sign",i==0)}</td><td>{cell(item,"verify",i==0)}</td><td>{NOTES[i]}</td></tr>'
+        math_basis, quantum_resistant = foundations[item['algorithm']]
+        algorithm_cell = (f'<td class="algorithm">{html.escape(item["algorithm"])}'
+                          f'<small>基础：{html.escape(math_basis)}</small>'
+                          f'<small>抗量子：{"是" if quantum_resistant else "否"}</small></td>')
+        rows+=f'<tr>{algorithm_cell}<td>{item["private_key_bytes"]:,} bytes</td><td>{item["public_key_bytes"]:,} bytes</td><td>{sig} bytes</td><td>{cell(item,"sign",i==0)}</td><td>{cell(item,"verify",i==0)}</td><td>{NOTES[i]}</td></tr>'
         for op in ['sign','verify']:
             vals=item[op]
             details+=f'<tr><td>{item["algorithm"]}</td><td>{"签名" if op=="sign" else "验签"}</td><td>'+ ' / '.join(f'{v:,.2f} us' for v in vals['round_cpu_us'])+f'</td><td>{vals["wall_us"]:,.2f} us</td><td>{vals["process_us"]:,.2f} us</td></tr>'
@@ -235,11 +247,12 @@ def render(data):
 
     source_links=''.join(f'<li><a href="{spec["repository"]}/tree/{spec["commit"]}">{html.escape(spec["version"])} · {spec["commit"][:12]}</a></li>' for spec in data['build']['identity']['sources'].values())
     page=f'''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Go 签名算法对比 · {profile}</title>
-<style>body{{font:15px/1.75 system-ui;max-width:1440px;margin:32px auto;padding:0 24px;color:#243447}}h1,h2{{line-height:1.4}}table{{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}}td,th{{padding:10px;border:1px solid #dce3eb;text-align:right;vertical-align:top}}td:first-child,th:first-child,td:last-child{{text-align:left}}th{{background:#edf3f8}}.scroll{{overflow:auto}}a{{color:#146caa}}.note{{padding:16px;background:#edf4fa;border-left:4px solid #3477a4}}details{{margin:24px 0}}pre{{white-space:pre-wrap}}small{{color:#526477}}</style>
+<style>body{{font:15px/1.75 system-ui;max-width:1440px;margin:32px auto;padding:0 24px;color:#243447}}h1,h2{{line-height:1.4}}table{{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}}td,th{{padding:10px;border:1px solid #dce3eb;text-align:right;vertical-align:top}}td:first-child,th:first-child,td:last-child{{text-align:left}}th{{background:#edf3f8}}.scroll{{overflow:auto}}a{{color:#146caa}}.note{{padding:16px;background:#edf4fa;border-left:4px solid #3477a4}}details{{margin:24px 0}}pre{{white-space:pre-wrap}}small{{color:#526477}}.algorithm{{min-width:180px}}.algorithm small{{display:block;margin-top:4px;font-size:12px;line-height:1.5;overflow-wrap:anywhere}}</style>
 <h1>签名算法对比 · Go 接口</h1><p>{html.escape(env['cpu'])} · {profile} · {html.escape(data['started_at'].split('T')[0])}</p>
 <div class="note">六项算法共用 Go 接口，每次 Sign / Verify 调用一次 C 后端，计入 Go 和 CGO 开销。密钥生成和可复用对象创建不计时，ECDSA 复用已解析的公钥对象。这是本机热密钥测试，完整交易 gas 见<a href="../chain-bench/report.html">链路报告</a>。</div>
 <h2>测试结果</h2><p>耗时越小越快；签名和验签分别以本次 ECDSA 为 baseline。每轮逐批平均后取中位数，再取各轮中位数。</p>
 <div class="scroll"><table><thead><tr><th rowspan="2">算法 / 参数</th><th colspan="3" style="text-align:center">存储</th><th colspan="2" style="text-align:center">计算</th><th rowspan="2">备注</th></tr><tr><th>私钥编码</th><th>公钥</th><th>签名</th><th>签名 CPU</th><th>验签 CPU</th></tr></thead><tbody>{rows}</tbody></table></div>
+<p>“抗量子”指在相应参数与安全假设下，抵抗目前已知的量子攻击，不是无条件安全保证。</p>
 <p>“存储”列是本实验使用的编码大小，不是对象内存或链上存储 gas。ML 私钥列为展开编码，不能与 32 bytes 种子备份直接比较。SLH 的 64 bytes 私钥编码包含 32 bytes 公钥；ECDSA 的 64 bytes 签名不含恢复位。</p>
 <p>Falcon 公钥 / 私钥省略固定的 1-byte 头，完整编码为 897 / 1,281 bytes。签名保留头部；617–667 bytes 是本适配器接受范围，本轮正式签名实际为 {observed_falcon} bytes。它不是 Falcon 的通用长度上限，也不是 TVM 的固定 666-byte 槽。</p>
 <h2>测试口径</h2><ul>
