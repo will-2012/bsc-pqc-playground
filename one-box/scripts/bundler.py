@@ -20,6 +20,9 @@ CLI = WORK / "src/esm/cli/alto.js"
 def settings(env, port=None, pq=False):
     path = env / "bundler/config.json"
     config = read(path) if path.exists() else read(BOX / "bundler.json")
+    # Removed upstream options are silently ignored by Alto 0.0.17.
+    config.pop("max-bundle-size", None)
+    config.pop("max-bundle-wait", None)
     if pq:
         config.update(read(BOX / "pq-bundler.json"))
     if port is not None:
@@ -69,6 +72,8 @@ def build():
     command(["patch", "--batch", "--forward", "-p1", "-i", timeout_patch], log, WORK)
     slh_patch = BOX / "patches/alto-slh-v2.patch"
     command(["patch", "--batch", "--forward", "-p1", "-i", slh_patch], log, WORK)
+    falcon_patch = BOX / "patches/alto-falcon-v3.patch"
+    command(["patch", "--batch", "--forward", "-p1", "-i", falcon_patch], log, WORK)
     # Do not run upstream prepare or the unrelated e2e workspaces.
     command(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"], log, WORK, timeout=900)
     command(["pnpm", "--filter", "@pimlico/alto", "build:esm"], log, WORK, timeout=300)
@@ -84,6 +89,7 @@ def build():
         "version": package["version"], "localhost_patch_sha256": digest(patch),
         "timeout_patch_sha256": digest(timeout_patch),
         "slh_v2_patch_sha256": digest(slh_patch),
+        "falcon_v3_patch_sha256": digest(falcon_patch),
     })
     print("Built Alto from submodule and compiled ERC-4337 contracts", flush=True)
 
@@ -117,9 +123,6 @@ def start(env):
         status(env)
         return
     config = settings(env)
-    if chain_config.get("pq_precompile"):
-        config["max-bundle-size"] = 1
-        write(env / "bundler/config.json", config)
     with socket.socket() as sock:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(("127.0.0.1", config["port"]))
@@ -129,6 +132,8 @@ def start(env):
     child_env["DOTENV_CONFIG_PATH"] = os.devnull
     if chain_config.get("pq_precompile"):
         child_env["ALTO_LOCAL_PRECOMPILE_V2"] = "1"
+    if chain_config.get("pq_precompile") == 3:
+        child_env["ALTO_LOCAL_PRECOMPILE_V3"] = "1"
     if config.get("timeout"):
         child_env["ALTO_LOCAL_TRACE_TIMEOUT"] = f'{config["timeout"]}ms'
         child_env["ALTO_LOCAL_RPC_TIMEOUT"] = str(config["timeout"])

@@ -176,7 +176,7 @@ Bundler 默认地址：`http://127.0.0.1:14337`。默认参数在 [`bundler.json
 
 `./tools/one-box bundler up --pq` 在当前环境合并 [`pq-bundler.json`](pq-bundler.json) 的实验预算；已运行时使用 `bundler restart --pq`。公共默认配置不变，当前环境的配置会持久保存。
 
-该 profile 将验证模拟预算设为 16M gas、估算总预算 35M gas，每 bundle 最多一个 UserOperation，RPC / trace 超时 180 秒。它不关闭安全模拟，不修改 EntryPoint，也不修改 BSC。Alto 0.0.17 的实际行为不代表符合公共内存池所有大小和 gas 限制；这里只验证独立本地 Bundler。
+该 profile 将验证模拟预算设为 16M gas、估算总预算 35M gas，RPC / trace 超时 180 秒。它不关闭安全模拟，不修改 EntryPoint，也不修改 BSC。Alto 0.0.17 的实际行为不代表符合公共内存池所有大小和 gas 限制；这里只验证独立本地 Bundler。
 
 `bundler build` 还会安装锁定的钱包依赖、编译 PQ 合约。创建账户、转账和批量实验使用外部入口 `tools/erc4337-wallet`、`tools/chain-bench/run`，详见 [钱包说明](../erc4337-wallet/README.md) 和 [PQ 验收记录](../docs/chain-bench/README.md)。
 
@@ -213,6 +213,26 @@ v2 二进制带 `pqprecompile` 构建标签；仅 chain ID 714、Parlia、Jenner
 
 `init --v2` 在默认配置上增加整数标记 `pq_precompile=1`，并将默认 RPC/P2P 端口各加 10；自定义 `--config` 时使用文件中的端口。此标记属于建链选择，不能通过 `config` 在线切换。重启和 reset 沿用该环境配置。实际运行文件仍在 `.runtime/<环境名>/bin/geth`，更新同类客户端使用现有 `upgrade --binary` 流程。
 
-Alto 根据当前环境标记启用 `alto-slh-v2.patch` 的 stateless 预编译识别，仍保持 `safe-mode`。v2 每个 bundle 最多一个操作，便于比较单笔交易 gas；不需要 v1 的 `--pq` 高预算配置。`--pq` 是 Bundler 预算，`--v2` 是客户端与环境选择，两者含义不同。
+Alto 根据当前环境标记启用 `alto-slh-v2.patch` 的 stateless 预编译识别，仍保持 `safe-mode`。单笔 gas 测试按顺序提交，实际每笔交易包含一个操作；不需要 v1 的 `--pq` 高预算配置。`--pq` 是 Bundler 预算，`--v2` 是客户端与环境选择，两者含义不同。
 
 本地 gas 价格为固定 60,000 gas。原生性能、输入 ABI、完整交易成本和限制见 [链路报告](../docs/chain-bench/README.md)。所有密钥、构建副本、运行日志及临时测量仍位于被 Git 忽略的 `.runtime/`。
+
+## v3：共同 PQ 分叉与 Falcon
+
+v3 在 `.runtime/build/v3/` 单独构建，从同一固定 BSC 提交和 v2 SLH 扩展开始，再应用 `bsc-pq-v3.patch`；不会覆盖 v1/v2 二进制。`precompile/v3/` 的 Falcon 后端按固定提交及归档 SHA-256 下载，使用 Go/cgo 和 ARMv8 NEON；当前只验证 macOS arm64。
+
+```bash
+./tools/one-box build --v3
+./tools/one-box --name devnet-v3 init --v3
+./tools/one-box --name devnet-v3 bundler up --port 14357
+./tools/erc4337-wallet test devnet-v3 --version v3
+./tools/one-box --name devnet-v3 down
+```
+
+配置标记 `pq_precompile=3` 选择 v3 客户端；`0` / 缺省仍为 v1，`1` 仍为旧 v2。`init --v3` 默认将 RPC/P2P 各加 20，自定义配置则使用文件端口。标记不可在线切换，reset 保留选择。
+
+v3 增加 `pqTime` 硬分叉，包含 Rules、兼容性、顺序检查及 `--override.pq`。首次启动按持久化的 Jenner 时间加 5 s 设置 PQ 时间；仅 chain ID 714 / Parlia / Jenner 后启用，排除 UBT。在同一个时间条件下启用 SLH `0x0101` 和 Falcon `0x0102`；两者都不会在分叉前启用。普通构建禁用这两个实验预编译，EVM 与 RPC 使用同一注册逻辑。
+
+Alto 为 v3 单独启用 `ALTO_LOCAL_PRECOMPILE_V3`，旧 v2 仅有 SLH 标记，v1 均关闭。`safe-mode` 保持开启。预编译价格 SLH 60,000 gas、Falcon 10,000 gas，方法和链上 trace 见[完整报告](../docs/chain-bench/README.md)。
+
+发现旧模板的 `max-bundle-size` / `max-bundle-wait` 不被锁定的 Alto 版本识别，已清理；`max-gas-per-bundle` 才是实际 gas 上限。单笔测试顺序提交，并发测试可能把多个操作放进同一外层交易。

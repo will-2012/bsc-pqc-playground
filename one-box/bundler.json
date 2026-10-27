@@ -4,8 +4,6 @@
   "legacy-transactions": true,
   "deploy-simulations-contract": false,
   "enable-debug-endpoints": false,
-  "max-bundle-wait": 2,
-  "max-bundle-size": 3,
   "max-block-range": 500,
   "min-executor-balance": "1000000000000000000",
   "min-entity-stake": 1,

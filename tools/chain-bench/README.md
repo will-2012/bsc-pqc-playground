@@ -49,3 +49,31 @@ python3 tools/chain-bench/report.py
 ```
 
 从 `docs/chain-bench/README.md` 和已归档的原始 JSON 生成 [report.html](../../docs/chain-bench/report.html)，仅使用 Python 标准库。页面可离线查看，支持窄屏表格滚动和打印；文档更新后重新生成，避免两份内容分别维护。
+
+## v3：Falcon-512 与同链对照
+
+当前仅 macOS arm64：
+
+```bash
+./tools/one-box bundler build
+./tools/one-box build --v3
+# 原生测量必须在所有本地链和 Bundler 停止时执行
+python3 tools/chain-bench/v3/precompile.py
+./tools/one-box --name devnet-v3 init --v3  # 首次执行；已有环境跳过
+./tools/one-box --name devnet-v3 bundler up --port 14357
+./tools/erc4337-wallet test devnet-v3 --version v3
+./tools/chain-bench/run devnet-v3 3 --version v3 --ecdsa-baseline
+./tools/chain-bench/run devnet-v3 3 --version v2
+node tools/chain-bench/v3/load.mjs devnet-v3 8 5
+node tools/chain-bench/v3/trace.mjs devnet-v3
+./tools/one-box --name devnet-v3 check
+./tools/one-box --name devnet-v3 down
+```
+
+首次 `bundler up` 前，可在另一个终端先启动 `python3 tools/chain-bench/v3/fork-check.py devnet-v3`，观察三个节点在 PQ 分叉前后同时关闭 / 启用两个预编译。已经过分叉的环境无法重现“之前”的状态，需要新的命名环境。
+
+v2 / v3 原生性能入口共用 `common/native_bench.py`，统一五轮、CPU 口径和定价公式；v3 增加 Falcon 验签正负例及原生签名路径。结果在 `.runtime/build/v3/native-bench.json`，不会自动更改客户端价格。
+
+负载脚本先测同链 SLH v2，再测 Falcon v3。第二、三个参数为账户数和轮数；默认 8 / 5。不同账户在每轮并发提交，按唯一外层交易统计 gas。账户准备不计入负载窗口；签名、估算和收据等待分别记录。结果位于 `.runtime/<环境>/wallet/load-v2-v3.json`；不是最大 TPS 测试。
+
+`max-bundle-size`、`max-bundle-wait` 不是当前 Alto 0.0.17 的有效选项，已从模板和加载逻辑中清理；单笔 gas 测试依靠顺序提交，不依靠包内数量限制。v3 的默认实际打包 gas 上限为 Alto 的 20M gas。

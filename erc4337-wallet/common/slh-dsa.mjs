@@ -44,6 +44,7 @@ export async function smartAccount(ctx, identity) {
 
 export const slhProfile = {
   entryPointVersion: '0.7', algorithm: 'SLH-DSA-SHA2-128s',
+  signDigest: (secretKey,message) => bytesToHex(slh.sign(hexToBytes(message),hexToBytes(secretKey))),
   keygen() {
     const keys = slh.keygen();
     const result = {publicKey: bytesToHex(keys.publicKey), secretKey: bytesToHex(keys.secretKey)};

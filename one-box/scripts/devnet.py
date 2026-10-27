@@ -60,8 +60,8 @@ def validate(cfg):
     expected = set(read(ROOT / "one-box/config.json"))
     if set(cfg) not in (expected, expected | {"pq_precompile"}) or any(type(v) is not int for v in cfg.values()):
         raise ValueError("Configuration must contain the integer fields in one-box/config.json, plus optional pq_precompile")
-    if cfg.get("pq_precompile", 0) not in (0, 1):
-        raise ValueError("pq_precompile must be 0 (v1) or 1 (v2)")
+    if cfg.get("pq_precompile", 0) not in (0, 1, 3):
+        raise ValueError("pq_precompile must be 0 (v1), 1 (v2) or 3 (v3)")
     if cfg["chain_id"] != 714:
         raise ValueError("This profile uses BSC Rialto system-contract bytecode: chain_id must be 714")
     if not 3 <= cfg["validators"] <= 7 or not 1 <= cfg["test_accounts"] <= 100:
@@ -150,9 +150,12 @@ def init(env, config_path):
     doctor()
     if env.exists():
         raise RuntimeError(f"Environment already exists: {env}. Use up/restart or explicit reset --yes")
-    selected = BUILD / "v2/geth" if cfg.get("pq_precompile") else BUILD / "geth"
+    selected = BUILD / "v3/geth" if cfg.get("pq_precompile") == 3 else BUILD / "v2/geth" if cfg.get("pq_precompile") else BUILD / "geth"
     if not selected.exists():
-        if cfg.get("pq_precompile"):
+        if cfg.get("pq_precompile") == 3:
+            from precompile_v3 import build as build_v3
+            build_v3()
+        elif cfg.get("pq_precompile"):
             from precompile import build as build_v2
             build_v2()
         else:
@@ -321,13 +324,22 @@ def check(env):
             raise RuntimeError("Wrong chain id")
         if cfg.get("pq_precompile"):
             check_precompile(cfg, i)
+        if cfg.get("pq_precompile") == 3:
+            expected_pq = forks["latest"] + 5
+            if int(rpc(cfg,i,"eth_getBlockByNumber",["latest",False])["timestamp"],16) < expected_pq:
+                raise RuntimeError("Waiting for common PQ fork")
+            vector = read(BUILD / "v3/falcon-public.json")["input"]
+            if rpc(cfg,i,"eth_call",[{"to":"0x0000000000000000000000000000000000000102","data":"0x"+vector,"gas":hex(1000000)},"latest"]) != "0x"+"00"*31+"01":
+                raise RuntimeError("Missing Falcon precompile")
         effective = json.loads(json.loads(attach(env, i, "JSON.stringify(admin.nodeInfo.protocols.eth.config)")))
+        if cfg.get("pq_precompile") == 3 and effective.get("pqTime") != forks["latest"] + 5:
+            raise RuntimeError("Validator PQ fork schedule mismatch")
         for fork in FORKS["passed"] + FORKS["recent"]:
             expected = forks["passed"] if fork in FORKS["passed"] + ["lorentz", "maxwell"] else forks["latest"]
             if effective.get(fork + "Time") != expected:
                 raise RuntimeError(f"Node {i} has a different {fork} schedule")
     return {"nodes": rows, "common_height": int(common, 16), "common_hash": hashes[0],
-            "latest_fork": FORKS["latest"], "genesis_hash": manifest["genesis_hash"]}
+            "latest_fork": "pq" if cfg.get("pq_precompile") == 3 else FORKS["latest"], "genesis_hash": manifest["genesis_hash"]}
 
 
 def register(env, manifest, cfg):
@@ -403,6 +415,8 @@ def up(env):
                 "--override.breatheblockinterval", cfg["breathe_seconds"]]
         for fork in FORKS["recent"]:
             args += ["--override." + fork, forks["passed"] if fork in ("lorentz", "maxwell") else forks["latest"]]
+        if cfg.get("pq_precompile") == 3:
+            args += ["--override.pq", forks["latest"] + 5]
         with (env / f"logs/node{i}.log").open("a") as output:
             child = subprocess.Popen(list(map(str, args)), cwd=ROOT, stdout=output, stderr=subprocess.STDOUT, start_new_session=True)
         write(directory / "pid.json", {"pid": child.pid})
@@ -485,12 +499,16 @@ def main():
     for name in ("doctor", "up", "down", "restart", "status", "check", "accounts"):
         sub.add_parser(name)
     p = sub.add_parser("build")
-    p.add_argument("--v2", action="store_true", help="Build isolated experimental SLH precompile client")
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--v2", action="store_true", help="Build isolated experimental SLH precompile client")
+    g.add_argument("--v3", action="store_true", help="Build common PQ fork client with SLH and Falcon")
     for name in ("init", "reset"):
         p = sub.add_parser(name)
         p.add_argument("--config", type=Path, default=ROOT / "one-box/config.json" if name == "init" else None)
         if name == "init":
-            p.add_argument("--v2", action="store_true", help="Enable v2 client and shift default RPC/P2P ports by 10")
+            g = p.add_mutually_exclusive_group()
+            g.add_argument("--v2", action="store_true", help="Enable v2 client and shift default RPC/P2P ports by 10")
+            g.add_argument("--v3", action="store_true", help="Enable v3 client and shift default ports by 20")
         if name == "reset":
             p.add_argument("--yes", action="store_true", help="Delete this environment, including its keys")
     p = sub.add_parser("config")
@@ -515,18 +533,21 @@ def main():
         if args.action == "doctor":
             doctor()
         elif args.action == "build":
-            if args.v2:
+            if args.v3:
+                from precompile_v3 import build as build_v3
+                build_v3()
+            elif args.v2:
                 from precompile import build as build_v2
                 build_v2()
             else:
                 build()
         elif args.action == "init":
             cfg = read(args.config.resolve())
-            if args.v2:
-                cfg["pq_precompile"] = 1
+            if args.v2 or args.v3:
+                cfg["pq_precompile"] = 3 if args.v3 else 1
                 if args.config.resolve() == (ROOT / "one-box/config.json").resolve():
-                    cfg["rpc_port"] += 10
-                    cfg["p2p_port"] += 10
+                    cfg["rpc_port"] += 20 if args.v3 else 10
+                    cfg["p2p_port"] += 20 if args.v3 else 10
             init(env, cfg)
         elif args.action == "reset":
             if not args.yes:

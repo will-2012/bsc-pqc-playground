@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/GMUCERG/FALCON_NEON",
+  "version": "Falcon-512 ARMv8 NEON",
+  "commit": "1d2670077d14de81a9b66b4c6494a67256342cd2",
+  "url": "https://codeload.github.com/GMUCERG/FALCON_NEON/tar.gz/1d2670077d14de81a9b66b4c6494a67256342cd2",
+  "sha256": "12241d78a6ecb23b5ac747e0823e3baa1cd09b8a8482db4460b379cb202b8c70",
+  "public_kat": {
+    "source": {
+      "commit": "a7e15616737074581cf1da94479769a90abd0dc9",
+      "url": "https://raw.githubusercontent.com/bcgit/bc-test-data/a7e15616737074581cf1da94479769a90abd0dc9/pqc/crypto/falcon/falcon512-KAT.rsp",
+      "sha256": "dd75c946fdedef4ec46a2bee7e10c65c9126f1a839b9ced6921fd45f7354b5cd",
+      "selected_public_tsv_sha256": "da1cfe1ed3d68616c6953e38f3b497e21ce48157c7e3d0a05b120e5a155fadf1"
+    },
+    "fixture_sha256": "da1cfe1ed3d68616c6953e38f3b497e21ce48157c7e3d0a05b120e5a155fadf1"
+  }
+}

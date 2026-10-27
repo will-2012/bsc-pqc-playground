@@ -58,6 +58,14 @@ export async function test(ctx) {
   }
   console.log('PASS: independent OpenSSL signature accepted by noble and Solidity');
 
+  return accountFlow(ctx, {verifierGasEstimate: verifierGas,
+    nobleValidMessages: 3, verifierNegativeCases: 5, opensslVersion, independentOpenSSL: true});
+}
+
+// Shared authorization, transfer and validator-consistency tests for every profile.
+export async function accountFlow(ctx, details = {}) {
+  const d = await deployment(ctx);
+  const mutate = value => value.slice(0,-2) + (value.endsWith('00') ? '01' : '00');
   const created = await createAccount(ctx);
   const identity = loadIdentity(ctx, created.id);
   assert.equal(fs.statSync(path.join(ctx.dir, 'accounts', `${created.id}.json`)).mode & 0o777, 0o600);
@@ -78,7 +86,7 @@ export async function test(ctx) {
   // Domain separation is enforced by the on-chain EntryPoint hash.
   const wrongChainHash = getUserOperationHash({chainId: ctx.chain.id + 1, entryPointAddress: d.entryPoint,
     entryPointVersion: '0.7', userOperation: operation});
-  const wrongChainSig = bytesToHex(slh.sign(hexToBytes(wrongChainHash), hexToBytes(identity.secretKey)));
+  const wrongChainSig = ctx.profile.signDigest(identity.secretKey, wrongChainHash);
   await rejected({...operation, signature: wrongChainSig}, /signature|AA24/i);
   const transferred = await submit(ctx, operation);
   assert.equal(await ctx.client.getBalance({address: recipient}) - before, parseEther('0.01'));
@@ -107,8 +115,7 @@ export async function test(ctx) {
   }
   for (const field of ['createBlock', 'transferBlock', 'counterBlock']) assert.equal(new Set(nodes.map(n => n[field])).size, 1);
   const result = {checkedAt: new Date().toISOString(), profile: ctx.profile.id, genesisHash: ctx.manifest.genesis_hash,
-    entryPoint: d.entryPoint, factory: d.factory, verifier: d.verifier, safeMode: true, verifierGasEstimate: verifierGas,
-    nobleValidMessages: 3, verifierNegativeCases: 5, opensslVersion, independentOpenSSL: true,
+    entryPoint: d.entryPoint, factory: d.factory, verifier: d.verifier, safeMode: true, ...details,
     wrongSignatureRejected: true, tamperedCallRejected: true, wrongChainRejected: true,
     replayRejected: true, directEoaRejected: true, profileMismatchRejected: true,
     created, transferred, counter, nodes};

@@ -1,0 +1,212 @@
+--- a/params/config.go
++++ b/params/config.go
+@@ -727,6 +727,7 @@
+ 	MendelTime     *uint64 `json:"mendelTime,omitempty"`     // Mendel switch time (nil = no fork, 0 = already on mendel)
+ 	PasteurTime    *uint64 `json:"pasteurTime,omitempty"`    // Pasteur switch time (nil = no fork, 0 = already on pasteur)
+ 	JennerTime     *uint64 `json:"jennerTime,omitempty"`     // Jenner switch time (nil = no fork, 0 = already on jenner)
++	PQTime *uint64 `json:"pqTime,omitempty"` // Local experimental SLH/Falcon fork.
+ 	BPO1Time       *uint64 `json:"bpo1Time,omitempty"`       // BPO1 switch time (nil = no fork, 0 = already on bpo1)
+ 	BPO2Time       *uint64 `json:"bpo2Time,omitempty"`       // BPO2 switch time (nil = no fork, 0 = already on bpo2)
+ 	BPO3Time       *uint64 `json:"bpo3Time,omitempty"`       // BPO3 switch time (nil = no fork, 0 = already on bpo3)
+@@ -1476,6 +1477,10 @@
+ // of relying on convention, so a non-Parlia/non-BSC config can never
+ // accidentally activate this BSC-only precompile even if some future code
+ // path sets JennerTime on it.
++func (c *ChainConfig) IsPQ(num *big.Int, time uint64) bool {
++ return c.IsJenner(num,time) && isTimestampForked(c.PQTime,time)
++}
++
+ func (c *ChainConfig) IsJenner(num *big.Int, time uint64) bool {
+ 	return c.IsInBSC() && c.IsLondon(num) && isTimestampForked(c.JennerTime, time)
+ }
+@@ -1608,6 +1613,7 @@
+ 		{name: "mendelTime", timestamp: c.MendelTime},
+ 		{name: "pasteurTime", timestamp: c.PasteurTime},
+ 		{name: "jennerTime", timestamp: c.JennerTime, optional: true},
++        {name: "pqTime", timestamp: c.PQTime, optional: true},
+ 		{name: "ubtTime", timestamp: c.UBTTime, optional: true},
+ 		{name: "bpo1", timestamp: c.BPO1Time, optional: true},
+ 		{name: "bpo2", timestamp: c.BPO2Time, optional: true},
+@@ -1839,6 +1845,9 @@
+ 	if isForkTimestampIncompatible(c.PasteurTime, newcfg.PasteurTime, headTimestamp) {
+ 		return newTimestampCompatError("Pasteur fork timestamp", c.PasteurTime, newcfg.PasteurTime)
+ 	}
++	if isForkTimestampIncompatible(c.PQTime, newcfg.PQTime, headTimestamp) {
++ return newTimestampCompatError("PQ fork timestamp", c.PQTime, newcfg.PQTime)
++ }
+ 	if isForkTimestampIncompatible(c.JennerTime, newcfg.JennerTime, headTimestamp) {
+ 		return newTimestampCompatError("Jenner fork timestamp", c.JennerTime, newcfg.JennerTime)
+ 	}
+@@ -2164,6 +2173,7 @@
+ 	IsBohr, IsPascal, IsPrague, IsLorentz, IsMaxwell        bool
+ 	IsFermi, IsOsaka, IsMendel                              bool
+ 	IsPasteur, IsAmsterdam, IsUBT                           bool
++	IsPQ bool
+ 	IsJenner                                                bool
+ 	// IsInBSC is true when Parlia is configured (BSC chains). core/vm uses it to
+ 	// select the BSC precompile set (…ForBSC); non-BSC chains (e.g. the standard
+@@ -2215,6 +2225,7 @@
+ 		// (fork names shared with upstream ethereum), Jenner is a BSC-only fork
+ 		// and IsJenner() itself embeds the IsInBSC() gate.
+ 		IsJenner:  c.IsJenner(num, timestamp),
++        IsPQ: c.IsPQ(num,timestamp),
+ 		IsUBT:     isUBT,
+ 		IsEIP4762: isUBT,
+ 		IsInBSC:   c.IsInBSC(),
+--- a/cmd/utils/flags.go
++++ b/cmd/utils/flags.go
+@@ -324,6 +324,11 @@
+ 		Usage:    "Manually specify the Jenner fork timestamp, overriding the bundled setting",
+ 		Category: flags.EthCategory,
+ 	}
++	OverridePQ = &cli.Uint64Flag{
++		Name:     "override.pq",
++		Usage:    "Manually specify the PQ fork timestamp, overriding the bundled setting",
++		Category: flags.EthCategory,
++	}
+ 	OverrideBPO1 = &cli.Uint64Flag{
+ 		Name:     "override.bpo1",
+ 		Usage:    "Manually specify the bpo1 fork timestamp, overriding the bundled setting",
+--- a/cmd/geth/main.go
++++ b/cmd/geth/main.go
+@@ -74,6 +74,7 @@
+ 		utils.OverrideMendel,
+ 		utils.OverridePasteur,
+ 		utils.OverrideJenner,
++		utils.OverridePQ,
+ 		utils.OverrideBPO1,
+ 		utils.OverrideBPO2,
+ 		utils.OverrideUBT,
+--- a/cmd/geth/config.go
++++ b/cmd/geth/config.go
+@@ -295,6 +295,10 @@
+ 		v := ctx.Uint64(utils.OverrideJenner.Name)
+ 		cfg.Eth.OverrideJenner = &v
+ 	}
++	if ctx.IsSet(utils.OverridePQ.Name) {
++		v := ctx.Uint64(utils.OverridePQ.Name)
++		cfg.Eth.OverridePQ = &v
++	}
+ 	if ctx.IsSet(utils.OverrideBPO1.Name) {
+ 		v := ctx.Uint64(utils.OverrideBPO1.Name)
+ 		cfg.Eth.OverrideBPO1 = &v
+--- a/cmd/geth/chaincmd.go
++++ b/cmd/geth/chaincmd.go
+@@ -77,6 +77,7 @@
+ 			utils.OverrideMendel,
+ 			utils.OverridePasteur,
+ 			utils.OverrideJenner,
++			utils.OverridePQ,
+ 			utils.OverrideBPO1,
+ 			utils.OverrideBPO2,
+ 			utils.OverrideUBT,
+@@ -378,6 +379,10 @@
+ 		v := ctx.Uint64(utils.OverrideJenner.Name)
+ 		overrides.OverrideJenner = &v
+ 	}
++	if ctx.IsSet(utils.OverridePQ.Name) {
++		v := ctx.Uint64(utils.OverridePQ.Name)
++		overrides.OverridePQ = &v
++	}
+ 	if ctx.IsSet(utils.OverrideBPO1.Name) {
+ 		v := ctx.Uint64(utils.OverrideBPO1.Name)
+ 		overrides.OverrideBPO1 = &v
+--- a/eth/backend.go
++++ b/eth/backend.go
+@@ -271,6 +271,10 @@
+ 		chainConfig.JennerTime = config.OverrideJenner
+ 		overrides.OverrideJenner = config.OverrideJenner
+ 	}
++	if config.OverridePQ != nil {
++		chainConfig.PQTime = config.OverridePQ
++		overrides.OverridePQ = config.OverridePQ
++	}
+ 	if config.OverrideBPO1 != nil {
+ 		chainConfig.BPO1Time = config.OverrideBPO1
+ 		overrides.OverrideBPO1 = config.OverrideBPO1
+--- a/core/genesis.go
++++ b/core/genesis.go
+@@ -294,6 +294,7 @@
+ 	OverrideMendel         *uint64
+ 	OverridePasteur        *uint64
+ 	OverrideJenner         *uint64
++	OverridePQ         *uint64
+ 	OverrideBPO1           *uint64
+ 	OverrideBPO2           *uint64
+ 	OverrideUBT            *uint64
+@@ -336,6 +337,9 @@
+ 	}
+ 	if o.OverrideJenner != nil {
+ 		cfg.JennerTime = o.OverrideJenner
++	}
++	if o.OverridePQ != nil {
++		cfg.PQTime = o.OverridePQ
+ 	}
+ 	if o.OverrideBPO1 != nil {
+ 		cfg.BPO1Time = o.OverrideBPO1
+--- a/eth/ethconfig/config.go
++++ b/eth/ethconfig/config.go
+@@ -258,6 +258,7 @@
+ 
+ 	// OverrideJenner (TODO: remove after the fork)
+ 	OverrideJenner *uint64 `toml:",omitempty"`
++	OverridePQ *uint64 `toml:",omitempty"`
+ 
+ 	// OverrideBPO1 (TODO: remove after the fork)
+ 	OverrideBPO1 *uint64 `toml:",omitempty"`
+--- a/eth/ethconfig/gen_config.go
++++ b/eth/ethconfig/gen_config.go
+@@ -83,6 +83,7 @@
+ 		OverrideMendel          *uint64       `toml:",omitempty"`
+ 		OverridePasteur         *uint64       `toml:",omitempty"`
+ 		OverrideJenner          *uint64       `toml:",omitempty"`
++		OverridePQ          *uint64       `toml:",omitempty"`
+ 		OverrideBPO1            *uint64       `toml:",omitempty"`
+ 		OverrideBPO2            *uint64       `toml:",omitempty"`
+ 		OverrideUBT             *uint64       `toml:",omitempty"`
+@@ -157,6 +158,7 @@
+ 	enc.OverrideMendel = c.OverrideMendel
+ 	enc.OverridePasteur = c.OverridePasteur
+ 	enc.OverrideJenner = c.OverrideJenner
++	enc.OverridePQ = c.OverridePQ
+ 	enc.OverrideBPO1 = c.OverrideBPO1
+ 	enc.OverrideBPO2 = c.OverrideBPO2
+ 	enc.OverrideUBT = c.OverrideUBT
+@@ -235,6 +237,7 @@
+ 		OverrideMendel          *uint64        `toml:",omitempty"`
+ 		OverridePasteur         *uint64        `toml:",omitempty"`
+ 		OverrideJenner          *uint64        `toml:",omitempty"`
++		OverridePQ          *uint64        `toml:",omitempty"`
+ 		OverrideBPO1            *uint64        `toml:",omitempty"`
+ 		OverrideBPO2            *uint64        `toml:",omitempty"`
+ 		OverrideUBT             *uint64        `toml:",omitempty"`
+@@ -442,6 +445,9 @@
+ 	if dec.OverrideJenner != nil {
+ 		c.OverrideJenner = dec.OverrideJenner
+ 	}
++	if dec.OverridePQ != nil {
++		c.OverridePQ = dec.OverridePQ
++	}
+ 	if dec.OverrideBPO1 != nil {
+ 		c.OverrideBPO1 = dec.OverrideBPO1
+ 	}
+--- a/core/vm/evm.go
++++ b/core/vm/evm.go
+@@ -184,7 +184,7 @@
+ 		jumpDests:   newMapJumpDests(),
+ 		arena:       newArena(),
+ 	}
+-	evm.precompiles = v2Precompiles(chainConfig, evm.chainRules, activePrecompiledContracts(evm.chainRules))
++	evm.precompiles = v3Precompiles(chainConfig, evm.chainRules, activePrecompiledContracts(evm.chainRules))
+ 
+ 	// Select the jump table for the current fork.
+ 	switch {
+@@ -242,7 +242,7 @@
+ // This method is only used through RPC calls.
+ // It is not thread-safe.
+ func (evm *EVM) SetPrecompiles(precompiles PrecompiledContracts) {
+-	evm.precompiles = v2Precompiles(evm.chainConfig, evm.chainRules, precompiles)
++	evm.precompiles = v3Precompiles(evm.chainConfig, evm.chainRules, precompiles)
+ }
+ 
+ // SetJumpDestCache configures the analysis cache.

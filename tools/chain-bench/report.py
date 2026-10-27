@@ -73,12 +73,12 @@ def render(lines):
 def main():
     source = (REPORT / 'README.md').read_text()
     body, toc = render(source.splitlines())
-    v1 = json.loads((REPORT / 'v1/results.json').read_text())
-    v2 = json.loads((REPORT / 'v2/results.json').read_text())
+    reference = json.loads((REPORT / 'v3/slh-reference.json').read_text())
+    current = json.loads((REPORT / 'v3/results.json').read_text())
     average = lambda data: statistics.mean(int(row['transferred']['outerTransactionGas']) for row in data['rows'])
-    transfer = average(v2)
-    reduction = (1-transfer/average(v1))*100
-    price = json.loads((REPORT / 'v2/precompile.json').read_text())['pricing']['selectedGas']
+    transfer = average(current)
+    reduction = (1-transfer/average(reference))*100
+    price = json.loads((REPORT / 'v3/precompile.json').read_text())['pricing']['Falcon']['selectedGas']
     navigation = ''.join(f'<a href="#{anchor}">{html.escape(title)}</a>' for anchor, title in toc)
     css = '''
 :root{color-scheme:light;--ink:#182b43;--muted:#607188;--line:#dfe7ef;--blue:#155ac4;--bg:#f3f6fa}
@@ -90,8 +90,8 @@ def main():
     title = html.escape(source.splitlines()[0][2:])
     page = f'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title><style>{css}</style></head>
-<body><header><div class="eyebrow">BSC PQC PLAYGROUND · LOCAL EXPERIMENT</div><h1>{title}</h1><p>SLH-DSA-SHA2-128s · Solidity 与原生预编译 · 2026-10-27</p>
-<div class="cards"><div class="card"><span>v2 转账，平均外层 gas</span><strong>{transfer:,.0f} gas</strong><small>三笔实测，原生 EOA 为 21,000 gas</small></div><div class="card"><span>转账 gas 相对 v1 减少</span><strong>{reduction:.2f}%</strong><small>同算法；独立环境、独立交易样本</small></div><div class="card"><span>SLH 预编译实验定价</span><strong>{price:,} gas</strong><small>五轮 CPU 测量；含余量与取整</small></div></div></header>
+<body><header><div class="eyebrow">BSC PQC PLAYGROUND · LOCAL EXPERIMENT</div><h1>{title}</h1><p>SLH-DSA-SHA2-128s / Falcon-512 · Solidity 与原生预编译 · 2026-10-27</p>
+<div class="cards"><div class="card"><span>v3 Falcon 转账，平均外层 gas</span><strong>{transfer:,.0f} gas</strong><small>三笔实测，原生 EOA 为 21,000 gas</small></div><div class="card"><span>转账 gas 相对同链 SLH 减少</span><strong>{reduction:.2f}%</strong><small>同链、同 Bundler；各三笔样本</small></div><div class="card"><span>Falcon 预编译实验定价</span><strong>{price:,} gas</strong><small>五轮 CPU 测量；含余量与取整</small></div></div></header>
 <div class="layout"><nav aria-label="报告目录">{navigation}<a href="README.md">Markdown 源文档 ↗</a></nav><article>{body}<footer>由 README.md 和原始 JSON 自动生成，无外部资源依赖。更新后运行 <code>python3 tools/chain-bench/report.py</code>。</footer></article></div></body></html>'''
     (REPORT / 'report.html').write_text(page)
     print(REPORT / 'report.html')

@@ -1,11 +1,12 @@
 # ERC-4337 PQ 钱包
 
-本地实验钱包：随机生成 PQ 密钥，通过 Alto 和 EntryPoint 创建智能账户，再发送 BNB 或调用合约。两版均使用 EntryPoint v0.7 和 SLH-DSA-SHA2-128s：
+本地实验钱包：随机生成 PQ 密钥，通过 Alto 和 EntryPoint 创建智能账户，再发送 BNB 或调用合约。各版本均使用 EntryPoint v0.7：
 
 | profile | 验签方式 | 本地环境 |
 | --- | --- | --- |
 | `slh-dsa-v1`，默认 | Solidity 完整验签 | 原 `devnet`，不需要新增预编译 |
-| `slh-dsa-v2` | adapter 调用原生预编译 | 独立 `devnet-v2`，显式启用实验客户端 |
+| `slh-dsa-v2` | SLH adapter 调用原生预编译 | 独立 `devnet-v2`，或 v3 共同 PQ 分叉环境 |
+| `falcon-v3` | Falcon-512 原生预编译 | 独立 `devnet-v3`，同时启用两个预编译 |
 
 ## 使用
 
@@ -37,7 +38,7 @@
 
 ## 版本与扩展
 
-入口支持 `--version v1/v2`，默认 v1。原 `--profile slh-dsa-v1/slh-dsa-v2` 保持兼容；同时指定时必须一致，否则拒绝执行：
+入口支持 `--version v1/v2/v3`，默认 v1。原 `--profile slh-dsa-v1/slh-dsa-v2` 保持兼容；同时指定时必须一致，否则拒绝执行：
 
 ```bash
 ./tools/erc4337-wallet create devnet --version v1
@@ -62,7 +63,7 @@ v2 在完成 [环境准备](../one-box/README.md#v2-预编译实验环境) 后�
 
 v1、v2 复用 common 中的密钥生成、签名、账户和工厂逻辑。v2 替换验证器，并在部署前向所有验证者探测真实预编译；若所选环境未启用 v2 或仍使用普通客户端，则拒绝部署。`contractVersion=2` 表示新的合约配置，不表示 PQAccount 源码被修改。
 
-新增算法或合约版本时，增加 `v3/` 等版本目录及 profile 模块，并在 `profiles.mjs` 中注册，提供现有适配器中的接口；同时增加相应合约和验收用例。通用的钱包流程与 bench 继续复用。需要不同 EntryPoint 版本时，环境也必须部署匹配版本；当前 one-box 部署的是 v0.7。
+新增算法或合约版本时，增加 `v4/` 等版本目录及 profile 模块，并在 `profiles.mjs` 中注册，提供现有适配器中的接口；同时增加相应合约和验收用例。通用的钱包流程与 bench 继续复用。需要不同 EntryPoint 版本时，环境也必须部署匹配版本；当前 one-box 部署的是 v0.7。
 
 每条账户记录绑定 profile、合约版本、创世 hash、EntryPoint、公钥和工厂地址。加载时检查这些标识和确定性地址，不自动把旧账户转换成新算法。合约不可升级；切换 profile 是新建账户，既有账户的迁移需要另行设计。部署时同时检查链上代码和原部署交易，拒绝把新编译产物与旧合约混用。
 
@@ -84,3 +85,17 @@ openssl-test/          独立实现生成的公开测试向量；临时私钥测
 当前只支持一笔 UserOperation 执行一个调用；转账接口要求接收地址被动收款，以余额变化核对金额。发送失败保留账户记录和已有收据，不自动再次创建身份。初始资金、gas price 和节点 RPC 来自选定环境，脚本不连接公共链。
 
 当前仅用户账户授权使用 PQ 签名；Bundler 外层交易、BSC 验证者共识和 P2P 身份仍沿用原有机制。
+
+## v3：Falcon-512
+
+```bash
+./tools/erc4337-wallet create devnet-v3 --version v3
+./tools/erc4337-wallet transfer devnet-v3 <id> <接收地址> 0.01 --version v3
+./tools/erc4337-wallet test devnet-v3 --version v3
+```
+
+`v3/profile.mjs` 使用 FalconAccountFactory / FalconAccount 和 FalconPrecompile；`native.mjs` 通过 stdin 调用固定 Go/cgo helper，私钥不进入命令行。helper 由 `build --v3` 构建，运行密钥仍只保存在忽略的、0600 权限的账户文件中。版本目录互不覆盖，不迁移或重用 SLH 身份。
+
+v3 公钥使用 896-byte 主体，私钥使用 1,280-byte 主体，原生层恢复固定头。对 32-byte UserOperation hash 签名，签名保留 0x39 头，长度 617–667 bytes。估算使用 667-byte 的非零为主 stub，正式提交发送真实变长签名；估算返回的 sigFailed 不作为正式授权。提交时依然验证真实签名和链上 EntryPoint hash。
+
+v3 的密码学测试包含独立 Bouncy Castle 公共 KAT；账户授权、篡改、重放、转账、Counter 及三验证者一致性检查与 v1/v2 复用 `common/test.mjs` 中的流程。签名使用原生后端，SLH 目前仍用 noble JavaScript；两者端到端时间不是仅算法耗时的公平比较，原生 CPU 比较另见报告。

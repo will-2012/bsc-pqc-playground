@@ -18,6 +18,7 @@
 src/common/   PQAccount、PQAccountFactory、Counter、上游合约导入
 src/v1/       SLHDSA128s，Solidity 完整验签
 src/v2/       SLHDSA128sPrecompile，原生预编译适配器
+src/v3/       FalconAccount、FalconAccountFactory、FalconPrecompile
 ```
 
 共享账户与工厂源码不复制；v1、v2 分别部署并绑定各自验证器。`src/common/Imports.sol` 引入上游实现，EntryPoint 保持不变。SimpleAccount 是 ECDSA 基线；PQAccount 使用独立的 PQ 授权逻辑。固定 Solidity 0.8.23、Paris 指令集和 OpenZeppelin 5.0.2，依赖由 `package-lock.json` 锁定。
@@ -42,3 +43,11 @@ PQ 合约由 [`erc4337-wallet`](../erc4337-wallet/README.md) 部署，记录位�
 这是实验实现，未经过独立安全审计或 FIPS 实现认证。算法依据为 [FIPS 205](https://doi.org/10.6028/NIST.FIPS.205)；测试包含 noble 与 OpenSSL 独立签名互验，不能据此宣称形式证明或生产安全。
 
 v2 的原生输入固定为 `publicKey[32] || userOpHash[32] || signature[7856]`，返回 32 bytes 的 0/1。adapter 在调用失败、返回长度不对或无预编译时返回 false，不会静默切换到 v1。`0x0101` 是本地实验地址，不是 BSC 主网预编译。价格为固定 60,000 gas，外层 calldata 和合约调用费用另计，详见 [链路报告](../docs/chain-bench/README.md)。
+
+## v3：Falcon 账户
+
+Falcon 公钥为 896-byte 主体，不能直接使用 common/PQAccount 的 bytes32 公钥。v3 使用独立 FalconAccountFactory / FalconAccount，保持固定 EntryPoint、固定验证器、仅 EntryPoint 可执行的权限模型；无 ECDSA owner、代理、恢复或密钥修改接口。工厂将完整公钥与 salt 绑定到 CREATE2 地址。
+
+公钥在构造时写入 bytes 存储，共 29 个槽。FalconPrecompile 以 `publicKey[896] || userOpHash[32] || signature[617..667]` 调用 `0x0102`，长度、调用或返回值不合法均返回 false，不回退到其他算法。链上保存公钥会显著增加创建及读取成本，本版未做代码存储或承诺优化。
+
+原有 SLH 合约与字节码保留。v3 的首次验证预算超过常见公共内存池预算，不能仅因签名更短就宣称所有公共 Bundler 可用。

@@ -105,7 +105,7 @@ function identityPath(ctx, id) {
 async function newIdentity(ctx) {
   const d = ctx.deployment || await deployment(ctx);
   const id = randomBytes(12).toString('hex');
-  const {publicKey, secretKey} = ctx.profile.keygen();
+  const {publicKey, secretKey} = await ctx.profile.keygen();
   const salt = BigInt(bytesToHex(randomBytes(32)));
   const address = await ctx.profile.getAddress(ctx, publicKey, salt);
   const identity = {id, profile: ctx.profile.id, contractVersion: ctx.profile.contractVersion,

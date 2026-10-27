@@ -11,27 +11,28 @@ SOURCE = WORK / "bsc"
 BINARY = WORK / "geth"
 
 
-def prepare():
+def prepare(work=WORK):
+    source = work / "bsc"
     upstream = ROOT / "external/bsc"
     if command(["git", "status", "--porcelain"], cwd=upstream).strip():
         raise RuntimeError("Build v2 from a clean, pinned BSC submodule")
     commit = command(["git", "rev-parse", "HEAD"], cwd=upstream).strip()
-    WORK.mkdir(parents=True, exist_ok=True)
-    if SOURCE.exists():
-        shutil.rmtree(SOURCE)
-    SOURCE.mkdir()
+    work.mkdir(parents=True, exist_ok=True)
+    if source.exists():
+        shutil.rmtree(source)
+    source.mkdir()
     archive = subprocess.check_output(["git", "archive", "HEAD"], cwd=upstream)
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-        tar.extractall(SOURCE, filter="data")
-    log = WORK / "build.log"
+        tar.extractall(source, filter="data")
+    log = work / "build.log"
     patch = BOX / "patches/bsc-slh-v2.patch"
-    command(["patch", "--batch", "-p1", "-i", patch], log, SOURCE)
+    command(["patch", "--batch", "-p1", "-i", patch], log, source)
     for path in (BOX / "precompile/v2").glob("*.go"):
-        shutil.copy2(path, SOURCE / "core/vm" / path.name)
-    shutil.copy2(BOX / "precompile/v2/testdata/slh_v2.json", SOURCE / "core/vm/testdata/slh_v2.json")
+        shutil.copy2(path, source / "core/vm" / path.name)
+    shutil.copy2(BOX / "precompile/v2/testdata/slh_v2.json", source / "core/vm/testdata/slh_v2.json")
     dep = read(BOX / "precompile/v2/dependency.json")
-    command(["go", "mod", "edit", f'-require={dep["module"]}@{dep["version"]}'], log, SOURCE)
-    sums = SOURCE / "go.sum"
+    command(["go", "mod", "edit", f'-require={dep["module"]}@{dep["version"]}'], log, source)
+    sums = source / "go.sum"
     with sums.open("a") as out:
         out.write(f'\n{dep["module"]} {dep["version"]} {dep["sum"]}\n')
         out.write(f'{dep["module"]} {dep["version"]}/go.mod {dep["goModSum"]}\n')

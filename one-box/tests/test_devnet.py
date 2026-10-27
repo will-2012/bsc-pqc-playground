@@ -40,6 +40,14 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate(self.cfg)
 
+    def test_v3_is_an_explicit_optional_extension(self):
+        cfg = dict(devnet.read(devnet.BOX / "config.json"), pq_precompile=3)
+        devnet.validate(cfg)
+        self.assertNotIn("pq_precompile", devnet.MUTABLE)
+        cfg["pq_precompile"] = 2
+        with self.assertRaises(ValueError):
+            devnet.validate(cfg)
+
     def test_v2_health_rejects_a_client_without_the_precompile(self):
         with patch.object(devnet, "rpc", return_value="0x"):
             with self.assertRaisesRegex(RuntimeError, "missing the v2 SLH precompile"):
