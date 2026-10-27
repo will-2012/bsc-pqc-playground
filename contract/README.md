@@ -20,6 +20,7 @@ src/v1/       SLHDSA128s，Solidity 完整验签
 src/v2/       SLHDSA128sPrecompile，原生预编译适配器
 src/v3/       FalconAccount、FalconAccountFactory、FalconPrecompile
 src/v4/       MLDSAAccount、MLDSAAccountFactory、MLDSAPrecompile
+src/v5/       MLDSA65Account、MLDSA65AccountFactory、MLDSA65Precompile
 ```
 
 共享账户与工厂源码不复制；v1、v2 分别部署并绑定各自验证器。`src/common/Imports.sol` 引入上游实现，EntryPoint 保持不变。SimpleAccount 是 ECDSA 基线；PQAccount 使用独立的 PQ 授权逻辑。固定 Solidity 0.8.23、Paris 指令集和 OpenZeppelin 5.0.2，依赖由 `package-lock.json` 锁定。
@@ -58,3 +59,7 @@ Falcon 公钥为 896-byte 主体，不能直接使用 common/PQAccount 的 bytes
 `src/v4/` 包含 MLDSAAccount、MLDSAAccountFactory、MLDSAPrecompile。账户权限边界沿用 v3；公钥为 1,312 bytes，以 bytes 存储，共 42 个槽（一个长度槽、41 个数据槽）。工厂通过公钥与 salt 绑定 CREATE2 地址，不接受错误公钥长度。验证器只接受固定 2,420-byte 签名，并以 `publicKey[1312] || userOpHash[32] || signature[2420]` 调用 `0x0103`，失败时返回 false。
 
 这是 FIPS 204 Pure ML-DSA-44、空 context 的本地预编译路径；合约不实现格运算，不回退到 ECDSA 或其他算法。算法已标准化不表示本仓库的客户端与合约经过认证或审计。
+
+## v5：ML-DSA-65 账户
+
+`src/v5/` 包含 MLDSA65Account、MLDSA65AccountFactory、MLDSA65Precompile。权限模型与 v4 相同，但固定公钥长度为 1,952 bytes，占 62 个存储槽（一个长度槽与 61 个数据槽）；签名为 3,309 bytes。adapter 使用 `0x0104`，原生输入为 `publicKey[1952] || userOpHash[32] || signature[3309]`。本版没有替换 v4 合约、改变旧账户权限或引入算法回退。

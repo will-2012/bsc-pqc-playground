@@ -253,3 +253,20 @@ v4 在独立的 `.runtime/build/v4/` 构建，复用 v3 的源代码准备流程
 配置标记 `pq_precompile=4`，默认 RPC/P2P 各加 30。v4 沿用同一个 `pqTime`，同时启用 SLH `0x0101`、Falcon `0x0102`、ML-DSA `0x0103`；没有增加第二个 PQ 硬分叉。v1–v3 的独立二进制、环境和密钥保留。Alto 根据标记仅在 v4 额外识别 `0x0103`，保持 safe-mode；它是本地实验扩展，不是公共 Bundler 的通用支持。
 
 ML-DSA 输入固定 `publicKey[1312] || userOpHash[32] || signature[2420]`，采用 FIPS 204 Pure、空 context。返回 32 bytes 的 0/1，长度或签名不合法返回 0。定价与完整 gas 见[链路报告](../docs/chain-bench/README.md)。
+
+## v5：ML-DSA-65
+
+v5 在 `.runtime/build/v5/` 中构建，复用 v4 的 ML 后端准备流程，同时编译相同固定版本的 ML-DSA-44 / 65 优化库。两个参数集在同一个 Go 原生包中使用各自命名空间，共用 OS 随机数桥接；不会替换旧版本二进制。上游两种参数的功能测试与 KAT 都会执行。
+
+```bash
+./tools/one-box bundler build
+./tools/one-box build --v5
+./tools/one-box --name devnet-v5 init --v5
+./tools/one-box --name devnet-v5 bundler up --port 14377
+./tools/erc4337-wallet test devnet-v5 --version v5
+./tools/one-box --name devnet-v5 down
+```
+
+配置标记 `pq_precompile=5`，默认 RPC/P2P 各加 40。沿用同一个 `pqTime`，在 SLH / Falcon / ML-DSA-44 之外启用 ML-DSA-65 `0x0104`；三个旧地址与价格保留。Alto 仅在 v5 环境额外识别该地址，safe-mode 保持开启。
+
+输入固定 5,293 bytes：`publicKey[1952] || userOpHash[32] || signature[3309]`，采用 FIPS 204 Pure、空 context。公钥 / 签名尺寸不正确或验签失败返回 32-byte 的 0；成功返回 1。当前整套客户端仍仅验证 macOS arm64。

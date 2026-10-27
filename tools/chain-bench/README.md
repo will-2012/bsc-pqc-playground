@@ -2,7 +2,7 @@
 
 调用 `erc4337-wallet` 的同一 API，顺序创建独立账户，再各转账 0.01 BNB。算法 CPU 的多方案对比仍在 `tools/crypto-bench/`；这里比较真实客户端预编译和链上交易。
 
-`run` 是公共入口，`common/run.mjs` 是各版共用的链上测量流程，通过 `--version v1/v2/v3/v4` 选择钱包。`v2/` 只放 v2 独有的原生性能测试和向量生成器。v1 没有独有的压测实现，因此不建立空目录或复制脚本。
+`run` 是公共入口，`common/run.mjs` 是各版共用的链上测量流程，通过 `--version v1/v2/v3/v4/v5` 选择钱包。`v2/` 只放 v2 独有的原生性能测试和向量生成器。v1 没有独有的压测实现，因此不建立空目录或复制脚本。
 
 ## v1：Solidity
 
@@ -102,3 +102,29 @@ node tools/chain-bench/v4/trace.mjs devnet-v4
 v4 的定价测试继续使用 `common/native_bench.py`，增加 ML-DSA 正负例与签名，五轮共 70 组测量。负载测试比较同链 Falcon v3 与 ML-DSA v4；两者都使用 Go/cgo helper，分别记录准备、提交和收据时间。每轮不同 sender 并发，仍是有限负载测试，不代表吞吐上限。trace 校验三个预编译的实际调用 gas。
 
 公开结果归档在 `docs/chain-bench/v4/`，旧版本结果不覆盖。运行数据、密钥、构建产物仍全部位于 `.runtime/`。
+
+## v5：ML-DSA-65 与 ML-DSA-44 同链对照
+
+```bash
+./tools/one-box bundler build
+./tools/one-box build --v5
+# 所有本地节点与 Bundler 关闭时测量五轮原生 CPU
+python3 tools/chain-bench/v5/precompile.py
+./tools/one-box --name devnet-v5 init --v5
+# 首次启动前，可在另一个终端观察共同分叉：
+# python3 tools/chain-bench/v5/fork-check.py devnet-v5
+./tools/one-box --name devnet-v5 bundler up --port 14377
+./tools/erc4337-wallet test devnet-v5 --version v5
+./tools/chain-bench/run devnet-v5 3 --version v5 --ecdsa-baseline
+./tools/chain-bench/run devnet-v5 3 --version v4
+./tools/chain-bench/run devnet-v5 3 --version v3
+./tools/chain-bench/run devnet-v5 3 --version v2
+node tools/chain-bench/v5/load.mjs devnet-v5 8 5
+node tools/chain-bench/v5/trace.mjs devnet-v5
+./tools/one-box --name devnet-v5 check
+./tools/one-box --name devnet-v5 down
+```
+
+v5 继续复用 common 中的 CPU、gas、负载、trace 与分叉检查实现。原生测试包含 ECRECOVER、SLH、Falcon、ML44、ML65 的有效 / 无效路径与原生签名，五轮共 95 组；定价仍以 ECRECOVER 的 3,000 gas 为基准。并发测试对比同链 ML44 / ML65，默认每版 8 个账户 × 5 轮，属于有限负载测试。
+
+结果归档在 `docs/chain-bench/v5/`。所有旧归档保留，私钥与运行文件不进入 docs。

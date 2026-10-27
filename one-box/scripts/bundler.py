@@ -76,6 +76,8 @@ def build():
     command(["patch", "--batch", "--forward", "-p1", "-i", falcon_patch], log, WORK)
     mldsa_patch = BOX / "patches/alto-mldsa-v4.patch"
     command(["patch", "--batch", "--forward", "-p1", "-i", mldsa_patch], log, WORK)
+    mldsa65_patch = BOX / "patches/alto-mldsa65-v5.patch"
+    command(["patch", "--batch", "--forward", "-p1", "-i", mldsa65_patch], log, WORK)
     # Do not run upstream prepare or the unrelated e2e workspaces.
     command(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"], log, WORK, timeout=900)
     command(["pnpm", "--filter", "@pimlico/alto", "build:esm"], log, WORK, timeout=300)
@@ -93,6 +95,7 @@ def build():
         "slh_v2_patch_sha256": digest(slh_patch),
         "falcon_v3_patch_sha256": digest(falcon_patch),
         "mldsa_v4_patch_sha256": digest(mldsa_patch),
+        "mldsa65_v5_patch_sha256": digest(mldsa65_patch),
     })
     print("Built Alto from submodule and compiled ERC-4337 contracts", flush=True)
 
@@ -135,10 +138,12 @@ def start(env):
     child_env["DOTENV_CONFIG_PATH"] = os.devnull
     if chain_config.get("pq_precompile"):
         child_env["ALTO_LOCAL_PRECOMPILE_V2"] = "1"
-    if chain_config.get("pq_precompile") in (3, 4):
+    if chain_config.get("pq_precompile") in (3, 4, 5):
         child_env["ALTO_LOCAL_PRECOMPILE_V3"] = "1"
-    if chain_config.get("pq_precompile") == 4:
+    if chain_config.get("pq_precompile") in (4,5):
         child_env["ALTO_LOCAL_PRECOMPILE_V4"] = "1"
+    if chain_config.get("pq_precompile") == 5:
+        child_env["ALTO_LOCAL_PRECOMPILE_V5"] = "1"
     if config.get("timeout"):
         child_env["ALTO_LOCAL_TRACE_TIMEOUT"] = f'{config["timeout"]}ms'
         child_env["ALTO_LOCAL_RPC_TIMEOUT"] = str(config["timeout"])
