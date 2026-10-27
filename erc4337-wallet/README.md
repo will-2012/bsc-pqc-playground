@@ -63,7 +63,7 @@ v2 在完成 [环境准备](../one-box/README.md#v2-预编译实验环境) 后�
 
 v1、v2 复用 common 中的密钥生成、签名、账户和工厂逻辑。v2 替换验证器，并在部署前向所有验证者探测真实预编译；若所选环境未启用 v2 或仍使用普通客户端，则拒绝部署。`contractVersion=2` 表示新的合约配置，不表示 PQAccount 源码被修改。
 
-新增算法或合约版本时，增加 `v4/` 等版本目录及 profile 模块，并在 `profiles.mjs` 中注册，提供现有适配器中的接口；同时增加相应合约和验收用例。通用的钱包流程与 bench 继续复用。需要不同 EntryPoint 版本时，环境也必须部署匹配版本；当前 one-box 部署的是 v0.7。
+新增算法或合约版本时，增加 `v5/` 等版本目录及 profile 模块，并在 `profiles.mjs` 中注册，提供现有适配器中的接口；同时增加相应合约和验收用例。通用的钱包流程与 bench 继续复用。需要不同 EntryPoint 版本时，环境也必须部署匹配版本；当前 one-box 部署的是 v0.7。
 
 每条账户记录绑定 profile、合约版本、创世 hash、EntryPoint、公钥和工厂地址。加载时检查这些标识和确定性地址，不自动把旧账户转换成新算法。合约不可升级；切换 profile 是新建账户，既有账户的迁移需要另行设计。部署时同时检查链上代码和原部署交易，拒绝把新编译产物与旧合约混用。
 
@@ -99,3 +99,17 @@ openssl-test/          独立实现生成的公开测试向量；临时私钥测
 v3 公钥使用 896-byte 主体，私钥使用 1,280-byte 主体，原生层恢复固定头。对 32-byte UserOperation hash 签名，签名保留 0x39 头，长度 617–667 bytes。估算使用 667-byte 的非零为主 stub，正式提交发送真实变长签名；估算返回的 sigFailed 不作为正式授权。提交时依然验证真实签名和链上 EntryPoint hash。
 
 v3 的密码学测试包含独立 Bouncy Castle 公共 KAT；账户授权、篡改、重放、转账、Counter 及三验证者一致性检查与 v1/v2 复用 `common/test.mjs` 中的流程。签名使用原生后端，SLH 目前仍用 noble JavaScript；两者端到端时间不是仅算法耗时的公平比较，原生 CPU 比较另见报告。
+
+## v4：ML-DSA-44
+
+```bash
+./tools/erc4337-wallet create devnet-v4 --version v4
+./tools/erc4337-wallet transfer devnet-v4 <id> <接收地址> 0.01 --version v4
+./tools/erc4337-wallet test devnet-v4 --version v4
+```
+
+profile 为 `mldsa-v4`，绑定 MLDSAAccountFactory / MLDSAAccount / MLDSAPrecompile。通过 v4 的 Go/cgo helper 调用 mldsa-native；公钥 1,312 bytes、展开私钥 2,560 bytes、签名固定 2,420 bytes。这里保存的是展开私钥，不是可用于派生密钥的 32-byte seed。Pure ML-DSA 对 32-byte UserOperation hash 签名，context 为空，不能与 HashML-DSA 或旧 Dilithium 混用。
+
+估算使用 2,420 bytes 的全非零无效 stub，覆盖真实签名的 calldata 成本上界；正式签名和本地验签后才提交。测试包含原生后端与 Noble 双向互验、独立空 context 公共 KAT，以及共用的授权、篡改、重放、转账、Counter 和三验证者一致性检查。密钥只经 stdin 传入 helper，并保存在忽略的本地账户目录；不写入报告或命令行。
+
+同链比较可以使用 v2/v3/v4 三个 profile，各版本的身份和部署记录独立。切换 profile 不会迁移既有账户。

@@ -1,6 +1,6 @@
 # 合约
 
-这里存放合约源码、依赖锁文件和编译配置。ECDSA 基线通过 `tools/one-box` 调用内部脚本 `one-box/scripts/erc4337.mjs`；PQ 两版通过 `tools/erc4337-wallet` 调用。
+这里存放合约源码、依赖锁文件和编译配置。ECDSA 基线通过 `tools/one-box` 调用内部脚本 `one-box/scripts/erc4337.mjs`；PQ 各版通过 `tools/erc4337-wallet` 调用。
 
 | 合约 | 来源与用途 |
 | --- | --- |
@@ -19,6 +19,7 @@ src/common/   PQAccount、PQAccountFactory、Counter、上游合约导入
 src/v1/       SLHDSA128s，Solidity 完整验签
 src/v2/       SLHDSA128sPrecompile，原生预编译适配器
 src/v3/       FalconAccount、FalconAccountFactory、FalconPrecompile
+src/v4/       MLDSAAccount、MLDSAAccountFactory、MLDSAPrecompile
 ```
 
 共享账户与工厂源码不复制；v1、v2 分别部署并绑定各自验证器。`src/common/Imports.sol` 引入上游实现，EntryPoint 保持不变。SimpleAccount 是 ECDSA 基线；PQAccount 使用独立的 PQ 授权逻辑。固定 Solidity 0.8.23、Paris 指令集和 OpenZeppelin 5.0.2，依赖由 `package-lock.json` 锁定。
@@ -51,3 +52,9 @@ Falcon 公钥为 896-byte 主体，不能直接使用 common/PQAccount 的 bytes
 公钥在构造时写入 bytes 存储，共 29 个槽。FalconPrecompile 以 `publicKey[896] || userOpHash[32] || signature[617..667]` 调用 `0x0102`，长度、调用或返回值不合法均返回 false，不回退到其他算法。链上保存公钥会显著增加创建及读取成本，本版未做代码存储或承诺优化。
 
 原有 SLH 合约与字节码保留。v3 的首次验证预算超过常见公共内存池预算，不能仅因签名更短就宣称所有公共 Bundler 可用。
+
+## v4：ML-DSA-44 账户
+
+`src/v4/` 包含 MLDSAAccount、MLDSAAccountFactory、MLDSAPrecompile。账户权限边界沿用 v3；公钥为 1,312 bytes，以 bytes 存储，共 42 个槽（一个长度槽、41 个数据槽）。工厂通过公钥与 salt 绑定 CREATE2 地址，不接受错误公钥长度。验证器只接受固定 2,420-byte 签名，并以 `publicKey[1312] || userOpHash[32] || signature[2420]` 调用 `0x0103`，失败时返回 false。
+
+这是 FIPS 204 Pure ML-DSA-44、空 context 的本地预编译路径；合约不实现格运算，不回退到 ECDSA 或其他算法。算法已标准化不表示本仓库的客户端与合约经过认证或审计。

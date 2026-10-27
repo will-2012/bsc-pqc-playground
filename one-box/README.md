@@ -236,3 +236,20 @@ v3 增加 `pqTime` 硬分叉，包含 Rules、兼容性、顺序检查及 `--ove
 Alto 为 v3 单独启用 `ALTO_LOCAL_PRECOMPILE_V3`，旧 v2 仅有 SLH 标记，v1 均关闭。`safe-mode` 保持开启。预编译价格 SLH 60,000 gas、Falcon 10,000 gas，方法和链上 trace 见[完整报告](../docs/chain-bench/README.md)。
 
 发现旧模板的 `max-bundle-size` / `max-bundle-wait` 不被锁定的 Alto 版本识别，已清理；`max-gas-per-bundle` 才是实际 gas 上限。单笔测试顺序提交，并发测试可能把多个操作放进同一外层交易。
+
+## v4：ML-DSA-44
+
+v4 在独立的 `.runtime/build/v4/` 构建，复用 v3 的源代码准备流程，再添加 `precompile/v4/`。mldsa-native 固定提交与归档校验和与 crypto-bench 一致；构建时从源码生成 ARM64 优化静态库，并执行上游功能测试、KAT、本仓库正负例、gas 边界、分叉与 fuzz 测试。当前整个客户端仍限定 macOS arm64，不能据此宣称支持 Linux Intel。
+
+```bash
+./tools/one-box bundler build
+./tools/one-box build --v4
+./tools/one-box --name devnet-v4 init --v4
+./tools/one-box --name devnet-v4 bundler up --port 14367
+./tools/erc4337-wallet test devnet-v4 --version v4
+./tools/one-box --name devnet-v4 down
+```
+
+配置标记 `pq_precompile=4`，默认 RPC/P2P 各加 30。v4 沿用同一个 `pqTime`，同时启用 SLH `0x0101`、Falcon `0x0102`、ML-DSA `0x0103`；没有增加第二个 PQ 硬分叉。v1–v3 的独立二进制、环境和密钥保留。Alto 根据标记仅在 v4 额外识别 `0x0103`，保持 safe-mode；它是本地实验扩展，不是公共 Bundler 的通用支持。
+
+ML-DSA 输入固定 `publicKey[1312] || userOpHash[32] || signature[2420]`，采用 FIPS 204 Pure、空 context。返回 32 bytes 的 0/1，长度或签名不合法返回 0。定价与完整 gas 见[链路报告](../docs/chain-bench/README.md)。

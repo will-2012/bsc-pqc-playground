@@ -1,0 +1,102 @@
+{
+  "checkedAt": "2026-10-27T08:21:44.885Z",
+  "profile": "mldsa-v4",
+  "genesisHash": "0x3614f46cb1244a05b5607a5c41fbd64906a3e09a885ccefee042e6aefe61add8",
+  "entryPoint": "0x9d6e2227a6e717a49a06d70259e9e08ea449863d",
+  "factory": "0xc5112a6100c6c10cc061b36dfcd23ecfd26ab933",
+  "verifier": "0x88eacc0e03865efd60b36049ddbe74cefdf8a2a7",
+  "safeMode": true,
+  "verifierGasEstimate": "175177",
+  "validMessages": 3,
+  "verifierNegativeCases": 5,
+  "crossImplementationDirections": 2,
+  "independentFips204Kats": 1,
+  "signatureBytes": [
+    2420,
+    2420,
+    2420
+  ],
+  "wrongSignatureRejected": true,
+  "tamperedCallRejected": true,
+  "wrongChainRejected": true,
+  "replayRejected": true,
+  "directEoaRejected": true,
+  "profileMismatchRejected": true,
+  "created": {
+    "id": "4547558d20146aa4bc3f05ad",
+    "address": "0xA18e9cA0701E48c6e006B6E0d7889E0189FC4d12",
+    "publicKey": "0x2d06944cc4bcdf0a8385bce47b1b64a42f5957449994bfc735c1e5989df80a45f1be41a9ab6b8780950a4158591a1e44fb4069d264cf7bad2d90d2a49aac29523ca033155d7aef47fa2ab4a041b5cad877b982a547515b43c1518518602d423aa46e81386527dbfb702400d4c51d92351dc49cde08d476f4d03b497bf1bcac64736a7dfc8fc7d7c4dd9751c6ebce3ee4395af3aeeda03bd6038cec0edde9d6ebcc6736dd1dab66173a8d9a9a858c78219c720ec8ae03091ee69658264c3ff5afb204a0b077eca355883170c9d847b8421217ebd98174d2e155155b8945766b00d3a63b42235aa9233266b6b9de7959e29210ba93a48b4fdff7d7cf6c90eedcd6c927751d497ed5a08b0bbecc029eee967335ba71c6186ae60c77978a3cadb18fd7b40bbf1bfb6f3e8402c9208915b953afe91c1568b3d54a938cd0ea85f26d32362897b0172e3aef5fc041973a84f9fc740fb640b2362835ebc7eee13b59ab37bcb6a54a9ac2cbb257de644b85df163d86157e11f797557aa9320cb445c5e0f3c156e1581c2f04bcadc171195ba52532f9250b706a67f61324b96351281daecbb63f31bb6f97bc7fad03ace86c324361f24b59162b541966d4348287f8e355bbe5032c88092d023923320788198e0f760c7a130aa8b8fdb9bf9fb50ed435a541d712af2e4367570f50249800043e2f9a3411edc6cd6b7a8a8c8f32f522b2548e0d5f53bf42634f991bae10b8e18bba8509890041526b456fb7ac40c2daaec640d15de76193f811840cb9828b806b1037e46c444845b31b04327d27dfeda6338e00773dee0de1507013fa962eb0996db828835f7ebc0a06043a90ba6241cc9fcbe45467300708c081108d6890738cce836dec289fa5d200e446a28d0a16834faf4665a3b0e3b1e6ef4d4ee1997c721cd60ae04d0aa1e4cb30c67c24a098f66566620c45d3b7998699baf164e28962c26260aa09e540a8175e51597cc877bb57bebcbd949d41080169bc5d3053e0c3162e79a72c50b6a47b8fe2470690a6aee7cefd18621cb838ed49d33007a9e5d762b8bf583037aee1de1e73dcfede982a38eac1659f7edac100196649004f2cb5c23da923f19e73727a76585057bde87fdb99c392cc2e5a522decb670b7891037f2efcf825dc0416a2658ace9d7bd2b505997f40be82b9097f870cb8e6b0b492a9714764ded92cd6ee0d926f67f25bb61fd3d372e578287febe70a14b99447239b6dbf7b635ee9820bcea84ef2788a57dd3221fccd5b333535518b99e82b9ccfff7d2196ee9d9ab51067539a78d5d349eb3c345d82e842a9ea5b24a91ddaad936ab8304c27bfd3d35be15bdd5433483c39b68b681ec8d1ce8dd4d6f4e6990d4ea7de169fef50e6916340b828b8dcc080c0f30955c82608ea9baa64021e69f23ddc960e4e43cacf46cde0e72df59742d180b8000b44f463efcc24da4610e7f1188e6cdc0604dd028b82c8cecd48443c313c902d81edbe44d9aa99f538d7ab7bc93b62da6ea9fd4ef8f21a606222a9899ea1c0665912140cdbccc232225504300b95a06ecedd66df9bd834d3c5771296c45df5f13efc5e1ba614a8f2356a2aafebb84f2e96e74ac4e4ea5b2b362f9ce759e32a6ccab709c19ed1c59a5368f2a92a3b0bfd39d3af23ccd39bada1a96b433f6e1f107792776ae7cbaf78dd9d1d941e343d98798f6425d707cdef108857b672d309a494820189e421c86a7796a5b7166990ee486537f7877216e234497a3d824a9cf06bdfc656a652ec59f43c8b3dd6a613d20a6ae44c8d455f580f35cabb7f01d8db1a7e6bfe68bc4991c8fb4976833ebcdecb82069ef65ab65ca0fd40492ee93b3",
+    "userOperationHash": "0x2c9305bf3a06077ab1bd1196e200870a6818a1a66deaffc729abb4b8110c1e2d",
+    "transactionHash": "0xc46a62552798e4412964d61c4e01b93ccd251920bc03dffd6c234adfedc03717",
+    "success": true,
+    "transactionStatus": "success",
+    "blockHash": "0xbbf6fc9c8046e884c7738f0657e3e589c9f77284bbf9d01e16df0e56ff208850",
+    "blockNumber": "304",
+    "actualGasUsed": "1729414",
+    "actualGasCost": "1729414000000000",
+    "outerTransactionGas": "1674119",
+    "outerGasPrice": "1200000000",
+    "outerTransactionCost": "2008942800000000",
+    "verificationGasLimit": "2077860",
+    "signatureBytes": 2420,
+    "packedUserOperationBytes": 4480
+  },
+  "transferred": {
+    "userOperationHash": "0x8decdc212ec1636f6cffa3f70f0515b68bb53b56ac1648e5a4023cbed5d30f26",
+    "transactionHash": "0x9bb1a4dd37f734faac75edddd7e46bfb6cfda77851387da91889b84134baf560",
+    "success": true,
+    "transactionStatus": "success",
+    "blockHash": "0xced81310d3860b6c44e084929f68d547b2c1eda5bfd45685444ab6c2ecdeb6d0",
+    "blockNumber": "307",
+    "actualGasUsed": "284123",
+    "actualGasCost": "284123000000000",
+    "outerTransactionGas": "232121",
+    "outerGasPrice": "1200000000",
+    "outerTransactionCost": "278545200000000",
+    "verificationGasLimit": "192605",
+    "signatureBytes": 2420,
+    "packedUserOperationBytes": 3040
+  },
+  "counter": {
+    "userOperationHash": "0x112f1b2a5b2bf5d190dad4193a27e249ced677aa1d75a6a593088182512e04bd",
+    "transactionHash": "0xf992a0f253e7cf6126ed553640673eb7feb55f5baf3b95c3a28e0a371da8bf00",
+    "success": true,
+    "transactionStatus": "success",
+    "blockHash": "0xc79e4c1c1bb4ef9fcfab21f49de908e2b9b94defdfb7c5658cd9adcb64d7a1f9",
+    "blockNumber": "309",
+    "actualGasUsed": "330861",
+    "actualGasCost": "330861000000000",
+    "outerTransactionGas": "279195",
+    "outerGasPrice": "1200000000",
+    "outerTransactionCost": "335034000000000",
+    "verificationGasLimit": "192605",
+    "signatureBytes": 2420,
+    "packedUserOperationBytes": 3072
+  },
+  "nodes": [
+    {
+      "node": 0,
+      "createBlock": "0xbbf6fc9c8046e884c7738f0657e3e589c9f77284bbf9d01e16df0e56ff208850",
+      "transferBlock": "0xced81310d3860b6c44e084929f68d547b2c1eda5bfd45685444ab6c2ecdeb6d0",
+      "counterBlock": "0xc79e4c1c1bb4ef9fcfab21f49de908e2b9b94defdfb7c5658cd9adcb64d7a1f9",
+      "count": "1",
+      "caller": "0xA18e9cA0701E48c6e006B6E0d7889E0189FC4d12"
+    },
+    {
+      "node": 1,
+      "createBlock": "0xbbf6fc9c8046e884c7738f0657e3e589c9f77284bbf9d01e16df0e56ff208850",
+      "transferBlock": "0xced81310d3860b6c44e084929f68d547b2c1eda5bfd45685444ab6c2ecdeb6d0",
+      "counterBlock": "0xc79e4c1c1bb4ef9fcfab21f49de908e2b9b94defdfb7c5658cd9adcb64d7a1f9",
+      "count": "1",
+      "caller": "0xA18e9cA0701E48c6e006B6E0d7889E0189FC4d12"
+    },
+    {
+      "node": 2,
+      "createBlock": "0xbbf6fc9c8046e884c7738f0657e3e589c9f77284bbf9d01e16df0e56ff208850",
+      "transferBlock": "0xced81310d3860b6c44e084929f68d547b2c1eda5bfd45685444ab6c2ecdeb6d0",
+      "counterBlock": "0xc79e4c1c1bb4ef9fcfab21f49de908e2b9b94defdfb7c5658cd9adcb64d7a1f9",
+      "count": "1",
+      "caller": "0xA18e9cA0701E48c6e006B6E0d7889E0189FC4d12"
+    }
+  ]
+}

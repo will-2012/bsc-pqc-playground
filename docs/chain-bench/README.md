@@ -1,153 +1,148 @@
-# ERC-4337 PQ 链路对比：v1 / v2 / v3
+# ERC-4337 PQ 链路对比：v1 / v2 / v3 / v4
 
-2026-10-27，macOS / Apple M1 Pro 本地实测。v1 是 SLH 的 Solidity 完整验签；v2 是 SLH 原生预编译；v3 新增 Falcon-512 原生预编译。原有 v1、v2 环境和归档数据保留，默认仍为 v1。
+2026-10-27，macOS / Apple M1 Pro 本地实测。v1 为 SLH Solidity 验签；v2 为 SLH 原生预编译；v3 为 Falcon-512 预编译；v4 新增 ML-DSA-44 预编译。默认仍为 v1，各版本环境、身份与归档结果独立保留。
 
-v3 的结果是：转账更省 gas，但当前账户实现需要存储更大的公钥，创建账户反而更贵。原生验签快，并不意味着完整交易、钱包或 Bundler 都按同样倍数变快。
+v4 已跑通签名、Bundler、三验证者、开户和转账。转账平均 232,225 gas，约为原生 EOA 的 11.06 倍；比同链 Falcon 增加 36.81%，比同链 SLH 减少 32.61%。验签 CPU 较低不代表完整交易同样便宜，公钥存储和签名 calldata 都要付费。
 
 ## 完整交易 gas
 
-每版取三个独立账户，先创建，再各转出 0.01 BNB。EOA 基线是三笔无 calldata 的原生 BNB 转账。下表使用真实外层交易收据的 `gasUsed`，每笔交易包含一个操作，平均值取整。
+最新对照来自同一个 devnet-v4、EntryPoint v0.7 和 Alto。每种算法取三个独立账户，先创建，再各转出 0.01 BNB；顺序提交，实际每笔外层交易一个操作。EOA 基线为三笔无 calldata、向已存在无代码地址发送的原生 BNB 转账。
 
-| 路径 | 操作 | 平均外层 gas | 相对 EOA 转账 | 最低–最高 gas |
+| 同链路径 | 操作 | 平均外层 gas | 相对 EOA 转账 | 最低–最高 gas |
 | --- | --- | ---: | ---: | ---: |
 | 原生 ECDSA EOA | 转账 | 21,000 gas | baseline | 21,000–21,000 gas |
-| v1：SLH / Solidity | 创建账户 | 6,683,222 gas | 318.25 倍 | 6,502,632–6,791,680 gas |
-| v1：SLH / Solidity | 已部署账户转账 | 5,998,498 gas | 285.64 倍 | 5,736,926–6,237,303 gas |
-| v2：SLH / 预编译 | 创建账户 | 745,081 gas | 35.48 倍 | 745,033–745,129 gas |
-| v2：SLH / 预编译 | 已部署账户转账 | 344,610 gas | 16.41 倍 | 344,340–344,850 gas |
-| v3：Falcon / 预编译 | 创建账户 | 1,339,768 gas | 63.80 倍 | 1,339,768–1,339,768 gas |
-| v3：Falcon / 预编译 | 已部署账户转账 | 169,758 gas | 8.08 倍 | 169,729–169,792 gas |
+| SLH v2 | 创建账户 | 745,113 gas | 35.48 倍 | 745,069–745,153 gas |
+| SLH v2 | 已部署账户转账 | 344,590 gas | 16.41 倍 | 344,520–344,670 gas |
+| Falcon v3 | 创建账户 | 1,339,773 gas | 63.80 倍 | 1,339,744–1,339,819 gas |
+| Falcon v3 | 已部署账户转账 | 169,741 gas | 8.08 倍 | 169,729–169,753 gas |
+| ML-DSA-44 v4 | 创建账户 | 1,674,235 gas | 79.73 倍 | 1,674,179–1,674,311 gas |
+| ML-DSA-44 v4 | 已部署账户转账 | 232,225 gas | 11.06 倍 | 232,049–232,481 gas |
 
-v1、v2 行是此前独立环境的原始样本；v3 行来自新 `devnet-v3`，没有重写旧数据。为降低环境差异，新链上另外重测了三个 SLH v2 账户：创建平均 745,097 gas，转账平均 344,570 gas。在同链对照中，Falcon 转账减少 50.73%，创建增加 79.81%。
+创建包括 CREATE2、初始化、首次验签和向自身的零金额调用，不含 faucet 充值、工厂与验证器的共享部署。表中是实际外层收据的 gasUsed；EntryPoint 对账户的 actualGasUsed / actualGasCost 是另一种口径。EOA 的 21,000 gas 已是完整转账，不应另加 ECRECOVER 的 3,000 gas。
 
-创建 gas 包含 CREATE2、账户初始化、验签和一次向自身的零金额调用；不包含 faucet 充值或共享工厂、验证器的初始部署。EOA 和 PQ 转账接收方均已存在且无代码。21,000 gas 的 EOA 转账不是一次 ECRECOVER 预编译调用，不能另加 3,000 gas。
-
-[历史 v1](v1/results.json) · [历史 v2](v2/results.json) · [v3 与 EOA](v3/results.json) · [同链 SLH 对照](v3/slh-reference.json)
-
-## 算法、编码与账户设计
-
-| 项目 | v1 / v2：SLH | v3：Falcon |
-| --- | --- | --- |
-| 算法 / 参数 | SLH-DSA-SHA2-128s，FIPS 205 Pure、空 context | 原始 Falcon-512，NTRU 格，n=512、q=12289 |
-| 私钥编码 | 64 bytes | 1,280 bytes 主体；完整编码为 1,281 bytes |
-| 公钥编码 | 32 bytes | 896 bytes 主体；完整编码为 897 bytes |
-| 签名编码 | 固定 7,856 bytes | 本实验接受 617–667 bytes 的压缩签名，头字节 0x39 |
-| 公钥在链上 | immutable，嵌入账户代码 | bytes 状态变量，896 bytes 数据加长度槽，共 29 个槽 |
-| 首次 / 转账操作编码 | 8,576 / 8,480 bytes | 本次样本 2,304 / 1,280 bytes |
-| 账户控制 | 固定公钥和验证器，无 ECDSA owner、恢复或升级接口 | 相同权限边界；公钥仅构造时写入，没有修改接口 |
-
-v3 沿用 crypto-bench 已测的 TRON 风格主体编码：省略公钥固定头 `0x09`、私钥固定头 `0x59`，原生后端在调用 Falcon API 前恢复。签名保留 `0x39` 头和随机 nonce。617–667 bytes 是本实验采用的编码与重试策略，不是所有 Falcon 实现的通用长度范围；不是 Falcon-det，也不是 FN-DSA 候选编码。
-
-Falcon 可以通俗理解为：公钥给出一个格上的关系，私钥帮助找出满足该关系的足够短的向量。签名者使用随机采样，验证者通过 SHAKE256、整数模运算和长度约束检查关系；高效验签使用 NTT。这个后端的签名实现涉及浮点采样，验签走整数运算路径。签名工程的侧信道与浮点实现质量仍需单独审查。
-
-后端固定为 [FALCON_NEON](https://github.com/GMUCERG/FALCON_NEON/tree/1d2670077d14de81a9b66b4c6494a67256342cd2)，与 crypto-bench 同源、同参数。钱包和客户端均通过 Go/cgo 调用；每次密钥生成与签名使用 OS 随机数，不调用上游测试用 `get_seed`。参考 [Falcon API 的编码说明](https://falcon-sign.info/impl/falcon.h.html)。目前此后端只在 macOS arm64 集成和验证，Linux x86_64 尚未接入。
-
-大公钥解释了创建代价：v3 要初始化 29 个存储槽，之后每次验证也要读取公钥。小签名减少外层 calldata，但没有消除这部分状态访问。当前版本先保持实现直观，尚未采用公钥放入独立代码、压缩或承诺等优化。
-
-## 原生性能与预编译定价
-
-最终轮次在本地链和 Bundler 停止后测量。使用同一组九个 32-byte 消息，轮转五轮，共 45 组测量，包含 ECRECOVER、SLH 正负例、Falcon 正负例及签名。每组 benchtime 为 1 s；GOMAXPROCS=1、锁定 OS 线程、正常 GC。主要计量为进程 CPU，另存线程 CPU、墙钟与 Go 堆分配；C 栈不计入 Go 的 B/op。
-
-| 实际原生路径 | 进程 CPU 中位值 | 相对 ECRECOVER | 固定验签价格 |
-| --- | ---: | ---: | ---: |
-| ECRECOVER 公钥恢复 | 30.01 us | baseline | 3,000 gas |
-| SLH 有效验签 | 415.60 us | 13.85 倍 | 60,000 gas |
-| Falcon 有效验签 | 9.49 us | 0.32 倍 | 10,000 gas |
-| Falcon 错误消息验签 | 9.48 us | 0.32 倍 | 10,000 gas |
-
-Falcon 原生签名 CPU 中位值为 167.66 us。该值是 Go/cgo 签名调用，排除密钥生成、进程启动、Node.js、RPC 和 Bundler；不是完整钱包接口的耗时。预编译性能比较的是实际 `Run` 路径，包含解析、验签和返回，不包含 EVM、RPC 或交易 calldata。ECRECOVER 是公钥恢复，不是已知公钥验签。
-
-两种 PQ 预编译采用同一规则：五轮中有效或无效验签最慢样本 ÷ 同轮 ECRECOVER 中位值 × 3,000 gas × 1.25，再先向上取整到 1,000 gas、后向上取整到 10,000 gas。
-
-- Falcon：9.625 us ÷ 30.013 us × 3,000 × 1.25，千位报价 2,000 gas，最终 10,000 gas。
-- SLH：429.956 us ÷ 30.013 us × 3,000 × 1.25，千位报价 54,000 gas，最终仍为 60,000 gas。
-
-Falcon 的万位取整带来了较大的额外余量。10,000 gas 不代表它在这台机器上比 ECRECOVER 更慢；这是沿用 v2 实验取整规则的结果。有效、无效及长度不符输入都按各自固定价格收费。STATICCALL trace 已确认 SLH / Falcon 实际扣除 60,000 / 10,000 gas。
-
-编译使用 `-O3 -mcpu=apple-m1 -DFALCON_LOGN=9 -DAPPLE_M1=0 -fno-fast-math -ffp-contract=off`，保留 NEON，关闭相关融合浮点特化。源归档、提交、校验和、构建脚本、客户端与测试二进制摘要随结果记录。独立 crypto-bench 的封装与测量路径不同，不能要求数值完全相等。
-
-这是单台 Mac、固定后端和有限输入支持的本地实验价，不是最坏成本的形式上界，也不是 BSC 主网价格。跨硬件、安全审计和资源上限验证仍未完成。
-
-[最终五轮数据及构建记录](v3/precompile.json) · [链上预编译扣费检查](v3/native-gas.json) · [历史 v2 原生数据](v2/precompile.json)
-
-## 同一个硬分叉启用两个预编译
-
-v3 客户端新增 `ChainConfig.pqTime`、`Rules.IsPQ`、配置兼容性检查、分叉顺序检查和 `--override.pq`。仅本地 Parlia / chain ID 714，在 Jenner 后且时间达到 `pqTime` 时同时启用以下两个地址，UBT 模式排除。普通构建不启用实验预编译。
-
-| 地址 | 验签 | 原生输入 | 返回 |
-| --- | --- | --- | --- |
-| 0x0101 | SLH-DSA-SHA2-128s | 公钥 32 bytes + 消息 32 bytes + 签名 7,856 bytes | 32-byte 0/1 |
-| 0x0102 | Falcon-512 | 公钥主体 896 bytes + 消息 32 bytes + 签名 617–667 bytes | 32-byte 0/1 |
-
-本地首次启动时，PQ 分叉安排在 Jenner 后 5 s，并持久保存。三个验证者均实测到：分叉前两个地址返回空数据；分叉后两个地址均对有效向量返回 1。EVM 与 RPC 使用同一启用条件，不修改公共分叉 map 或预热地址表，首次冷调用另承担正常地址访问成本。
-
-这里说的“同一硬分叉”是指 v3 实验客户端。独立旧 v2 客户端继续沿用原来的 Jenner 启用方式，没有修改已存在的 v2 环境或创世配置。地址不是主网标准预编译。
-
-Alto 保持 safe-mode；v3 环境识别两个 stateless 预编译地址，旧 v2 环境只识别 SLH，v1 都不启用。EntryPoint v0.7 保持不变。
-
-[三验证者真实切换记录](v3/fork-check.json)
-
-## 钱包、Bundler 与链的并发测试
-
-同一条 devnet-v3、同一个 Alto、同一 EntryPoint，先测 SLH，后测 Falcon。每版八个独立账户，五轮；每轮先准备八个操作，再同时提交，下一轮等待本轮全部成功。初始部署和充值不计入窗口，钱包签名、模拟、打包及收据等待计入端到端时间。
-
-| 指标 | SLH v2 | Falcon v3 |
+| 历史独立环境 | 创建平均 | 转账平均 |
 | --- | ---: | ---: |
-| 成功操作 | 40 笔 | 40 笔 |
-| 账户数 × 轮数 | 8 × 5 | 8 × 5 |
-| 准备阶段合计 | 115.06 s | 1.63 s |
-| 端到端总时长 | 127.15 s | 13.30 s |
-| 端到端吞吐 | 0.31 ops/s | 3.01 ops/s |
-| 提交窗口吞吐 | 3.31 ops/s | 3.43 ops/s |
-| 提交到收据 p50 | 2.37 s | 2.31 s |
-| 提交到收据 p95 | 2.58 s | 2.92 s |
-| 外层交易数 | 5 笔 | 5 笔 |
-| 最高区块 gas 利用率 | 3.79 % | 1.72 % |
-| 批量平均外层 gas / 操作 | 324,684 gas | 140,732 gas |
+| v1：SLH Solidity | 6,683,222 gas | 5,998,498 gas |
+| v2：SLH 预编译 | 745,081 gas | 344,610 gas |
+| v3：Falcon 预编译 | 1,339,768 gas | 169,758 gas |
 
-每版 40 笔操作全部成功，分别实际装入五笔外层交易、五个区块，每笔外层交易八个操作。批量 gas 按唯一外层交易去重后相加，不能把同一个 bundle 的 gas 为每个 UserOperation 重复相加。
+历史数据没有覆盖，地址、签名随机字节和测量环境不同会造成少量 gas 差异。v1 使用相同 SLH 参数，在 Solidity 中完成算法，仅调用已有 SHA-256 预编译。
 
-准备阶段包含密钥与账户检查、stub 签名、估算、正式签名和本地验签。SLH 当前钱包使用 noble JavaScript，Falcon 使用原生 Go helper，两版实现路径不同。因此端到端差异不能全归因于算法，更不能宣称链吞吐提升近十倍。排除准备阶段后，提交窗口的吞吐和收据等待接近，主要受当前 Bundler 调度和出块等待影响。
+[最新 ML-DSA 与 EOA](v4/results.json) · [同链 Falcon](v4/falcon-reference.json) · [同链 SLH](v4/slh-reference.json) · [历史 v1](v1/results.json) · [历史 v2](v2/results.json) · [历史 v3](v3/results.json)
 
-最高区块 gas 利用率只有约 3.79% / 1.72%，没有压满链。这是有限并发联通与成本测试，不是最大 TPS、长期稳定性或硬件容量结论。三验证者最终性已覆盖本次全部样本。
+## 算法、编码与公钥存储
 
-本次还确认：Alto 0.0.17 不识别旧模板的 `max-bundle-size`、`max-bundle-wait`，两项无效配置已移除。原始负载 JSON 保留测试时的配置快照，其中旧字段不表示实际生效；实际 gas 打包上限由 `max-gas-per-bundle` 控制，本轮为默认 20M gas。原有单笔报告是顺序提交得到的单操作交易，不是上述无效字段保证的。
+| 项目 | v1 / v2：SLH | v3：Falcon | v4：ML-DSA-44 |
+| --- | --- | --- | --- |
+| 原理 / 参数 | 哈希；SHA2-128s，n=16、h=63、d=7、a=12、k=14、w=16 | NTRU 格；n=512、q=12289 | 模格；k=4、l=4、q=8380417、n=256 |
+| 算法定义 | FIPS 205 Pure，空 context | 原版 Falcon-512，不是 FN-DSA 候选编码 | FIPS 204 Pure，空 context，不是旧 Dilithium 或 HashML-DSA |
+| NIST 安全类别 | 类别 1 | 类别 1 | 类别 2；不能把三者说成完全相同安全参数 |
+| 私钥编码 | 64 bytes | 1,280 bytes 主体，完整为 1,281 bytes | 2,560 bytes 展开私钥，不是 32-byte seed |
+| 公钥编码 | 32 bytes | 896 bytes 主体，完整为 897 bytes | 1,312 bytes |
+| 签名编码 | 固定 7,856 bytes | 本实验接受 617–667 bytes 压缩签名 | 固定 2,420 bytes |
+| 公钥在链上 | immutable，嵌入账户代码 | bytes 存储，29 个槽 | bytes 存储，42 个槽 |
+| 创建 / 转账操作编码 | 8,576 / 8,480 bytes | 本轮 2,304 / 1,280 bytes | 4,480 / 3,040 bytes |
+| 验证器 | v1 Solidity；v2 地址 0x0101 | 地址 0x0102 | 地址 0x0103 |
 
-[并发原始结果、分轮耗时与区块数据](v3/load.json)
+SLH 用哈希链和树验证授权，安全假设较保守，代价是大签名及较重的计算。Falcon 借助私钥进行格上的短向量采样，公钥用于验证该短向量关系；签名实现涉及浮点采样，本后端验签使用整数运算。v3 省略公钥头 0x09、私钥头 0x59，原生层恢复；签名保留 0x39 头及随机 nonce。617–667 bytes 是本实验的编码与重试策略，不是所有 Falcon 实现的统一范围。
 
-## 如何理解完整交易成本
+ML-DSA 可以理解为：公钥给出带有小噪声的模格关系；签名者用短随机向量、哈希挑战和拒绝采样，在证明掌握秘密的同时避免泄露秘密；验证者检查模运算关系、向量范围和 hint 编码。它用更大的固定签名换取较直接的整数实现与较快的签名速度，仍依赖格问题的困难性。
 
-SLH 的三笔同链转账仍受 EIP-7623 calldata floor 约束：`21,000 + 10 × (零字节数 + 4 × 非零字节数)`。预编译没有压缩 7,856-byte 签名。Falcon 的三笔转账 gas 高于各自 floor，已经主要体现账户存储读取、EntryPoint、合约调用和验签等执行成本。
+所有账户均固定 EntryPoint、公钥与验证器；无 ECDSA owner、管理员、升级、恢复或密钥修改接口。工厂将公钥与 salt 绑定 CREATE2 地址，重复创建复用已有账户。切换 profile 是创建新身份，不会自动迁移旧账户。
 
-- `outerTransactionGas` 是外层真实交易 gas，供本文比较。
-- `actualGasUsed` / `actualGasCost` 是 EntryPoint 对账户的计费，不等于外层 gas 或 Bundler 成本。
-- 价格与 gas 必须分开看。本轮 UserOperation 为 1 gwei，Bundler 外层为 1.2 gwei；三笔单操作 Falcon 转账的账户扣款合计比外层费用少约 0.0000493218 BNB，由本地测试执行账户补足。当前费率配置不能直接作为生产收费方案，不能靠提高验签 gas 掩盖这个费率差。
-- PQ 公钥只在创建时进入外层初始化参数；后续转账不重复携带公钥，但账户验证会从链上读取它并传给预编译。
+Falcon 与 ML-DSA 的公钥只在创建时进入外层初始化参数，后续转账不重复携带；但账户验证仍要从链上读取公钥并传给预编译。ML-DSA 比 Falcon 多 13 个公钥存储槽，签名也更大，所以即使二者预编译同价，ML-DSA 的创建和转账仍更贵。当前没有引入公钥代码存储、承诺或压缩优化。
 
-Falcon 的操作编码解决了本地 SLH 的大小预算问题：本次首次 / 转账为 2,304 / 1,280 bytes，低于 [ERC-7562](https://eips.ethereum.org/EIPS/eip-7562) 对 packed 且 ABI 编码操作的 8,192-byte 限制。但首次验证预算约 1,677,956 gas，高于常见公共内存池的 500,000 gas 预算；已部署账户约 144,998 gas。大小合规不等于满足所有公共内存池规则，目前仍使用适配本地预编译的 Bundler。
+ML 后端固定为 [mldsa-native v2.0.0](https://github.com/pq-code-package/mldsa-native/tree/834a90d5e846ffa1e1611bd24e160bb2e9b86d35)，使用 clang -O3 -mcpu=apple-m1、OPT=1、AUTO=1 的 ARM64 优化库，与 crypto-bench 同源。算法依据为 [FIPS 204](https://csrc.nist.gov/pubs/fips/204/final)；SLH 为 [FIPS 205](https://csrc.nist.gov/pubs/fips/205/final)。Falcon 固定 [FALCON_NEON 提交](https://github.com/GMUCERG/FALCON_NEON/tree/1d2670077d14de81a9b66b4c6494a67256342cd2)，编码参考 [Falcon API](https://falcon-sign.info/impl/falcon.h.html)。本轮使用的 SLH 是固定 Go 后端，Falcon / ML-DSA 是 Go/cgo 原生后端；这些结果反映实际客户端实现，不是所有算法最佳实现的排名。
 
-## 结构、验收与复现
+## 五轮原生 CPU 与预编译定价
 
-v1、v2、v3 是实验链路版本，不是 EntryPoint 或算法标准的版本。入口 `--version v1/v2/v3`；旧 `--profile` 继续兼容，冲突参数直接拒绝。
+本地链和 Bundler 停止后测量。三种 PQ 算法使用同一组九个 32-byte 消息，密钥在计时外随机生成。五轮轮转共 70 组测量，每组 benchtime 为 1 s；GOMAXPROCS=1、锁定 OS 线程、正常 GC。记录实际 Go precompile Run 的进程 CPU，另存线程 CPU、墙钟、Go 分配；C 栈不在 Go B/op 中。这里不包含 RPC、钱包 helper 启动、calldata 或账户存储。
+
+| 实际原生路径 | 进程 CPU 中位值及相对基线 | 固定验签价格 |
+| --- | ---: | ---: |
+| ECRECOVER 公钥恢复 | 28.59 us, baseline | 3,000 gas |
+| SLH 有效验签 | 420.62 us, 14.71 倍 baseline | 60,000 gas |
+| Falcon 有效验签 | 8.98 us, 0.31 倍 baseline | 10,000 gas |
+| ML-DSA-44 有效验签 | 15.51 us, 0.54 倍 baseline | 10,000 gas |
+
+钱包使用的同一原生签名 API：ML-DSA-44 中位值 51.01 us，Falcon 为 168.00 us，包含签名随机数与 Go 分配，不包含 keygen 和 helper 进程启动。ECRECOVER 是公钥恢复，不能把这一列当成 ECDSA 签名时间；也不能直接等同于 crypto-bench 的 ECDSA Verify 基线。
+
+沿用 v2 / v3 的规则：所有有效和无效验签路径中，取五轮最慢一次的 CPU，除以 ECRECOVER CPU 中位值，乘 3,000 gas 和 1.25 余量；先向上取整到 1,000 gas，再到 10,000 gas。
+
+| 算法 | 最慢已测验签 CPU | 取整到 1,000 gas | 最终实验定价 |
+| --- | ---: | ---: | ---: |
+| SLH | 429.657 us | 57,000 gas | 60,000 gas |
+| Falcon | 9.151 us | 2,000 gas | 10,000 gas |
+| ML-DSA-44 | 15.585 us | 3,000 gas | 10,000 gas |
+
+ML-DSA / Falcon 同价来自既有的 10,000-gas 取整粒度，不代表计算量完全相同，也不是把较便宜的 CPU 人为说成需要 10,000 gas。价格仅为本地实验规则；跨硬件和更广的恶意输入上界尚未评估。有效、改签名、改消息、全零签名均纳入测量；长度错误直接拒绝。SLH / Falcon 原价保持不变。
+
+ML 预编译输入固定 3,764 bytes：publicKey[1312] || userOpHash[32] || signature[2420]。原生层负责 Pure ML-DSA 消息封装，context 为空。有效输出 32 bytes 的 1；错误长度或签名输出 32 bytes 的 0，不修改输入。合约在调用失败、输出长度不对或结果不为 1 时返回 false，不回退到其他算法。gas 边界测试确认少 1 gas 失败，恰好 10,000 gas 成功；链上 call trace 也核实三个预编译分别实际收取 60,000 / 10,000 / 10,000 gas。
+
+[五轮原始测量、编译参数与源码校验和](v4/precompile.json) · [链上调用 gas](v4/native-gas.json) · [历史 v3 测量](v3/precompile.json)
+
+## 同链并发：Falcon v3 与 ML-DSA v4
+
+同一 devnet-v4 和 Bundler，先 Falcon、后 ML-DSA；每版 8 个独立账户、5 轮，共 40 个操作。账户创建和充值在负载计时外。每轮先准备 8 个操作，再从不同 sender 并发提交；同一个 sender 不并发争用 nonce。
+
+| 指标 | Falcon v3 | ML-DSA-44 v4 |
+| --- | ---: | ---: |
+| 操作数 | 40 笔 | 40 笔 |
+| 端到端耗时 | 11.59 s | 14.61 s |
+| 准备阶段合计 | 1.62 s | 1.32 s |
+| 提交窗口合计 | 9.97 s | 13.29 s |
+| 端到端完成速率 | 3.45 ops/s | 2.74 ops/s |
+| 提交到收据 p50 | 1.81 s | 2.83 s |
+| 提交到收据 p95 | 2.30 s | 2.92 s |
+| 外层交易 / 区块数 | 5 / 5 | 5 / 5 |
+| 最高区块 gas 利用率 | 1.73 % | 2.43 % |
+| 平均外层 gas / 操作 | 140,502 gas | 204,247 gas |
+
+80 笔操作全部成功，两版各装入 5 笔外层交易，每笔 8 个操作。批量 gas 按唯一交易 hash 去重，不把一个 bundle 的 gas 为每个操作重复相加。收款方总余额变化也已核对。
+
+本轮最高区块利用率不足 2.5%，没有压满链。这是有限负载的联通、延迟和费用测试，不能据此推导最大 TPS。ML 原生签名更快，但端到端仍受 helper 启动、账户读取、估算、Bundler 调度和出块等待影响；本次提交等待的差异不能全归因于算法。两种钱包均使用 Go/cgo helper，没有把 JS 与原生签名时间混为一谈。
+
+旧 [v2 / v3 并发结果](v3/load.json) 保留；当时 SLH 使用 Noble JavaScript 签名，不能用其端到端差异宣称算法或链吞吐提升。当前 Alto 0.0.17 的实际默认 max-gas-per-bundle 为 20M gas；旧 max-bundle-size / max-bundle-wait 无效字段已从模板移除，旧 JSON 快照中的同名字段不表示生效。
+
+[本轮全部收据与分轮耗时](v4/load.json)
+
+## 分叉、交易成本与公共 Bundler 边界
+
+v4 继续使用 v3 引入的 pqTime，三个预编译在同一个时间点启用，没有新增另一个 PQ 分叉。包含 Rules、配置兼容性、分叉顺序与 override；仅 chain ID 714、Parlia、Jenner 后启用，排除 UBT。普通构建不启用；EVM 与 RPC 使用同一注册条件。全新环境的三个验证者均实测：分叉前无这三个预编译，分叉后有效向量全部通过。
+
+Alto 保持 safe-mode，根据环境标记启用本地预编译识别：v2 仅 SLH，v3 加 Falcon，v4 再加 ML-DSA。未知地址没有通用放行。当前实现未改变公共预编译地址表的预热规则，完整 gas 测量已包含实际调用开销。
+
+SLH 转账仍受到 EIP-7623 calldata floor 限制：21,000 + 10 × (零字节数 + 4 × 非零字节数)。预编译不会压缩签名。最新 ML 转账的外层 calldata 为 3,140 bytes，floor 为 126,710–127,790 gas，实际为 232,049–232,481 gas；它高于 floor，还承担公钥存储读取、EntryPoint 与合约执行等成本。Falcon 同样高于各自 floor。
+
+ML 的 packed 且 ABI 编码 UserOperation 创建 / 转账为 4,480 / 3,040 bytes，低于 [ERC-7562](https://eips.ethereum.org/EIPS/eip-7562) 的 8,192-byte 限制；但首次 verificationGasLimit 为 2,077,860 gas，高于常见公共内存池的 500,000-gas 验证预算，转账约 192,605 gas。Falcon 首次约 1,677,956 gas，SLH 操作大小本身超过 8,192 bytes。通过本地 Alto 不等于已满足所有公共 Bundler 规则。
+
+费用必须与 gas 分开。本轮 UserOperation 为 1 gwei，Bundler 外层交易为 1.2 gwei：三笔单操作 ML 创建的账户扣费合计比外层成本少 0.000838819 BNB；三笔 ML 转账多 0.000016346 BNB。Falcon 创建与转账也有补贴缺口。当前收费配置不能直接当作生产盈利模型，不能通过抬高密码学验签 gas 来掩盖费率差。
+
+[三个验证者的分叉前后记录](v4/fork-check.json)
+
+## 验收、结构与复现
+
+v4 通过上游 ML-DSA-44 功能测试和 KAT 摘要校验；本地覆盖 2 组密钥 × 9 个消息、签名 / 公钥 / 消息篡改、错误长度、gas 边界、分叉 / RPC / 配置兼容性、普通构建禁用及 5 s fuzz。另验证一条独立的空 context 公共 FIPS 向量，钱包与 Noble 对三个消息双向互验，避免仅用同一个后端自签自验。
+
+真实账户测试覆盖创建、转账、Counter、错误签名、调用与跨链篡改、nonce 重放、直接 EOA 越权、profile 混用拒绝和三验证者收据一致性。旧 v3 授权流程另外回归；同链 v2 / v3 各三个账户创建与转账通过。18 项环境脚本测试通过。gas 与负载样本的 31 笔外层交易在三节点均成功、区块 hash 一致，且已最终确认；重新构建的 v4 客户端与钱包 helper 均逐字节一致。历史 v1–v3 JSON、SLH 合约和各旧环境保留，没有转换旧账户。
+
+[完整 v4 验收结果](v4/validation.json) · [构建、环境与脚本记录](v4/environment.json)
 
 ```text
-contract/src/common/          原有共享账户、工厂、测试合约
-contract/src/v1/              SLH Solidity 验签
-contract/src/v2/              SLH 预编译适配器
-contract/src/v3/              Falcon 账户、工厂、预编译适配器
-erc4337-wallet/common/        通用钱包流程及账户验收
-erc4337-wallet/v1,v2,v3/      独立版本配置；v3 有原生签名与密码学验收
-one-box/precompile/v2/       保留 SLH 扩展
-one-box/precompile/v3/       Falcon 与共同 PQ 分叉扩展
-tools/chain-bench/common/     共用链路及原生性能测试流程
-tools/chain-bench/v2,v3/      版本入口和专有工具
-docs/chain-bench/v1,v2,v3/    按版本归档公开结果
+contract/src/common,v1,v2,v3,v4/  公共实现与独立版本合约
+erc4337-wallet/common/           共用钱包流程和账户验收
+erc4337-wallet/v1,v2,v3,v4/      版本配置、原生签名与算法验收
+one-box/precompile/v2,v3,v4/     原生扩展、桥接和测试
+one-box/.runtime/                忽略的密钥、链数据、日志、构建产物
+tools/chain-bench/common/        共用 gas、CPU、负载、trace、分叉检查
+tools/chain-bench/v2,v3,v4/      简单版本入口
+docs/chain-bench/v1,v2,v3,v4/    按版本保留的公开结果
 ```
 
-v3 使用独立 devnet-v3，RPC 19565 / 19567 / 19569、Alto 14357；旧环境保持原端口和部署记录。依赖固定 BSC v1.8.1（947ba1cb…）、Alto 0.0.17（1d330b71…）、EntryPoint v0.7、Solidity 0.8.23 / Paris / optimizer runs 1,000,000、Go 1.26.4、Node.js v25.9.0。
+v4 独立环境为 devnet-v4，RPC 19575 / 19577 / 19579、Alto 14367；旧环境端口不变。固定 BSC v1.8.1（947ba1cb…）、Alto 0.0.17（1d330b71…）、EntryPoint v0.7、Solidity 0.8.23 / Paris / optimizer runs 1,000,000、Go 1.26.4。原生代码使用 OS 随机数，不使用上游测试 RNG。当前整个 PQ 客户端仅在 macOS arm64 验证，Linux Intel 尚未接入。
 
-已通过：两个独立 Bouncy Castle 公共 KAT、随机签名与编码负例、gas 边界、共用分叉前后与 RPC 条件、普通构建禁用、params 测试，以及 5 s fuzz。真实创建、转账、Counter、签名 / 调用 / 跨链篡改、nonce 重放、直接 EOA 越权和三验证者一致性均通过。18 项环境脚本测试通过，v1 创建 / 转账回归通过；v2 重构建二进制与旧环境逐字节一致。原始 v1、v2 JSON 和 SLH 合约字节码保留；原始 v2 测量中的 `one-box/precompile/...` 路径现在对应 `one-box/precompile/v2/...`，文件内容未改。
+入口仍支持 --version v1/v2/v3/v4，默认 v1；旧 --profile 兼容，冲突选择拒绝。v4 复用旧构建准备逻辑，在独立 build/v4 中应用扩展，不覆盖原二进制或 submodule。v4-only 构建也包含 Falcon 后端，旧 v3 helper 不存在时可调用 v4 helper 的相同 Falcon 实现进行对照。
 
-复现步骤见 [chain-bench 工具](../../tools/chain-bench/README.md)、[开发链](../../one-box/README.md)、[钱包](../../erc4337-wallet/README.md) 和 [合约](../../contract/README.md)。所有密钥、数据库、编译副本和完整运行日志都在 Git 忽略的 `one-box/.runtime/`，不进入报告。
+复现见 [chain-bench](../../tools/chain-bench/README.md)、[开发链](../../one-box/README.md)、[钱包](../../erc4337-wallet/README.md) 和 [合约](../../contract/README.md)。Markdown 为内容源，report.html 由脚本生成。密钥、数据库、编译副本和完整运行日志不进入 Git 或报告。
 
-PQ 只保护本实验的用户账户授权；外层交易、共识和 P2P 仍沿用原有密码学。实现未经独立安全审计，当前不作为生产钱包或主网升级方案。
+PQ 只保护这里的用户账户授权；外层交易、共识和 P2P 仍沿用原有密码学。算法已标准化不表示本实验经过独立安全审计或实现认证。

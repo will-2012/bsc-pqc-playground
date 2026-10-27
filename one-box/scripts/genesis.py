@@ -135,7 +135,7 @@ def generate(work, cfg, validators, accounts):
     forks = json.loads((ROOT / "one-box/forks.json").read_text())
     for fork in forks["passed"] + forks["recent"]:
         result["config"][fork + "Time"] = 0  # First up applies persisted relative-time overrides.
-    if cfg.get("pq_precompile") == 3:
+    if cfg.get("pq_precompile") in (3, 4):
         result["config"]["pqTime"] = 0
     result["config"]["depositContractAddress"] = "0x" + "00" * 20
     result["config"]["blobSchedule"] = {

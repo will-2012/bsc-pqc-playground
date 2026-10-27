@@ -29,7 +29,7 @@ git submodule update --init
 ./tools/one-box down
 ```
 
-合约说明见 [contract 文档](contract/README.md)。合约和钱包按 `common/`、`v1/`、`v2/`、`v3/` 组织：公共实现复用，版本差异独立。保留 ECDSA 基线，以及两个互不替换的 SLH-DSA profile：v1 为 Solidity 验签（默认），v2 为新增预编译。
+合约说明见 [contract 文档](contract/README.md)。合约和钱包按 `common/`、`v1/`、`v2/`、`v3/`、`v4/` 组织：公共实现复用，版本差异独立。保留 ECDSA 基线，以及两个互不替换的 SLH-DSA profile：v1 为 Solidity 验签（默认），v2 为新增预编译。
 
 运行 v1 PQ 全链路（Solidity 验签）：
 
@@ -48,3 +48,5 @@ v2 的独立客户端构建和环境准备见 [one-box](one-box/README.md#v2-预
 本机密码学性能对比见 [tools/crypto-bench](tools/crypto-bench/README.md)，实验报告保存在 `docs/crypto-bench/`。
 
 Falcon-512 v3 的预编译、共同 PQ 硬分叉、钱包与并发测试见 [HTML 对比报告](docs/chain-bench/report.html)；[运行步骤](tools/chain-bench/README.md#v3falcon-512-与同链对照)。
+
+ML-DSA-44 v4 沿用共同 PQ 硬分叉，新增预编译、独立账户和钱包 profile；[运行步骤](tools/chain-bench/README.md#v4ml-dsa-44)与[链路报告](docs/chain-bench/report.html)。

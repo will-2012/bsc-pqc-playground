@@ -1,9 +1,13 @@
+import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-const binary=fileURLToPath(new URL('../../one-box/.runtime/build/v3/pq-wallet',import.meta.url));
+const original=fileURLToPath(new URL('../../one-box/.runtime/build/v3/pq-wallet',import.meta.url));
+const current=fileURLToPath(new URL('../../one-box/.runtime/build/v4/pq-wallet',import.meta.url));
+// A v4-only checkout also builds the same pinned Falcon backend.
+const binary=fs.existsSync(original)?original:current;
 // Secret material is sent over stdin, never command-line arguments.
 export function native(action,fields={}){
-  const request=Object.fromEntries(Object.entries({action,...fields}).map(([k,v])=>[k,typeof v==='string'&&v.startsWith('0x')?v.slice(2):v]));
+  const request=Object.fromEntries(Object.entries({action,...fields,...(binary===current?{algorithm:'falcon'}:{})}).map(([k,v])=>[k,typeof v==='string'&&v.startsWith('0x')?v.slice(2):v]));
   const result=JSON.parse(execFileSync(binary,[],{input:JSON.stringify(request),encoding:'utf8',maxBuffer:1024*1024}));
   for(const k of ['publicKey','secretKey','signature'])if(result[k])result[k]='0x'+result[k];
   return result;

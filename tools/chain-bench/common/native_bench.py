@@ -18,7 +18,7 @@ from devnet import command, read, write, digest  # noqa: E402
 
 
 def main(version):
-    backend = importlib.import_module("precompile" if version == 2 else "precompile_v3")
+    backend = importlib.import_module("precompile" if version == 2 else f"precompile_v{version}")
     SOURCE, WORK = backend.SOURCE, backend.WORK
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rounds", type=int, default=5)
@@ -34,13 +34,15 @@ def main(version):
         except ProcessLookupError:
             continue
         parser.error("Stop local devnets before native performance measurement")
-    if version == 3:
+    if version >= 3:
         os.environ['CGO_CFLAGS_ALLOW']='-ffp-contract=off|-mcpu=apple-m1'
     binary = WORK / "vm.test"
     log = WORK / "native-bench.txt"
     command(["go", "test", "-mod=readonly", "-tags", "pqprecompile", "-buildvcs=false", "-trimpath", "-c", "-o", binary, "./core/vm"],
             WORK / "build.log", SOURCE, timeout=600)
     names = ["SLHV2ECRecover", "SLHV2Valid", "SLHV2Invalid", "SLHV2ZeroSignature", "FalconV3Valid", "FalconV3Invalid", "FalconV3WrongMessage", "FalconV3ZeroSignature", "FalconV3Sign"]
+    if version == 4:
+        names += ["MLDSAV4"+kind for kind in ["Valid","Invalid","WrongMessage","ZeroSignature","Sign"]]
     if version == 2:
         names = names[:4]
     rows = []
@@ -70,9 +72,9 @@ def main(version):
                      "threadMedianUs": statistics.median(r["threadNsPerOp"] for r in rows if r["name"] == name)/1000} for name in names}
     baseline = summary["SLHV2ECRecover"]["medianUs"]
     pricing = {}
-    for family in (['SLH'] if version == 2 else ['SLH','Falcon']):
-        prefix = 'SLHV2' if family == 'SLH' else 'FalconV3'
-        worst = max(value['maxUs'] for name,value in summary.items() if name.startswith(prefix) and name not in ['SLHV2ECRecover','FalconV3Sign'])
+    for family in (['SLH'] if version == 2 else ['SLH','Falcon','MLDSA'] if version == 4 else ['SLH','Falcon']):
+        prefix = 'SLHV2' if family == 'SLH' else 'MLDSAV4' if family == 'MLDSA' else 'FalconV3'
+        worst = max(value['maxUs'] for name,value in summary.items() if name.startswith(prefix) and name not in ['SLHV2ECRecover','FalconV3Sign','MLDSAV4Sign'])
         price = math.ceil((3000 * worst / baseline * 1.25) / 1000) * 1000
         pricing[family] = {'ecRecoverGas':3000, 'worstMeasuredUs':worst, 'margin':1.25,
             'recommendedGas':price, 'roundingGas':1000, 'selectedGas':math.ceil(price/10000)*10000,

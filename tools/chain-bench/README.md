@@ -2,7 +2,7 @@
 
 调用 `erc4337-wallet` 的同一 API，顺序创建独立账户，再各转账 0.01 BNB。算法 CPU 的多方案对比仍在 `tools/crypto-bench/`；这里比较真实客户端预编译和链上交易。
 
-`run` 是公共入口，`common/run.mjs` 是两版共用的链上测量流程，通过 `--version v1/v2` 选择钱包。`v2/` 只放 v2 独有的原生性能测试和向量生成器。v1 没有独有的压测实现，因此不建立空目录或复制脚本。
+`run` 是公共入口，`common/run.mjs` 是各版共用的链上测量流程，通过 `--version v1/v2/v3/v4` 选择钱包。`v2/` 只放 v2 独有的原生性能测试和向量生成器。v1 没有独有的压测实现，因此不建立空目录或复制脚本。
 
 ## v1：Solidity
 
@@ -77,3 +77,28 @@ v2 / v3 原生性能入口共用 `common/native_bench.py`，统一五轮、CPU �
 负载脚本先测同链 SLH v2，再测 Falcon v3。第二、三个参数为账户数和轮数；默认 8 / 5。不同账户在每轮并发提交，按唯一外层交易统计 gas。账户准备不计入负载窗口；签名、估算和收据等待分别记录。结果位于 `.runtime/<环境>/wallet/load-v2-v3.json`；不是最大 TPS 测试。
 
 `max-bundle-size`、`max-bundle-wait` 不是当前 Alto 0.0.17 的有效选项，已从模板和加载逻辑中清理；单笔 gas 测试依靠顺序提交，不依靠包内数量限制。v3 的默认实际打包 gas 上限为 Alto 的 20M gas。
+
+## v4：ML-DSA-44
+
+```bash
+./tools/one-box bundler build
+./tools/one-box build --v4
+# 先停止所有本地链和 Bundler，再测五轮原生 CPU
+python3 tools/chain-bench/v4/precompile.py
+./tools/one-box --name devnet-v4 init --v4
+# 首次启动前可在另一终端运行：
+# python3 tools/chain-bench/v4/fork-check.py devnet-v4
+./tools/one-box --name devnet-v4 bundler up --port 14367
+./tools/erc4337-wallet test devnet-v4 --version v4
+./tools/chain-bench/run devnet-v4 3 --version v4 --ecdsa-baseline
+./tools/chain-bench/run devnet-v4 3 --version v3
+./tools/chain-bench/run devnet-v4 3 --version v2
+node tools/chain-bench/v4/load.mjs devnet-v4 8 5
+node tools/chain-bench/v4/trace.mjs devnet-v4
+./tools/one-box --name devnet-v4 check
+./tools/one-box --name devnet-v4 down
+```
+
+v4 的定价测试继续使用 `common/native_bench.py`，增加 ML-DSA 正负例与签名，五轮共 70 组测量。负载测试比较同链 Falcon v3 与 ML-DSA v4；两者都使用 Go/cgo helper，分别记录准备、提交和收据时间。每轮不同 sender 并发，仍是有限负载测试，不代表吞吐上限。trace 校验三个预编译的实际调用 gas。
+
+公开结果归档在 `docs/chain-bench/v4/`，旧版本结果不覆盖。运行数据、密钥、构建产物仍全部位于 `.runtime/`。
