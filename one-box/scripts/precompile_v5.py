@@ -9,23 +9,30 @@ SOURCE=WORK/'bsc'
 BINARY=WORK/'geth'
 NATIVE=BOX/'precompile/v5'
 
-def build():
+def prepare(work=WORK):
+    source=work/'bsc'
     dependency=read(NATIVE/'dependency.json')
     base=read(BOX/'precompile/v4/dependency.json')
     if any(dependency[k]!=v for k,v in base.items()):
         raise RuntimeError('v4/v5 must use the same pinned mldsa-native backend')
     if digest(NATIVE/'testdata/mldsa65.tsv')!=dependency['public_kat']['sha256']:
         raise RuntimeError('ML-DSA-65 public KAT checksum mismatch')
-    commit=precompile_v4.prepare(WORK,levels=(44,65))
-    log=WORK/'build.log'
-    package=SOURCE/'crypto/pqmldsa'
+    commit=precompile_v4.prepare(work,levels=(44,65))
+    log=work/'build.log'
+    package=source/'crypto/pqmldsa'
     shutil.copytree(NATIVE/'native',package,dirs_exist_ok=True)
-    shutil.copy2(WORK/'mldsa/test/build/libmldsa65.a',package/'libmldsa65.a')
-    for p in NATIVE.glob('*.go'):shutil.copy2(p,SOURCE/'core/vm'/p.name)
-    shutil.copy2(NATIVE/'testdata/mldsa65.tsv',SOURCE/'core/vm/testdata/mldsa_v5.tsv')
-    p=SOURCE/'core/vm/evm.go';p.write_text(p.read_text().replace('v4Precompiles(', 'v5Precompiles('))
-    shutil.copytree(NATIVE/'wallet',SOURCE/'cmd/pq-wallet',dirs_exist_ok=True)
-    command(['gofmt','-w',*package.glob('*.go'),*list((SOURCE/'core/vm').glob('*v5*.go'))],log,SOURCE)
+    shutil.copy2(work/'mldsa/test/build/libmldsa65.a',package/'libmldsa65.a')
+    for p in NATIVE.glob('*.go'):shutil.copy2(p,source/'core/vm'/p.name)
+    shutil.copy2(NATIVE/'testdata/mldsa65.tsv',source/'core/vm/testdata/mldsa_v5.tsv')
+    p=source/'core/vm/evm.go';p.write_text(p.read_text().replace('v4Precompiles(', 'v5Precompiles('))
+    shutil.copytree(NATIVE/'wallet',source/'cmd/pq-wallet',dirs_exist_ok=True)
+    command(['gofmt','-w',*package.glob('*.go'),*list((source/'core/vm').glob('*v5*.go'))],log,source)
+    return commit
+
+def build():
+    commit=prepare()
+    package=SOURCE/'crypto/pqmldsa'
+    log=WORK/'build.log'
     command(['go','test','-mod=readonly','-tags','pqprecompile','./core/vm','-run','Test(MLDSAV5|MLDSAV4|FalconV3|SLHV2)','-count=1'],log,SOURCE,timeout=600)
     command(['go','test','-mod=readonly','./core/vm','-run','Test(SLHV2Disabled|FalconV3Disabled|MLDSAV4Disabled|MLDSAV5Disabled)','-count=1'],log,SOURCE,timeout=600)
     command(['go','test','-mod=readonly','./params','-count=1'],log,SOURCE,timeout=300)

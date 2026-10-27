@@ -57,8 +57,8 @@ export const profile = {
   keygen: () => native('keygen'),
   signDigest: (secretKey,message) => native('sign',{secretKey,message}).signature,
   async probe(ctx) {
-    assert([4,5].includes(ctx.config.pq_precompile),'v4 requires a compatible PQ-fork client');
-    const file=fileURLToPath(new URL(`../../one-box/.runtime/build/v${ctx.config.pq_precompile}/mldsa${ctx.config.pq_precompile===5?'44':''}-public.json`,import.meta.url));
+    assert([4,5,6].includes(ctx.config.pq_precompile),'v4 requires a compatible PQ-fork client');
+    const file=fileURLToPath(new URL(`../../one-box/.runtime/build/v${ctx.config.pq_precompile}/mldsa${ctx.config.pq_precompile>=5?'44':''}-public.json`,import.meta.url));
     const {input}=JSON.parse(fs.readFileSync(file,'utf8'));
     for(let i=0;i<ctx.config.validators;i++){
       const node=createPublicClient({chain:ctx.chain,transport:http(`http://127.0.0.1:${ctx.config.rpc_port+2*i}`)});

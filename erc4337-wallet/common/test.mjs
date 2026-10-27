@@ -3,14 +3,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {slh_dsa_sha2_128s as slh} from '@noble/post-quantum/slh-dsa.js';
+import {slh_dsa_sha2_128s,slh_dsa_sha2_128f} from '@noble/post-quantum/slh-dsa.js';
 import {bytesToHex, hexToBytes, createPublicClient, http, parseAbi, encodeFunctionData, parseEther} from 'viem';
 import {getUserOperationHash} from 'viem/account-abstraction';
 import {artifact, createAccount, deployment, loadIdentity, prepare, smartAccount, submit, write} from './wallet.mjs';
 import {getProfile} from '../profiles.mjs';
 
 export async function test(ctx) {
-  assert(['slh-dsa-v1', 'slh-dsa-v2'].includes(ctx.profile.id), 'This suite covers the two SLH-DSA profiles');
+  assert(['slh-dsa-v1','slh-dsa-v2','slh-dsa-v6'].includes(ctx.profile.id),'This suite covers SLH profiles');
+  const slh=ctx.profile.algorithm==='SLH-DSA-SHA2-128f'?slh_dsa_sha2_128f:slh_dsa_sha2_128s;
+  const signatureSize=ctx.profile.algorithm==='SLH-DSA-SHA2-128f'?17088:7856;
   const d = await deployment(ctx);
   const verifierContract = ctx.profile.contracts(ctx).find(([label]) => label === 'verifier')[1];
   const abi = artifact(verifierContract).abi;
@@ -20,7 +22,7 @@ export async function test(ctx) {
   let sample;
   for (const message of [new Uint8Array(32), new Uint8Array(32).fill(255), randomBytes(32)]) {
     const signature = slh.sign(message, secretKey);
-    assert.equal(signature.length, 7856);
+    assert.equal(signature.length, signatureSize);
     assert(slh.verify(signature, message, publicKey));
     sample = [bytesToHex(publicKey), bytesToHex(message), bytesToHex(signature)];
     assert.equal(await verify(...sample), true);
@@ -45,7 +47,7 @@ export async function test(ctx) {
   const opensslVersion = execFileSync(openssl, ['version'], {encoding: 'utf8'}).trim();
   let independent;
   try {
-    execFileSync(openssl, ['genpkey', '-algorithm', 'SLH-DSA-SHA2-128s', '-out', key]);
+    execFileSync(openssl, ['genpkey', '-algorithm', ctx.profile.algorithm, '-out', key]);
     fs.writeFileSync(msg, randomBytes(32), {mode: 0o600});
     execFileSync(openssl, ['pkeyutl', '-sign', '-rawin', '-inkey', key, '-in', msg, '-out', sig]);
     const der = execFileSync(openssl, ['pkey', '-in', key, '-pubout', '-outform', 'DER']);
@@ -56,7 +58,7 @@ export async function test(ctx) {
   } finally {
     fs.rmSync(key, {force: true});
   }
-  console.log('PASS: independent OpenSSL signature accepted by noble and Solidity');
+  console.log('PASS: independent OpenSSL signature accepted by noble and the on-chain verifier');
 
   return accountFlow(ctx, {verifierGasEstimate: verifierGas,
     nobleValidMessages: 3, verifierNegativeCases: 5, opensslVersion, independentOpenSSL: true});

@@ -15,7 +15,7 @@ export const profile = {
     ['factory', 'PQAccountFactory', [ctx.base.entryPoint, ctx.deployment.verifier]],
   ],
   async probe(ctx) {
-    assert([1,3,4,5].includes(ctx.config.pq_precompile), 'v2 requires an explicitly enabled PQ environment');
+    assert([1,3,4,5,6].includes(ctx.config.pq_precompile), 'v2 requires an explicitly enabled PQ environment');
     const file = fileURLToPath(new URL('../../one-box/precompile/v2/testdata/slh_v2.json', import.meta.url));
     const input = '0x' + JSON.parse(fs.readFileSync(file, 'utf8'))[0].input;
     for (let i = 0; i < ctx.config.validators; i++) {

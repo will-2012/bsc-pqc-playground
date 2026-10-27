@@ -14,8 +14,9 @@ const targets=[
  ['slh-dsa-v2',32,path.join(root,'one-box/precompile/v2/testdata/slh_v2.json'),'0101',60000n],
  ['falcon-v3',896,path.join(root,`one-box/.runtime/build/v${version}/falcon-public.json`),'0102',10000n],
 ];
-if(version>=4)targets.push(['mldsa-v4',1312,path.join(root,`one-box/.runtime/build/v${version}/mldsa${version===5?'44':''}-public.json`),'0103',10000n]);
-if(version===5)targets.push(['mldsa65-v5',1952,path.join(root,'one-box/.runtime/build/v5/mldsa-public.json'),'0104',10000n]);
+if(version>=4)targets.push(['mldsa-v4',1312,path.join(root,`one-box/.runtime/build/v${version}/mldsa${version>=5?'44':''}-public.json`),'0103',10000n]);
+if(version>=5)targets.push(['mldsa65-v5',1952,path.join(root,`one-box/.runtime/build/v${version}/mldsa-public.json`),'0104',10000n]);
+if(version===6)targets.push(['slh-dsa-v6',32,path.join(root,'one-box/.runtime/build/v6/slh-public.json'),'0105',BigInt(JSON.parse(fs.readFileSync(path.join(root,'one-box/.runtime/build/v6/native-bench.json'),'utf8')).pricing.SLHF.selectedGas)]);
 for(const [profile,size,source,address,gas] of targets){
  const ctx=await context(name,profile);const d=await deployment(ctx);
  const parsed=JSON.parse(fs.readFileSync(source,'utf8'));const input=Array.isArray(parsed)?parsed[0].input:parsed.input;
@@ -28,5 +29,5 @@ for(const [profile,size,source,address,gas] of targets){
  checks.push({profile,blockNumber:block.number,blockHash:block.hash,precompile:frames[0].to,gasUsed:gas,input:frames[0].input,result:frames[0].output});
  write(path.join(ctx.dir,'native-call-trace.json'),trace);
 }
-const ctx=await context(name,version===5?'mldsa65-v5':version===4?'mldsa-v4':'falcon-v3');write(path.join(ctx.env,'native-gas-check.json'),{checks});console.log('PASS: all selected precompile STATICCALL charges match constants');
+const ctx=await context(name,version===6?'slh-dsa-v6':version===5?'mldsa65-v5':version===4?'mldsa-v4':'falcon-v3');write(path.join(ctx.env,'native-gas-check.json'),{checks});console.log('PASS: all selected precompile STATICCALL charges match constants');
 }

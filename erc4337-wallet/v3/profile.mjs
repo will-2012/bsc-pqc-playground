@@ -62,7 +62,7 @@ export const profile = {
   keygen: () => native('keygen'),
   signDigest: (secretKey,message) => native('sign',{secretKey,message}).signature,
   async probe(ctx) {
-    assert([3,4,5].includes(ctx.config.pq_precompile),'v3 requires a PQ-fork client');
+    assert([3,4,5,6].includes(ctx.config.pq_precompile),'v3 requires a PQ-fork client');
     const file=fileURLToPath(new URL(`../../one-box/.runtime/build/v${ctx.config.pq_precompile}/falcon-public.json`,import.meta.url));
     const {input}=JSON.parse(fs.readFileSync(file,'utf8'));
     for(let i=0;i<ctx.config.validators;i++){

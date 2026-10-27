@@ -29,7 +29,7 @@ git submodule update --init
 ./tools/one-box down
 ```
 
-合约说明见 [contract 文档](contract/README.md)。合约和钱包按 `common/`、`v1/`、`v2/`、`v3/`、`v4/`、`v5/` 组织：公共实现复用，版本差异独立。保留 ECDSA 基线，以及两个互不替换的 SLH-DSA profile：v1 为 Solidity 验签（默认），v2 为新增预编译。
+合约说明见 [contract 文档](contract/README.md)。合约和钱包按 `common/`、`v1/`、`v2/`、`v3/`、`v4/`、`v5/`、`v6/` 组织：公共实现复用，版本差异独立。保留 ECDSA 基线，以及互不替换的 SLH-DSA profile：v1 为 Solidity 验签（默认），v2 为 128s 预编译，v6 为 128f 预编译。
 
 运行 v1 PQ 全链路（Solidity 验签）：
 
@@ -52,3 +52,5 @@ Falcon-512 v3 的预编译、共同 PQ 硬分叉、钱包与并发测试见 [HTM
 ML-DSA-44 v4 沿用共同 PQ 硬分叉，新增预编译、独立账户和钱包 profile；[运行步骤](tools/chain-bench/README.md#v4ml-dsa-44)与[链路报告](docs/chain-bench/report.html)。
 
 ML-DSA-65 v5 使用类别 3 参数，独立账户与预编译，仍复用同一 PQ 分叉；[运行步骤](tools/chain-bench/README.md#v5ml-dsa-65-与-ml-dsa-44-同链对照)。
+
+SLH-DSA-SHA2-128f v6 复用 32-byte 公钥账户，新增同一 PQ 分叉下的预编译；[运行步骤](tools/chain-bench/README.md)与[同链对比](docs/chain-bench/report.html)。

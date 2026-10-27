@@ -21,8 +21,9 @@ def main(version=3):
                 b=rpc(cfg,i,'eth_getBlockByNumber',['latest',False]);timestamp=int(b['timestamp'],16)
                 results=[]
                 targets=[('0101',slh),('0102',falcon)]
-                if version>=4:targets.append(('0103',read(BUILD/f"v{version}/mldsa{'44' if version==5 else ''}-public.json")['input']))
-                if version==5:targets.append(('0104',read(BUILD/'v5/mldsa-public.json')['input']))
+                if version>=4:targets.append(('0103',read(BUILD/f"v{version}/mldsa{'44' if version>=5 else ''}-public.json")['input']))
+                if version>=5:targets.append(('0104',read(BUILD/f'v{version}/mldsa-public.json')['input']))
+                if version==6:targets.append(('0105',read(BUILD/'v6/slh-public.json')['input']))
                 for address,data in targets:
                     results.append(rpc(cfg,i,'eth_call',[{'to':'0x'+'0'*36+address,'data':'0x'+data,'gas':hex(1000000)},b['number']]))
                 expected='0x' if timestamp<fork else '0x'+'00'*31+'01'

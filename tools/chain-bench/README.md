@@ -2,7 +2,7 @@
 
 调用 `erc4337-wallet` 的同一 API，顺序创建独立账户，再各转账 0.01 BNB。算法 CPU 的多方案对比仍在 `tools/crypto-bench/`；这里比较真实客户端预编译和链上交易。
 
-`run` 是公共入口，`common/run.mjs` 是各版共用的链上测量流程，通过 `--version v1/v2/v3/v4/v5` 选择钱包。`v2/` 只放 v2 独有的原生性能测试和向量生成器。v1 没有独有的压测实现，因此不建立空目录或复制脚本。
+`run` 是公共入口，`common/run.mjs` 是各版共用的链上测量流程，通过 `--version v1/v2/v3/v4/v5/v6` 选择钱包。`v2/` 只放 v2 独有的原生性能测试和向量生成器。v1 没有独有的压测实现，因此不建立空目录或复制脚本。
 
 ## v1：Solidity
 
@@ -128,3 +128,30 @@ node tools/chain-bench/v5/trace.mjs devnet-v5
 v5 继续复用 common 中的 CPU、gas、负载、trace 与分叉检查实现。原生测试包含 ECRECOVER、SLH、Falcon、ML44、ML65 的有效 / 无效路径与原生签名，五轮共 95 组；定价仍以 ECRECOVER 的 3,000 gas 为基准。并发测试对比同链 ML44 / ML65，默认每版 8 个账户 × 5 轮，属于有限负载测试。
 
 结果归档在 `docs/chain-bench/v5/`。所有旧归档保留，私钥与运行文件不进入 docs。
+
+## v6：SLH-DSA-SHA2-128f 与 128s 同链对照
+
+```bash
+./tools/one-box bundler build
+./tools/one-box build --v6
+# 所有本地节点与 Bundler 关闭时执行
+python3 tools/chain-bench/v6/precompile.py
+./tools/one-box --name devnet-v6 init --v6
+# 首次启动前，在另一终端运行分叉观察
+# python3 tools/chain-bench/v6/fork-check.py devnet-v6
+./tools/one-box --name devnet-v6 bundler up --port 14387
+./tools/erc4337-wallet test devnet-v6 --version v6
+./tools/chain-bench/run devnet-v6 3 --version v6 --ecdsa-baseline
+./tools/chain-bench/run devnet-v6 3 --version v2
+./tools/chain-bench/run devnet-v6 3 --version v3
+./tools/chain-bench/run devnet-v6 3 --version v4
+./tools/chain-bench/run devnet-v6 3 --version v5
+node tools/chain-bench/v6/load.mjs devnet-v6 8 5
+node tools/chain-bench/v6/trace.mjs devnet-v6
+./tools/one-box --name devnet-v6 check
+./tools/one-box --name devnet-v6 down
+```
+
+原生测量五轮共 125 组，新增 128f 四种验签路径和 128s / 128f 原生签名，沿用相同定价公式。有限负载对照 v2 / v6，两者的钱包签名均使用 Noble JavaScript，原生 CPU 则均使用相同 Go SLH 后端；不要将两种时间口径混用。公开结果归档在 `docs/chain-bench/v6/`。
+
+v6 的八操作并发可能因 17 KB 签名触及 BSC 128 KiB 单笔交易大小上限；Alto 在 v6 环境按编码字节拆包，不通过提高链的限制绕过。报告按真实外层交易数统计，不能假设一轮只有一笔 bundle。

@@ -127,3 +127,13 @@ profile 为 `mldsa-v4`，绑定 MLDSAAccountFactory / MLDSAAccount / MLDSAPrecom
 profile 为 `mldsa65-v5`，绑定 MLDSA65AccountFactory / MLDSA65Account / MLDSA65Precompile。公钥 1,952 bytes、展开私钥 4,032 bytes、签名固定 3,309 bytes；对 32-byte UserOperation hash 使用 Pure ML-DSA-65、空 context。估算采用同长度的全非零无效 stub，正式操作经过原生签名和本地验签后提交。
 
 `build --v5` 同时包含 ML44 / ML65 / Falcon 后端；在只构建 v5 的新 checkout 中，旧 profile 可通过 helper 的显式算法选择使用相同旧算法，不能把 ML44 的密钥送入 ML65。旧版本 helper 存在时仍优先使用原文件。测试包含 Noble 双向互验、独立公共 FIPS 204 ML65 向量，以及共用账户授权与三节点一致性检查。所有私钥仍只保存在忽略的运行目录中。
+
+## v6：SLH-DSA-SHA2-128f
+
+```bash
+./tools/erc4337-wallet create devnet-v6 --version v6
+./tools/erc4337-wallet transfer devnet-v6 <id> <接收地址> 0.01 --version v6
+./tools/erc4337-wallet test devnet-v6 --version v6
+```
+
+profile 为 `slh-dsa-v6`，公钥 32 bytes、私钥 64 bytes、签名 17,088 bytes。与 v1/v2 共用 Noble SLH 钱包适配流程，仅选择不同参数集与验证器；Pure 模式、空 context。账户目录、密钥和部署记录按 profile 隔离。128f 与 128s 均为类别 1；f 用更大的签名换取更快的签名生成。操作超过公共内存池常见的 8 KB 大小限制，本地联通不代表公共 Bundler 可直接接受。

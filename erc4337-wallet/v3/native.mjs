@@ -5,7 +5,8 @@ const original=fileURLToPath(new URL('../../one-box/.runtime/build/v3/pq-wallet'
 const current=fileURLToPath(new URL('../../one-box/.runtime/build/v4/pq-wallet',import.meta.url));
 // A v4-only checkout also builds the same pinned Falcon backend.
 const latest=fileURLToPath(new URL('../../one-box/.runtime/build/v5/pq-wallet',import.meta.url));
-const binary=fs.existsSync(original)?original:fs.existsSync(current)?current:latest;
+const next=fileURLToPath(new URL('../../one-box/.runtime/build/v6/pq-wallet',import.meta.url));
+const binary=fs.existsSync(original)?original:fs.existsSync(current)?current:fs.existsSync(latest)?latest:next;
 // Secret material is sent over stdin, never command-line arguments.
 export function native(action,fields={}){
   const request=Object.fromEntries(Object.entries({action,...fields,...(binary!==original?{algorithm:'falcon'}:{})}).map(([k,v])=>[k,typeof v==='string'&&v.startsWith('0x')?v.slice(2):v]));

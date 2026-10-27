@@ -60,8 +60,8 @@ def validate(cfg):
     expected = set(read(ROOT / "one-box/config.json"))
     if set(cfg) not in (expected, expected | {"pq_precompile"}) or any(type(v) is not int for v in cfg.values()):
         raise ValueError("Configuration must contain the integer fields in one-box/config.json, plus optional pq_precompile")
-    if cfg.get("pq_precompile", 0) not in (0, 1, 3, 4, 5):
-        raise ValueError("pq_precompile must be 0 (v1), 1 (v2), 3 (v3), 4 (v4) or 5 (v5)")
+    if cfg.get("pq_precompile", 0) not in (0, 1, 3, 4, 5, 6):
+        raise ValueError("pq_precompile must be 0 (v1), 1 (v2), 3 (v3), 4 (v4), 5 (v5) or 6 (v6)")
     if cfg["chain_id"] != 714:
         raise ValueError("This profile uses BSC Rialto system-contract bytecode: chain_id must be 714")
     if not 3 <= cfg["validators"] <= 7 or not 1 <= cfg["test_accounts"] <= 100:
@@ -150,7 +150,7 @@ def init(env, config_path):
     doctor()
     if env.exists():
         raise RuntimeError(f"Environment already exists: {env}. Use up/restart or explicit reset --yes")
-    version = {1: 2, 3: 3, 4: 4, 5: 5}.get(cfg.get("pq_precompile"))
+    version = {1: 2, 3: 3, 4: 4, 5: 5, 6: 6}.get(cfg.get("pq_precompile"))
     selected = BUILD / (f"v{version}/geth" if version else "geth")
     if not selected.exists():
         if version:
@@ -322,31 +322,35 @@ def check(env):
             raise RuntimeError("Wrong chain id")
         if cfg.get("pq_precompile"):
             check_precompile(cfg, i)
-        if cfg.get("pq_precompile") in (3, 4, 5):
+        if cfg.get("pq_precompile") in (3, 4, 5, 6):
             expected_pq = forks["latest"] + 5
             if int(rpc(cfg,i,"eth_getBlockByNumber",["latest",False])["timestamp"],16) < expected_pq:
                 raise RuntimeError("Waiting for common PQ fork")
             vector = read(BUILD / f"v{cfg['pq_precompile']}/falcon-public.json")["input"]
             if rpc(cfg,i,"eth_call",[{"to":"0x0000000000000000000000000000000000000102","data":"0x"+vector,"gas":hex(1000000)},"latest"]) != "0x"+"00"*31+"01":
                 raise RuntimeError("Missing Falcon precompile")
-        if cfg.get("pq_precompile") in (4,5):
+        if cfg.get("pq_precompile") in (4,5,6):
             v=cfg['pq_precompile']
-            vector=read(BUILD/f"v{v}/mldsa{'44' if v==5 else ''}-public.json")['input']
+            vector=read(BUILD/f"v{v}/mldsa{'44' if v>=5 else ''}-public.json")['input']
             if rpc(cfg,i,"eth_call",[{"to":"0x0000000000000000000000000000000000000103","data":"0x"+vector,"gas":hex(1000000)},"latest"])!="0x"+"00"*31+"01":
                 raise RuntimeError("Missing ML-DSA precompile")
-        if cfg.get("pq_precompile") == 5:
-            vector=read(BUILD/'v5/mldsa-public.json')['input']
+        if cfg.get("pq_precompile") in (5,6):
+            vector=read(BUILD/f"v{cfg['pq_precompile']}/mldsa-public.json")['input']
             if rpc(cfg,i,"eth_call",[{"to":"0x0000000000000000000000000000000000000104","data":"0x"+vector,"gas":hex(1000000)},"latest"])!="0x"+"00"*31+"01":
                 raise RuntimeError("Missing ML-DSA-65 precompile")
+        if cfg.get("pq_precompile") == 6:
+            vector=read(BUILD/'v6/slh-public.json')['input']
+            if rpc(cfg,i,"eth_call",[{"to":"0x0000000000000000000000000000000000000105","data":"0x"+vector,"gas":hex(1000000)},"latest"])!="0x"+"00"*31+"01":
+                raise RuntimeError("Missing SLH128f precompile")
         effective = json.loads(json.loads(attach(env, i, "JSON.stringify(admin.nodeInfo.protocols.eth.config)")))
-        if cfg.get("pq_precompile") in (3, 4, 5) and effective.get("pqTime") != forks["latest"] + 5:
+        if cfg.get("pq_precompile") in (3, 4, 5, 6) and effective.get("pqTime") != forks["latest"] + 5:
             raise RuntimeError("Validator PQ fork schedule mismatch")
         for fork in FORKS["passed"] + FORKS["recent"]:
             expected = forks["passed"] if fork in FORKS["passed"] + ["lorentz", "maxwell"] else forks["latest"]
             if effective.get(fork + "Time") != expected:
                 raise RuntimeError(f"Node {i} has a different {fork} schedule")
     return {"nodes": rows, "common_height": int(common, 16), "common_hash": hashes[0],
-            "latest_fork": "pq" if cfg.get("pq_precompile") in (3, 4, 5) else FORKS["latest"], "genesis_hash": manifest["genesis_hash"]}
+            "latest_fork": "pq" if cfg.get("pq_precompile") in (3, 4, 5, 6) else FORKS["latest"], "genesis_hash": manifest["genesis_hash"]}
 
 
 def register(env, manifest, cfg):
@@ -422,7 +426,7 @@ def up(env):
                 "--override.breatheblockinterval", cfg["breathe_seconds"]]
         for fork in FORKS["recent"]:
             args += ["--override." + fork, forks["passed"] if fork in ("lorentz", "maxwell") else forks["latest"]]
-        if cfg.get("pq_precompile") in (3, 4, 5):
+        if cfg.get("pq_precompile") in (3, 4, 5, 6):
             args += ["--override.pq", forks["latest"] + 5]
         with (env / f"logs/node{i}.log").open("a") as output:
             child = subprocess.Popen(list(map(str, args)), cwd=ROOT, stdout=output, stderr=subprocess.STDOUT, start_new_session=True)
@@ -511,6 +515,7 @@ def main():
     g.add_argument("--v3", action="store_true", help="Build common PQ fork client with SLH and Falcon")
     g.add_argument("--v4", action="store_true", help="Build common PQ fork client with SLH, Falcon and ML-DSA")
     g.add_argument("--v5", action="store_true", help="Build common PQ fork client including ML-DSA-65")
+    g.add_argument("--v6", action="store_true", help="Build common PQ fork client including SLH128f")
     for name in ("init", "reset"):
         p = sub.add_parser(name)
         p.add_argument("--config", type=Path, default=ROOT / "one-box/config.json" if name == "init" else None)
@@ -520,6 +525,7 @@ def main():
             g.add_argument("--v3", action="store_true", help="Enable v3 client and shift default ports by 20")
             g.add_argument("--v4", action="store_true", help="Enable v4 client and shift default ports by 30")
             g.add_argument("--v5", action="store_true", help="Enable v5 client and shift default ports by 40")
+            g.add_argument("--v6", action="store_true", help="Enable v6 client and shift default ports by 50")
         if name == "reset":
             p.add_argument("--yes", action="store_true", help="Delete this environment, including its keys")
     p = sub.add_parser("config")
@@ -544,7 +550,10 @@ def main():
         if args.action == "doctor":
             doctor()
         elif args.action == "build":
-            if args.v5:
+            if args.v6:
+                from precompile_v6 import build as build_v6
+                build_v6()
+            elif args.v5:
                 from precompile_v5 import build as build_v5
                 build_v5()
             elif args.v4:
@@ -560,11 +569,11 @@ def main():
                 build()
         elif args.action == "init":
             cfg = read(args.config.resolve())
-            if args.v2 or args.v3 or args.v4 or args.v5:
-                cfg["pq_precompile"] = 5 if args.v5 else 4 if args.v4 else 3 if args.v3 else 1
+            if args.v2 or args.v3 or args.v4 or args.v5 or args.v6:
+                cfg["pq_precompile"] = 6 if args.v6 else 5 if args.v5 else 4 if args.v4 else 3 if args.v3 else 1
                 if args.config.resolve() == (ROOT / "one-box/config.json").resolve():
-                    cfg["rpc_port"] += 40 if args.v5 else 30 if args.v4 else 20 if args.v3 else 10
-                    cfg["p2p_port"] += 40 if args.v5 else 30 if args.v4 else 20 if args.v3 else 10
+                    cfg["rpc_port"] += 50 if args.v6 else 40 if args.v5 else 30 if args.v4 else 20 if args.v3 else 10
+                    cfg["p2p_port"] += 50 if args.v6 else 40 if args.v5 else 30 if args.v4 else 20 if args.v3 else 10
             init(env, cfg)
         elif args.action == "reset":
             if not args.yes:

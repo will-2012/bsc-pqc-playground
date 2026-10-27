@@ -1,0 +1,1607 @@
+{
+  "checkedAt": "2026-10-27T10:17:10.106899+00:00",
+  "rounds": 5,
+  "rows": [
+    {
+      "round": 1,
+      "name": "SLHV2ECRecover",
+      "iterations": 41046,
+      "nsPerOp": 30657.0,
+      "wallNsPerOp": 29382.0,
+      "threadNsPerOp": 29150.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 1,
+      "name": "SLHV2Valid",
+      "iterations": 2926,
+      "nsPerOp": 412114.0,
+      "wallNsPerOp": 412839.0,
+      "threadNsPerOp": 411277.0,
+      "bytesPerOp": 226508,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 1,
+      "name": "SLHV2Invalid",
+      "iterations": 2869,
+      "nsPerOp": 413437.0,
+      "wallNsPerOp": 414125.0,
+      "threadNsPerOp": 412108.0,
+      "bytesPerOp": 226503,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 1,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2857,
+      "nsPerOp": 418958.0,
+      "wallNsPerOp": 419896.0,
+      "threadNsPerOp": 417329.0,
+      "bytesPerOp": 228516,
+      "allocsPerOp": 5501
+    },
+    {
+      "round": 1,
+      "name": "FalconV3Valid",
+      "iterations": 129564,
+      "nsPerOp": 9511.0,
+      "wallNsPerOp": 9473.0,
+      "threadNsPerOp": 9418.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "FalconV3Invalid",
+      "iterations": 280018,
+      "nsPerOp": 3945.0,
+      "wallNsPerOp": 3922.0,
+      "threadNsPerOp": 3908.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "FalconV3WrongMessage",
+      "iterations": 125618,
+      "nsPerOp": 9442.0,
+      "wallNsPerOp": 9387.0,
+      "threadNsPerOp": 9359.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "FalconV3ZeroSignature",
+      "iterations": 25841415,
+      "nsPerOp": 48.17,
+      "wallNsPerOp": 48.38,
+      "threadNsPerOp": 47.73,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "FalconV3Sign",
+      "iterations": 7942,
+      "nsPerOp": 166384.0,
+      "wallNsPerOp": 158414.0,
+      "threadNsPerOp": 157999.0,
+      "bytesPerOp": 712,
+      "allocsPerOp": 2
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV4Valid",
+      "iterations": 79118,
+      "nsPerOp": 15447.0,
+      "wallNsPerOp": 15346.0,
+      "threadNsPerOp": 15297.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV4Invalid",
+      "iterations": 85354,
+      "nsPerOp": 14068.0,
+      "wallNsPerOp": 13960.0,
+      "threadNsPerOp": 13924.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV4WrongMessage",
+      "iterations": 79442,
+      "nsPerOp": 15628.0,
+      "wallNsPerOp": 16057.0,
+      "threadNsPerOp": 15461.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV4ZeroSignature",
+      "iterations": 2061024,
+      "nsPerOp": 577.4,
+      "wallNsPerOp": 575.8,
+      "threadNsPerOp": 570.9,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV4Sign",
+      "iterations": 25292,
+      "nsPerOp": 50451.0,
+      "wallNsPerOp": 46974.0,
+      "threadNsPerOp": 46507.0,
+      "bytesPerOp": 2688,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV5Valid",
+      "iterations": 47408,
+      "nsPerOp": 25880.0,
+      "wallNsPerOp": 25686.0,
+      "threadNsPerOp": 25547.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV5Invalid",
+      "iterations": 49465,
+      "nsPerOp": 24377.0,
+      "wallNsPerOp": 24187.0,
+      "threadNsPerOp": 24142.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV5WrongMessage",
+      "iterations": 46486,
+      "nsPerOp": 26011.0,
+      "wallNsPerOp": 25842.0,
+      "threadNsPerOp": 25656.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV5ZeroSignature",
+      "iterations": 1415881,
+      "nsPerOp": 802.5,
+      "wallNsPerOp": 799.3,
+      "threadNsPerOp": 795.3,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "MLDSAV5Sign",
+      "iterations": 16221,
+      "nsPerOp": 80356.0,
+      "wallNsPerOp": 74551.0,
+      "threadNsPerOp": 73883.0,
+      "bytesPerOp": 3456,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 1,
+      "name": "SLHV6Valid",
+      "iterations": 1002,
+      "nsPerOp": 1180887.0,
+      "wallNsPerOp": 1223695.0,
+      "threadNsPerOp": 1176241.0,
+      "bytesPerOp": 640792,
+      "allocsPerOp": 15426
+    },
+    {
+      "round": 1,
+      "name": "SLHV6Invalid",
+      "iterations": 1015,
+      "nsPerOp": 1171577.0,
+      "wallNsPerOp": 1173220.0,
+      "threadNsPerOp": 1166151.0,
+      "bytesPerOp": 638357,
+      "allocsPerOp": 15365
+    },
+    {
+      "round": 1,
+      "name": "SLHV6WrongMessage",
+      "iterations": 1023,
+      "nsPerOp": 1159196.0,
+      "wallNsPerOp": 1161202.0,
+      "threadNsPerOp": 1154590.0,
+      "bytesPerOp": 640198,
+      "allocsPerOp": 15411
+    },
+    {
+      "round": 1,
+      "name": "SLHV6ZeroSignature",
+      "iterations": 1005,
+      "nsPerOp": 1152808.0,
+      "wallNsPerOp": 1154517.0,
+      "threadNsPerOp": 1148250.0,
+      "bytesPerOp": 635240,
+      "allocsPerOp": 15287
+    },
+    {
+      "round": 1,
+      "name": "SLHV6Sign",
+      "iterations": 62,
+      "nsPerOp": 18476113.0,
+      "wallNsPerOp": 18492484.0,
+      "threadNsPerOp": 18251967.0,
+      "bytesPerOp": 8892540,
+      "allocsPerOp": 219206
+    },
+    {
+      "round": 1,
+      "name": "SLHV2Sign",
+      "iterations": 3,
+      "nsPerOp": 381465000.0,
+      "wallNsPerOp": 381705389.0,
+      "threadNsPerOp": 375251917.0,
+      "bytesPerOp": 180010480,
+      "allocsPerOp": 4498543
+    },
+    {
+      "round": 2,
+      "name": "SLHV2Valid",
+      "iterations": 3007,
+      "nsPerOp": 414560.0,
+      "wallNsPerOp": 415368.0,
+      "threadNsPerOp": 412726.0,
+      "bytesPerOp": 226508,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 2,
+      "name": "SLHV2Invalid",
+      "iterations": 2894,
+      "nsPerOp": 409663.0,
+      "wallNsPerOp": 410161.0,
+      "threadNsPerOp": 408109.0,
+      "bytesPerOp": 226507,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 2,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2863,
+      "nsPerOp": 412180.0,
+      "wallNsPerOp": 412615.0,
+      "threadNsPerOp": 410625.0,
+      "bytesPerOp": 228516,
+      "allocsPerOp": 5501
+    },
+    {
+      "round": 2,
+      "name": "FalconV3Valid",
+      "iterations": 127683,
+      "nsPerOp": 9166.0,
+      "wallNsPerOp": 9114.0,
+      "threadNsPerOp": 9090.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "FalconV3Invalid",
+      "iterations": 279429,
+      "nsPerOp": 3860.0,
+      "wallNsPerOp": 3837.0,
+      "threadNsPerOp": 3824.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "FalconV3WrongMessage",
+      "iterations": 123391,
+      "nsPerOp": 9290.0,
+      "wallNsPerOp": 9235.0,
+      "threadNsPerOp": 9211.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "FalconV3ZeroSignature",
+      "iterations": 25196937,
+      "nsPerOp": 48.55,
+      "wallNsPerOp": 48.68,
+      "threadNsPerOp": 47.94,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "FalconV3Sign",
+      "iterations": 7726,
+      "nsPerOp": 166548.0,
+      "wallNsPerOp": 158735.0,
+      "threadNsPerOp": 158240.0,
+      "bytesPerOp": 712,
+      "allocsPerOp": 2
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV4Valid",
+      "iterations": 79042,
+      "nsPerOp": 15534.0,
+      "wallNsPerOp": 15426.0,
+      "threadNsPerOp": 15383.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV4Invalid",
+      "iterations": 83395,
+      "nsPerOp": 14052.0,
+      "wallNsPerOp": 13961.0,
+      "threadNsPerOp": 13925.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV4WrongMessage",
+      "iterations": 78008,
+      "nsPerOp": 15570.0,
+      "wallNsPerOp": 15758.0,
+      "threadNsPerOp": 15409.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV4ZeroSignature",
+      "iterations": 2101644,
+      "nsPerOp": 584.9,
+      "wallNsPerOp": 582.7,
+      "threadNsPerOp": 578.3,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV4Sign",
+      "iterations": 25206,
+      "nsPerOp": 52616.0,
+      "wallNsPerOp": 48423.0,
+      "threadNsPerOp": 47649.0,
+      "bytesPerOp": 2688,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV5Valid",
+      "iterations": 46540,
+      "nsPerOp": 25781.0,
+      "wallNsPerOp": 25500.0,
+      "threadNsPerOp": 25430.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV5Invalid",
+      "iterations": 49953,
+      "nsPerOp": 24406.0,
+      "wallNsPerOp": 24214.0,
+      "threadNsPerOp": 24161.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV5WrongMessage",
+      "iterations": 45814,
+      "nsPerOp": 25811.0,
+      "wallNsPerOp": 25562.0,
+      "threadNsPerOp": 25494.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV5ZeroSignature",
+      "iterations": 1480543,
+      "nsPerOp": 808.6,
+      "wallNsPerOp": 806.5,
+      "threadNsPerOp": 801.9,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "MLDSAV5Sign",
+      "iterations": 16286,
+      "nsPerOp": 79735.0,
+      "wallNsPerOp": 73956.0,
+      "threadNsPerOp": 73218.0,
+      "bytesPerOp": 3456,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 2,
+      "name": "SLHV6Valid",
+      "iterations": 1004,
+      "nsPerOp": 1161798.0,
+      "wallNsPerOp": 1163456.0,
+      "threadNsPerOp": 1156664.0,
+      "bytesPerOp": 635899,
+      "allocsPerOp": 15304
+    },
+    {
+      "round": 2,
+      "name": "SLHV6Invalid",
+      "iterations": 1032,
+      "nsPerOp": 1171831.0,
+      "wallNsPerOp": 1174597.0,
+      "threadNsPerOp": 1167566.0,
+      "bytesPerOp": 635629,
+      "allocsPerOp": 15297
+    },
+    {
+      "round": 2,
+      "name": "SLHV6WrongMessage",
+      "iterations": 933,
+      "nsPerOp": 1200651.0,
+      "wallNsPerOp": 1244440.0,
+      "threadNsPerOp": 1187599.0,
+      "bytesPerOp": 635572,
+      "allocsPerOp": 15296
+    },
+    {
+      "round": 2,
+      "name": "SLHV6ZeroSignature",
+      "iterations": 1017,
+      "nsPerOp": 1203070.0,
+      "wallNsPerOp": 1222401.0,
+      "threadNsPerOp": 1195344.0,
+      "bytesPerOp": 645475,
+      "allocsPerOp": 15543
+    },
+    {
+      "round": 2,
+      "name": "SLHV6Sign",
+      "iterations": 60,
+      "nsPerOp": 18960900.0,
+      "wallNsPerOp": 19098885.0,
+      "threadNsPerOp": 18653105.0,
+      "bytesPerOp": 8891325,
+      "allocsPerOp": 219176
+    },
+    {
+      "round": 2,
+      "name": "SLHV2Sign",
+      "iterations": 3,
+      "nsPerOp": 390957333.0,
+      "wallNsPerOp": 392486917.0,
+      "threadNsPerOp": 383282597.0,
+      "bytesPerOp": 180010080,
+      "allocsPerOp": 4498533
+    },
+    {
+      "round": 2,
+      "name": "SLHV2ECRecover",
+      "iterations": 36735,
+      "nsPerOp": 29237.0,
+      "wallNsPerOp": 28772.0,
+      "threadNsPerOp": 28357.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 3,
+      "name": "SLHV2Invalid",
+      "iterations": 2854,
+      "nsPerOp": 419416.0,
+      "wallNsPerOp": 422184.0,
+      "threadNsPerOp": 417386.0,
+      "bytesPerOp": 226508,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 3,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2852,
+      "nsPerOp": 419661.0,
+      "wallNsPerOp": 421032.0,
+      "threadNsPerOp": 418229.0,
+      "bytesPerOp": 228513,
+      "allocsPerOp": 5501
+    },
+    {
+      "round": 3,
+      "name": "FalconV3Valid",
+      "iterations": 127466,
+      "nsPerOp": 9150.0,
+      "wallNsPerOp": 9100.0,
+      "threadNsPerOp": 9068.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "FalconV3Invalid",
+      "iterations": 294093,
+      "nsPerOp": 3798.0,
+      "wallNsPerOp": 3781.0,
+      "threadNsPerOp": 3763.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "FalconV3WrongMessage",
+      "iterations": 125526,
+      "nsPerOp": 9115.0,
+      "wallNsPerOp": 9067.0,
+      "threadNsPerOp": 9036.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "FalconV3ZeroSignature",
+      "iterations": 25562167,
+      "nsPerOp": 47.95,
+      "wallNsPerOp": 48.07,
+      "threadNsPerOp": 47.38,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "FalconV3Sign",
+      "iterations": 7495,
+      "nsPerOp": 166284.0,
+      "wallNsPerOp": 158655.0,
+      "threadNsPerOp": 158141.0,
+      "bytesPerOp": 712,
+      "allocsPerOp": 2
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV4Valid",
+      "iterations": 77586,
+      "nsPerOp": 15426.0,
+      "wallNsPerOp": 15351.0,
+      "threadNsPerOp": 15279.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV4Invalid",
+      "iterations": 85863,
+      "nsPerOp": 14098.0,
+      "wallNsPerOp": 14127.0,
+      "threadNsPerOp": 13967.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV4WrongMessage",
+      "iterations": 78724,
+      "nsPerOp": 15564.0,
+      "wallNsPerOp": 15995.0,
+      "threadNsPerOp": 15383.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV4ZeroSignature",
+      "iterations": 2046471,
+      "nsPerOp": 577.9,
+      "wallNsPerOp": 585.1,
+      "threadNsPerOp": 571.8,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV4Sign",
+      "iterations": 24788,
+      "nsPerOp": 51322.0,
+      "wallNsPerOp": 47627.0,
+      "threadNsPerOp": 46969.0,
+      "bytesPerOp": 2688,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV5Valid",
+      "iterations": 46851,
+      "nsPerOp": 26105.0,
+      "wallNsPerOp": 27551.0,
+      "threadNsPerOp": 25723.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV5Invalid",
+      "iterations": 47013,
+      "nsPerOp": 24907.0,
+      "wallNsPerOp": 26176.0,
+      "threadNsPerOp": 24598.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV5WrongMessage",
+      "iterations": 46399,
+      "nsPerOp": 25767.0,
+      "wallNsPerOp": 25468.0,
+      "threadNsPerOp": 25392.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV5ZeroSignature",
+      "iterations": 1514515,
+      "nsPerOp": 809.3,
+      "wallNsPerOp": 805.1,
+      "threadNsPerOp": 800.6,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "MLDSAV5Sign",
+      "iterations": 16240,
+      "nsPerOp": 79210.0,
+      "wallNsPerOp": 73595.0,
+      "threadNsPerOp": 73026.0,
+      "bytesPerOp": 3456,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 3,
+      "name": "SLHV6Valid",
+      "iterations": 1062,
+      "nsPerOp": 1160882.0,
+      "wallNsPerOp": 1163817.0,
+      "threadNsPerOp": 1156720.0,
+      "bytesPerOp": 636502,
+      "allocsPerOp": 15319
+    },
+    {
+      "round": 3,
+      "name": "SLHV6Invalid",
+      "iterations": 1022,
+      "nsPerOp": 1152256.0,
+      "wallNsPerOp": 1154052.0,
+      "threadNsPerOp": 1148009.0,
+      "bytesPerOp": 636847,
+      "allocsPerOp": 15327
+    },
+    {
+      "round": 3,
+      "name": "SLHV6WrongMessage",
+      "iterations": 1014,
+      "nsPerOp": 1193570.0,
+      "wallNsPerOp": 1230429.0,
+      "threadNsPerOp": 1183436.0,
+      "bytesPerOp": 637923,
+      "allocsPerOp": 15354
+    },
+    {
+      "round": 3,
+      "name": "SLHV6ZeroSignature",
+      "iterations": 1024,
+      "nsPerOp": 1152800.0,
+      "wallNsPerOp": 1162906.0,
+      "threadNsPerOp": 1146642.0,
+      "bytesPerOp": 631843,
+      "allocsPerOp": 15202
+    },
+    {
+      "round": 3,
+      "name": "SLHV6Sign",
+      "iterations": 61,
+      "nsPerOp": 18934475.0,
+      "wallNsPerOp": 18969725.0,
+      "threadNsPerOp": 18643383.0,
+      "bytesPerOp": 8892631,
+      "allocsPerOp": 219208
+    },
+    {
+      "round": 3,
+      "name": "SLHV2Sign",
+      "iterations": 3,
+      "nsPerOp": 387569333.0,
+      "wallNsPerOp": 387916528.0,
+      "threadNsPerOp": 380606000.0,
+      "bytesPerOp": 180009680,
+      "allocsPerOp": 4498523
+    },
+    {
+      "round": 3,
+      "name": "SLHV2ECRecover",
+      "iterations": 41792,
+      "nsPerOp": 29399.0,
+      "wallNsPerOp": 28527.0,
+      "threadNsPerOp": 28322.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 3,
+      "name": "SLHV2Valid",
+      "iterations": 2943,
+      "nsPerOp": 408307.0,
+      "wallNsPerOp": 409313.0,
+      "threadNsPerOp": 406881.0,
+      "bytesPerOp": 226512,
+      "allocsPerOp": 5451
+    },
+    {
+      "round": 4,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2976,
+      "nsPerOp": 420196.0,
+      "wallNsPerOp": 420979.0,
+      "threadNsPerOp": 418608.0,
+      "bytesPerOp": 228517,
+      "allocsPerOp": 5501
+    },
+    {
+      "round": 4,
+      "name": "FalconV3Valid",
+      "iterations": 130479,
+      "nsPerOp": 9244.0,
+      "wallNsPerOp": 9198.0,
+      "threadNsPerOp": 9169.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "FalconV3Invalid",
+      "iterations": 282152,
+      "nsPerOp": 3639.0,
+      "wallNsPerOp": 3618.0,
+      "threadNsPerOp": 3608.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "FalconV3WrongMessage",
+      "iterations": 130663,
+      "nsPerOp": 9002.0,
+      "wallNsPerOp": 8950.0,
+      "threadNsPerOp": 8926.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "FalconV3ZeroSignature",
+      "iterations": 25071361,
+      "nsPerOp": 48.45,
+      "wallNsPerOp": 48.54,
+      "threadNsPerOp": 47.87,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "FalconV3Sign",
+      "iterations": 7647,
+      "nsPerOp": 164836.0,
+      "wallNsPerOp": 157831.0,
+      "threadNsPerOp": 157492.0,
+      "bytesPerOp": 712,
+      "allocsPerOp": 2
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV4Valid",
+      "iterations": 79363,
+      "nsPerOp": 15288.0,
+      "wallNsPerOp": 15190.0,
+      "threadNsPerOp": 15158.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV4Invalid",
+      "iterations": 85076,
+      "nsPerOp": 14252.0,
+      "wallNsPerOp": 14153.0,
+      "threadNsPerOp": 14118.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV4WrongMessage",
+      "iterations": 79286,
+      "nsPerOp": 15318.0,
+      "wallNsPerOp": 15253.0,
+      "threadNsPerOp": 15174.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV4ZeroSignature",
+      "iterations": 2134713,
+      "nsPerOp": 584.3,
+      "wallNsPerOp": 582.0,
+      "threadNsPerOp": 577.3,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV4Sign",
+      "iterations": 25204,
+      "nsPerOp": 51360.0,
+      "wallNsPerOp": 48494.0,
+      "threadNsPerOp": 47321.0,
+      "bytesPerOp": 2688,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV5Valid",
+      "iterations": 47546,
+      "nsPerOp": 25689.0,
+      "wallNsPerOp": 25346.0,
+      "threadNsPerOp": 25304.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV5Invalid",
+      "iterations": 48814,
+      "nsPerOp": 24527.0,
+      "wallNsPerOp": 24343.0,
+      "threadNsPerOp": 24269.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV5WrongMessage",
+      "iterations": 47076,
+      "nsPerOp": 26191.0,
+      "wallNsPerOp": 27020.0,
+      "threadNsPerOp": 25793.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV5ZeroSignature",
+      "iterations": 1468150,
+      "nsPerOp": 841.1,
+      "wallNsPerOp": 840.9,
+      "threadNsPerOp": 832.7,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "MLDSAV5Sign",
+      "iterations": 16504,
+      "nsPerOp": 78751.0,
+      "wallNsPerOp": 73492.0,
+      "threadNsPerOp": 72954.0,
+      "bytesPerOp": 3456,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 4,
+      "name": "SLHV6Valid",
+      "iterations": 1034,
+      "nsPerOp": 1165878.0,
+      "wallNsPerOp": 1170346.0,
+      "threadNsPerOp": 1158220.0,
+      "bytesPerOp": 633194,
+      "allocsPerOp": 15236
+    },
+    {
+      "round": 4,
+      "name": "SLHV6Invalid",
+      "iterations": 1033,
+      "nsPerOp": 1160712.0,
+      "wallNsPerOp": 1162523.0,
+      "threadNsPerOp": 1157105.0,
+      "bytesPerOp": 636653,
+      "allocsPerOp": 15323
+    },
+    {
+      "round": 4,
+      "name": "SLHV6WrongMessage",
+      "iterations": 1005,
+      "nsPerOp": 1159949.0,
+      "wallNsPerOp": 1181638.0,
+      "threadNsPerOp": 1154460.0,
+      "bytesPerOp": 635426,
+      "allocsPerOp": 15292
+    },
+    {
+      "round": 4,
+      "name": "SLHV6ZeroSignature",
+      "iterations": 1065,
+      "nsPerOp": 1171433.0,
+      "wallNsPerOp": 1173456.0,
+      "threadNsPerOp": 1166381.0,
+      "bytesPerOp": 640043,
+      "allocsPerOp": 15407
+    },
+    {
+      "round": 4,
+      "name": "SLHV6Sign",
+      "iterations": 60,
+      "nsPerOp": 18564100.0,
+      "wallNsPerOp": 18585144.0,
+      "threadNsPerOp": 18311173.0,
+      "bytesPerOp": 8892565,
+      "allocsPerOp": 219207
+    },
+    {
+      "round": 4,
+      "name": "SLHV2Sign",
+      "iterations": 3,
+      "nsPerOp": 391072000.0,
+      "wallNsPerOp": 392623347.0,
+      "threadNsPerOp": 383341986.0,
+      "bytesPerOp": 180006880,
+      "allocsPerOp": 4498453
+    },
+    {
+      "round": 4,
+      "name": "SLHV2ECRecover",
+      "iterations": 41910,
+      "nsPerOp": 29140.0,
+      "wallNsPerOp": 28328.0,
+      "threadNsPerOp": 28162.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 4,
+      "name": "SLHV2Valid",
+      "iterations": 2974,
+      "nsPerOp": 402767.0,
+      "wallNsPerOp": 403129.0,
+      "threadNsPerOp": 400005.0,
+      "bytesPerOp": 226507,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 4,
+      "name": "SLHV2Invalid",
+      "iterations": 2956,
+      "nsPerOp": 405656.0,
+      "wallNsPerOp": 406312.0,
+      "threadNsPerOp": 403130.0,
+      "bytesPerOp": 226507,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 5,
+      "name": "FalconV3Valid",
+      "iterations": 130461,
+      "nsPerOp": 9252.0,
+      "wallNsPerOp": 9201.0,
+      "threadNsPerOp": 9178.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "FalconV3Invalid",
+      "iterations": 286452,
+      "nsPerOp": 3767.0,
+      "wallNsPerOp": 3744.0,
+      "threadNsPerOp": 3733.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "FalconV3WrongMessage",
+      "iterations": 132294,
+      "nsPerOp": 9035.0,
+      "wallNsPerOp": 8978.0,
+      "threadNsPerOp": 8960.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "FalconV3ZeroSignature",
+      "iterations": 26220792,
+      "nsPerOp": 48.72,
+      "wallNsPerOp": 49.99,
+      "threadNsPerOp": 48.09,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "FalconV3Sign",
+      "iterations": 7927,
+      "nsPerOp": 165425.0,
+      "wallNsPerOp": 157920.0,
+      "threadNsPerOp": 157538.0,
+      "bytesPerOp": 712,
+      "allocsPerOp": 2
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV4Valid",
+      "iterations": 79509,
+      "nsPerOp": 15246.0,
+      "wallNsPerOp": 15153.0,
+      "threadNsPerOp": 15120.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV4Invalid",
+      "iterations": 85146,
+      "nsPerOp": 14181.0,
+      "wallNsPerOp": 14134.0,
+      "threadNsPerOp": 14035.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV4WrongMessage",
+      "iterations": 75345,
+      "nsPerOp": 15524.0,
+      "wallNsPerOp": 15471.0,
+      "threadNsPerOp": 15377.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV4ZeroSignature",
+      "iterations": 2032912,
+      "nsPerOp": 602.9,
+      "wallNsPerOp": 600.9,
+      "threadNsPerOp": 596.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV4Sign",
+      "iterations": 25356,
+      "nsPerOp": 52364.0,
+      "wallNsPerOp": 47921.0,
+      "threadNsPerOp": 47201.0,
+      "bytesPerOp": 2688,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV5Valid",
+      "iterations": 46561,
+      "nsPerOp": 25668.0,
+      "wallNsPerOp": 25376.0,
+      "threadNsPerOp": 25324.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV5Invalid",
+      "iterations": 49970,
+      "nsPerOp": 24167.0,
+      "wallNsPerOp": 23994.0,
+      "threadNsPerOp": 23949.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV5WrongMessage",
+      "iterations": 47109,
+      "nsPerOp": 25773.0,
+      "wallNsPerOp": 25489.0,
+      "threadNsPerOp": 25416.0,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV5ZeroSignature",
+      "iterations": 1460110,
+      "nsPerOp": 811.3,
+      "wallNsPerOp": 807.6,
+      "threadNsPerOp": 803.5,
+      "bytesPerOp": 32,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "MLDSAV5Sign",
+      "iterations": 16018,
+      "nsPerOp": 79947.0,
+      "wallNsPerOp": 74269.0,
+      "threadNsPerOp": 73521.0,
+      "bytesPerOp": 3456,
+      "allocsPerOp": 1
+    },
+    {
+      "round": 5,
+      "name": "SLHV6Valid",
+      "iterations": 1054,
+      "nsPerOp": 1163801.0,
+      "wallNsPerOp": 1166380.0,
+      "threadNsPerOp": 1157908.0,
+      "bytesPerOp": 637061,
+      "allocsPerOp": 15333
+    },
+    {
+      "round": 5,
+      "name": "SLHV6Invalid",
+      "iterations": 968,
+      "nsPerOp": 1165137.0,
+      "wallNsPerOp": 1166928.0,
+      "threadNsPerOp": 1160631.0,
+      "bytesPerOp": 638574,
+      "allocsPerOp": 15371
+    },
+    {
+      "round": 5,
+      "name": "SLHV6WrongMessage",
+      "iterations": 1036,
+      "nsPerOp": 1185045.0,
+      "wallNsPerOp": 1188426.0,
+      "threadNsPerOp": 1176961.0,
+      "bytesPerOp": 639465,
+      "allocsPerOp": 15393
+    },
+    {
+      "round": 5,
+      "name": "SLHV6ZeroSignature",
+      "iterations": 1021,
+      "nsPerOp": 1155961.0,
+      "wallNsPerOp": 1158027.0,
+      "threadNsPerOp": 1151001.0,
+      "bytesPerOp": 637590,
+      "allocsPerOp": 15346
+    },
+    {
+      "round": 5,
+      "name": "SLHV6Sign",
+      "iterations": 63,
+      "nsPerOp": 18873270.0,
+      "wallNsPerOp": 19288073.0,
+      "threadNsPerOp": 18624929.0,
+      "bytesPerOp": 8892566,
+      "allocsPerOp": 219207
+    },
+    {
+      "round": 5,
+      "name": "SLHV2Sign",
+      "iterations": 3,
+      "nsPerOp": 381810000.0,
+      "wallNsPerOp": 382388625.0,
+      "threadNsPerOp": 375890653.0,
+      "bytesPerOp": 180011280,
+      "allocsPerOp": 4498563
+    },
+    {
+      "round": 5,
+      "name": "SLHV2ECRecover",
+      "iterations": 42157,
+      "nsPerOp": 29967.0,
+      "wallNsPerOp": 28980.0,
+      "threadNsPerOp": 28753.0,
+      "bytesPerOp": 352,
+      "allocsPerOp": 6
+    },
+    {
+      "round": 5,
+      "name": "SLHV2Valid",
+      "iterations": 2980,
+      "nsPerOp": 406482.0,
+      "wallNsPerOp": 407149.0,
+      "threadNsPerOp": 404474.0,
+      "bytesPerOp": 226508,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 5,
+      "name": "SLHV2Invalid",
+      "iterations": 2895,
+      "nsPerOp": 408131.0,
+      "wallNsPerOp": 408685.0,
+      "threadNsPerOp": 405473.0,
+      "bytesPerOp": 226504,
+      "allocsPerOp": 5450
+    },
+    {
+      "round": 5,
+      "name": "SLHV2ZeroSignature",
+      "iterations": 2959,
+      "nsPerOp": 419564.0,
+      "wallNsPerOp": 420221.0,
+      "threadNsPerOp": 417949.0,
+      "bytesPerOp": 228514,
+      "allocsPerOp": 5501
+    }
+  ],
+  "summary": {
+    "SLHV2ECRecover": {
+      "medianUs": 29.399,
+      "maxUs": 30.657,
+      "wallMedianUs": 28.772,
+      "threadMedianUs": 28.357
+    },
+    "SLHV2Valid": {
+      "medianUs": 408.307,
+      "maxUs": 414.56,
+      "wallMedianUs": 409.313,
+      "threadMedianUs": 406.881
+    },
+    "SLHV2Invalid": {
+      "medianUs": 409.663,
+      "maxUs": 419.416,
+      "wallMedianUs": 410.161,
+      "threadMedianUs": 408.109
+    },
+    "SLHV2ZeroSignature": {
+      "medianUs": 419.564,
+      "maxUs": 420.196,
+      "wallMedianUs": 420.221,
+      "threadMedianUs": 417.949
+    },
+    "FalconV3Valid": {
+      "medianUs": 9.244,
+      "maxUs": 9.511,
+      "wallMedianUs": 9.198,
+      "threadMedianUs": 9.169
+    },
+    "FalconV3Invalid": {
+      "medianUs": 3.798,
+      "maxUs": 3.945,
+      "wallMedianUs": 3.781,
+      "threadMedianUs": 3.763
+    },
+    "FalconV3WrongMessage": {
+      "medianUs": 9.115,
+      "maxUs": 9.442,
+      "wallMedianUs": 9.067,
+      "threadMedianUs": 9.036
+    },
+    "FalconV3ZeroSignature": {
+      "medianUs": 0.04845,
+      "maxUs": 0.04872,
+      "wallMedianUs": 0.04854,
+      "threadMedianUs": 0.047869999999999996
+    },
+    "FalconV3Sign": {
+      "medianUs": 166.284,
+      "maxUs": 166.548,
+      "wallMedianUs": 158.414,
+      "threadMedianUs": 157.999
+    },
+    "MLDSAV4Valid": {
+      "medianUs": 15.426,
+      "maxUs": 15.534,
+      "wallMedianUs": 15.346,
+      "threadMedianUs": 15.279
+    },
+    "MLDSAV4Invalid": {
+      "medianUs": 14.098,
+      "maxUs": 14.252,
+      "wallMedianUs": 14.127,
+      "threadMedianUs": 13.967
+    },
+    "MLDSAV4WrongMessage": {
+      "medianUs": 15.564,
+      "maxUs": 15.628,
+      "wallMedianUs": 15.758,
+      "threadMedianUs": 15.383
+    },
+    "MLDSAV4ZeroSignature": {
+      "medianUs": 0.5842999999999999,
+      "maxUs": 0.6029,
+      "wallMedianUs": 0.5827,
+      "threadMedianUs": 0.5772999999999999
+    },
+    "MLDSAV4Sign": {
+      "medianUs": 51.36,
+      "maxUs": 52.616,
+      "wallMedianUs": 47.921,
+      "threadMedianUs": 47.201
+    },
+    "MLDSAV5Valid": {
+      "medianUs": 25.781,
+      "maxUs": 26.105,
+      "wallMedianUs": 25.5,
+      "threadMedianUs": 25.43
+    },
+    "MLDSAV5Invalid": {
+      "medianUs": 24.406,
+      "maxUs": 24.907,
+      "wallMedianUs": 24.214,
+      "threadMedianUs": 24.161
+    },
+    "MLDSAV5WrongMessage": {
+      "medianUs": 25.811,
+      "maxUs": 26.191,
+      "wallMedianUs": 25.562,
+      "threadMedianUs": 25.494
+    },
+    "MLDSAV5ZeroSignature": {
+      "medianUs": 0.8092999999999999,
+      "maxUs": 0.8411000000000001,
+      "wallMedianUs": 0.8065,
+      "threadMedianUs": 0.8019
+    },
+    "MLDSAV5Sign": {
+      "medianUs": 79.735,
+      "maxUs": 80.356,
+      "wallMedianUs": 73.956,
+      "threadMedianUs": 73.218
+    },
+    "SLHV6Valid": {
+      "medianUs": 1163.801,
+      "maxUs": 1180.887,
+      "wallMedianUs": 1166.38,
+      "threadMedianUs": 1157.908
+    },
+    "SLHV6Invalid": {
+      "medianUs": 1165.137,
+      "maxUs": 1171.831,
+      "wallMedianUs": 1166.928,
+      "threadMedianUs": 1160.631
+    },
+    "SLHV6WrongMessage": {
+      "medianUs": 1185.045,
+      "maxUs": 1200.651,
+      "wallMedianUs": 1188.426,
+      "threadMedianUs": 1176.961
+    },
+    "SLHV6ZeroSignature": {
+      "medianUs": 1155.961,
+      "maxUs": 1203.07,
+      "wallMedianUs": 1162.906,
+      "threadMedianUs": 1151.001
+    },
+    "SLHV6Sign": {
+      "medianUs": 18873.27,
+      "maxUs": 18960.9,
+      "wallMedianUs": 18969.725,
+      "threadMedianUs": 18624.929
+    },
+    "SLHV2Sign": {
+      "medianUs": 387569.333,
+      "maxUs": 391072.0,
+      "wallMedianUs": 387916.528,
+      "threadMedianUs": 380606.0
+    }
+  },
+  "measurement": "process CPU including Go GC; thread CPU and wall recorded separately; GOMAXPROCS=1, GC enabled",
+  "pricing": {
+    "SLH": {
+      "ecRecoverGas": 3000,
+      "worstMeasuredUs": 420.196,
+      "margin": 1.25,
+      "recommendedGas": 54000,
+      "roundingGas": 1000,
+      "selectedGas": 60000,
+      "basis": "max measured verifier Run CPU / median ECRECOVER Run CPU * 3000 * 1.25; ceil to 1000 then 10000"
+    },
+    "SLHF": {
+      "ecRecoverGas": 3000,
+      "worstMeasuredUs": 1203.07,
+      "margin": 1.25,
+      "recommendedGas": 154000,
+      "roundingGas": 1000,
+      "selectedGas": 160000,
+      "basis": "max measured verifier Run CPU / median ECRECOVER Run CPU * 3000 * 1.25; ceil to 1000 then 10000"
+    },
+    "Falcon": {
+      "ecRecoverGas": 3000,
+      "worstMeasuredUs": 9.511,
+      "margin": 1.25,
+      "recommendedGas": 2000,
+      "roundingGas": 1000,
+      "selectedGas": 10000,
+      "basis": "max measured verifier Run CPU / median ECRECOVER Run CPU * 3000 * 1.25; ceil to 1000 then 10000"
+    },
+    "MLDSA": {
+      "ecRecoverGas": 3000,
+      "worstMeasuredUs": 15.628,
+      "margin": 1.25,
+      "recommendedGas": 2000,
+      "roundingGas": 1000,
+      "selectedGas": 10000,
+      "basis": "max measured verifier Run CPU / median ECRECOVER Run CPU * 3000 * 1.25; ceil to 1000 then 10000"
+    },
+    "MLDSA65": {
+      "ecRecoverGas": 3000,
+      "worstMeasuredUs": 26.191,
+      "margin": 1.25,
+      "recommendedGas": 4000,
+      "roundingGas": 1000,
+      "selectedGas": 10000,
+      "basis": "max measured verifier Run CPU / median ECRECOVER Run CPU * 3000 * 1.25; ceil to 1000 then 10000"
+    }
+  },
+  "environment": {
+    "CGO_CFLAGS": "-O2 -g",
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOARM64": "v8.0",
+    "GOFLAGS": "",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.4"
+  },
+  "fixtureSha256": "21a5afabb8babd24acfb263f33b9dee9d45db2ae26818556177d81cf70e9e6ff",
+  "sources": {
+    "one-box/precompile/v6/dependency.json": "4e856d6c39f038ad8f18509e46f6d8b87b87c5795b49d8e58e0970e0150490cd",
+    "one-box/precompile/v6/slh_v6_bench_test.go": "508059767c9d94e63e10208dc38199dc5efe1aa57bce4adfb8693c1d0aa88602",
+    "one-box/precompile/v6/slh_v6_test.go": "67904219fd6bb22dd80f2c0e3a98b64eeab9e2684585e6dced0a6085e3e7b804",
+    "one-box/precompile/v6/slh_v6_disabled.go": "729d58566d7b2a92aee8bdc2f2fa6dacb64a862918a6e6fe8d230b2ddd3b26e8",
+    "one-box/precompile/v6/slh_v6_fuzz_test.go": "1eb957b4328e897c90a1cc7419730e0ccc0331e32fb6ccaa87844bd3f77802a7",
+    "one-box/precompile/v6/slh_v6.go": "4c8bf7b2716baea7baaae8a951805f139db173a9b85cef1bc746a8aa69b39f86",
+    "one-box/precompile/v6/slh_v6_disabled_test.go": "784705f32e6a4267866031b09747bd4692bcd713e210760361c99ebe1cb77faf",
+    "one-box/precompile/v2/slh_v2_disabled.go": "dc48585df189184a473498068ee42cf013dbb69bec8c4712ea7db5d19b183013",
+    "one-box/precompile/v2/dependency.json": "4e856d6c39f038ad8f18509e46f6d8b87b87c5795b49d8e58e0970e0150490cd",
+    "one-box/precompile/v2/slh_v2_bench_test.go": "64b7f5953697cd54298a8580ab21b872b4ab6ddf1bb025759963cc7be78b392f",
+    "one-box/precompile/v2/slh_v2_disabled_test.go": "8dd4ad5015d99c1ffd11534805c186add2fba0cfc2672290fb981084447fd68e",
+    "one-box/precompile/v2/slh_v2.go": "96b07c0d9e299cf6be5a511d8f7c81a1db487563a1b6ab2014be49e1e70ff2ab",
+    "one-box/precompile/v2/slh_v2_test.go": "0139bff9e33a1fae149f2d2054043609452d419c49d6e15f52b8fba48323bbc4",
+    "one-box/precompile/v5/mldsa_v5.go": "8c1ff125be964bfab1c63026a7c3ade46ed3bd271318c8a4f4a4ba734c394de0",
+    "one-box/precompile/v5/dependency.json": "6ab6577984cc128e32f2f70cbc440349d58cf5e6f602b00041f805ff7441832f",
+    "one-box/precompile/v5/mldsa_v5_fuzz_test.go": "5218cfa9c53e43c082e46335022dbbf6ef37f30f527d0e48a46c3a0301de5656",
+    "one-box/precompile/v5/mldsa_v5_test.go": "ac351c660b16b8d2e6cae54d51c5a5da1fb5cb3f92f7dd8386dab817d2c77644",
+    "one-box/precompile/v5/mldsa_v5_disabled.go": "4988af40bfbdbb7db59aa0f002f161d74027223a64dbfe9cd04f6e5b10d6c7a8",
+    "one-box/precompile/v5/mldsa_v5_bench_test.go": "7100657cb0932b9a362c41fa770f4c812cb5ea52007b1149e2c268f57ffe969d",
+    "one-box/precompile/v5/mldsa_v5_disabled_test.go": "ce9eb721b6ac8cd2737377e50dc334c14e1a7a15f6a2e4671a21fa421a4c3043",
+    "one-box/precompile/v4/mldsa_v4_test.go": "4cf9471c3124f9add868abe335fbb2b35a488ea9702fe9dde7ed41ef58168b73",
+    "one-box/precompile/v4/dependency.json": "4af4e3d50417c3febfcbd0243d99c0092d9af4c5f3ec0ee4f375fb152bdc06dd",
+    "one-box/precompile/v4/mldsa_v4.go": "2f772280f398c7e7084cdbcfcd3d9a727481a11ae2d3e8860df43a8d900d1a10",
+    "one-box/precompile/v4/mldsa_v4_fuzz_test.go": "bd032b6c298b3c6438883d4886fea35c33182d25d39a927baefd43b98a948c9d",
+    "one-box/precompile/v4/mldsa_v4_bench_test.go": "060778e8d479530c254f12c70aa8db3c779de414e0f06fc05f04d78c3a5b21dc",
+    "one-box/precompile/v4/mldsa_v4_disabled_test.go": "3baf87bfd519c63c1db6cd36dd19752221dc97484514f10a9da4e6c58dade5c9",
+    "one-box/precompile/v4/mldsa_v4_disabled.go": "2a7e81fcd580cbfc7f46ebe8ad9d0cf29eddc0bc632fa548778cd7116fcc3e53",
+    "one-box/precompile/v3/dependency.json": "86920b3a9e2f9f624127dac891955ae8b4dafca9f81707d6babd4b813f4a5797",
+    "one-box/precompile/v3/falcon_v3_disabled_test.go": "5a03dba374a949c83f2db7ed3e4750b0d12055a06becc4a4b5e2c45da89bff5d",
+    "one-box/precompile/v3/falcon_v3_fuzz_test.go": "5834bf35fd867b224991fe51ee147a8141ce8e0ad1f8b1d517043fc6190915dc",
+    "one-box/precompile/v3/falcon_v3_bench_test.go": "6a752e24ffbb82fa53223e111df6fdec7cb9c9ec77ae16532bd06f4ded7f8236",
+    "one-box/precompile/v3/falcon_v3_disabled.go": "2d9b6051d361bbed7308f13ed176609b6639236c6cd423cb100667f27d6b5f13",
+    "one-box/precompile/v3/falcon_v3_test.go": "f8b47171be553c68934e446a5eff3bb93531baa4ce3adbdfb46ed3d7de88cce2",
+    "one-box/precompile/v3/falcon_v3.go": "b1c7697b92941431c2e95d5a1d7f462e35473d62d4683880b17d67b903048e62",
+    "one-box/precompile/v3/native/bridge.h": "d1f4fab5bbcfd77fd71c5838e9f87a189756e40b90a91976544ce56f48a81438",
+    "one-box/precompile/v3/native/bridge.c": "44050ae2b6a0874cb29b3496771e3669d0f3d14f6771b553923268d392540ab5",
+    "one-box/precompile/v3/native/falcon.go": "d205c4f807203aaf446106557c8011fae6cd17b97c44b1b5cb9c629f2001d86f",
+    "one-box/precompile/v3/wallet/main.go": "ef841a316ab423b68db2fcb4ba9968edbc687f851064288d391c7cbcc9a66326",
+    "one-box/precompile/v4/native/bridge.h": "75abf7a8d8740419c840996ad66dd220f2d90747d20cbfabd18b9eafcdf2dffe",
+    "one-box/precompile/v4/native/mldsa.go": "5bdc271b2da2e997de91e78b4eeed6ae9fd270d73668d556921235762aa9f757",
+    "one-box/precompile/v4/native/bridge.c": "c1a8ccea64d22e757625c8a4b3fc52cad5268ce890612c00e65068e95d6f7fa2",
+    "one-box/precompile/v4/wallet/main.go": "431f5f1f5b9d09e2d2dce5bde5ffd079178910e8c6c3584980cb6bf23b2c2ae3",
+    "one-box/precompile/v5/testdata/mldsa65.tsv": "ea17cf5b32fe8b2ec1120df96986168aea0936fd2eca88e94d6943a895e58176",
+    "one-box/precompile/v5/testdata/README.md": "dee2ef80cdd4a2ff479d71d6e61d1a1129ee02439bf43295d03c8732bf71e21b",
+    "one-box/precompile/v5/native/bridge65.h": "bcf7ed55b27493de7fc2112c40880fa598e922c291e2339b3d4c148422e51bc0",
+    "one-box/precompile/v5/native/mldsa65.go": "1319151082c9166b87e4c55b4defc06962e9b80c4c363b25bda2c353df808003",
+    "one-box/precompile/v5/native/bridge65.c": "03a8d31b48630175e540427694f30e752ffb74a926a788a4e796564659932fec",
+    "one-box/precompile/v5/wallet/main.go": "30505db6d4483724e53ecf23580e2a62231d74c680cf43624dadeb5fbd4c4229",
+    "one-box/precompile/v2/testdata/slh_v2.json": "21a5afabb8babd24acfb263f33b9dee9d45db2ae26818556177d81cf70e9e6ff"
+  },
+  "dependency": {
+    "module": "github.com/trailofbits/go-slh-dsa",
+    "version": "v0.1.0",
+    "commit": "0b3b31f8a1266e290326771384d2324c84d8a7bb",
+    "sum": "h1:2JVntrSjm8lYfwICtyC/eDZjmGUsZvx47qMvzDmVZH4=",
+    "goModSum": "h1:g0SMcIUgLR3AgK15UN7LPOwnDss9cjgpC906/IgzvGw="
+  },
+  "clientBuild": {
+    "sha256": "f9ccaa25f686263bb4ed72d1b39ef25cb19d2e3ecc9247190b9add84aa50d31c",
+    "version": "Geth\nVersion: 1.8.1\nArchitecture: arm64\nGo Version: go1.26.4\nOperating System: darwin\nGOPATH=\nGOROOT=/opt/homebrew/Cellar/go/1.26.4/libexec",
+    "source_commit": "947ba1cb1ef05d4a5f71b738113a3d8b4c16f6b7",
+    "build_tag": "pqprecompile",
+    "dependency": {
+      "module": "github.com/trailofbits/go-slh-dsa",
+      "version": "v0.1.0",
+      "commit": "0b3b31f8a1266e290326771384d2324c84d8a7bb",
+      "sum": "h1:2JVntrSjm8lYfwICtyC/eDZjmGUsZvx47qMvzDmVZH4=",
+      "goModSum": "h1:g0SMcIUgLR3AgK15UN7LPOwnDss9cjgpC906/IgzvGw="
+    },
+    "wallet_sha256": "d0677b9b82da2ba4a4a4154fef63aaf9f74cf47b36ab3629e187bf195958bd23",
+    "static_library_sha256": {
+      "libmldsa44.a": "c9e6d506eedb694734581d0e353504a25d088f19069e76338ac06e39a47ec8b9",
+      "libmldsa65.a": "5bf87deb84208fa106d2f536ebf2341a0b0a8e7e40b533274f0729c619a1c648"
+    },
+    "extension_files": {
+      "precompile/v2/slh_v2_disabled.go": "dc48585df189184a473498068ee42cf013dbb69bec8c4712ea7db5d19b183013",
+      "precompile/v2/dependency.json": "4e856d6c39f038ad8f18509e46f6d8b87b87c5795b49d8e58e0970e0150490cd",
+      "precompile/v2/slh_v2_bench_test.go": "64b7f5953697cd54298a8580ab21b872b4ab6ddf1bb025759963cc7be78b392f",
+      "precompile/v2/slh_v2_disabled_test.go": "8dd4ad5015d99c1ffd11534805c186add2fba0cfc2672290fb981084447fd68e",
+      "precompile/v2/slh_v2.go": "96b07c0d9e299cf6be5a511d8f7c81a1db487563a1b6ab2014be49e1e70ff2ab",
+      "precompile/v2/slh_v2_test.go": "0139bff9e33a1fae149f2d2054043609452d419c49d6e15f52b8fba48323bbc4",
+      "precompile/v2/testdata/slh_v2.json": "21a5afabb8babd24acfb263f33b9dee9d45db2ae26818556177d81cf70e9e6ff",
+      "precompile/v3/dependency.json": "86920b3a9e2f9f624127dac891955ae8b4dafca9f81707d6babd4b813f4a5797",
+      "precompile/v3/falcon_v3_disabled_test.go": "5a03dba374a949c83f2db7ed3e4750b0d12055a06becc4a4b5e2c45da89bff5d",
+      "precompile/v3/falcon_v3_fuzz_test.go": "5834bf35fd867b224991fe51ee147a8141ce8e0ad1f8b1d517043fc6190915dc",
+      "precompile/v3/falcon_v3_bench_test.go": "6a752e24ffbb82fa53223e111df6fdec7cb9c9ec77ae16532bd06f4ded7f8236",
+      "precompile/v3/falcon_v3_disabled.go": "2d9b6051d361bbed7308f13ed176609b6639236c6cd423cb100667f27d6b5f13",
+      "precompile/v3/falcon_v3_test.go": "f8b47171be553c68934e446a5eff3bb93531baa4ce3adbdfb46ed3d7de88cce2",
+      "precompile/v3/falcon_v3.go": "b1c7697b92941431c2e95d5a1d7f462e35473d62d4683880b17d67b903048e62",
+      "precompile/v3/native/bridge.h": "d1f4fab5bbcfd77fd71c5838e9f87a189756e40b90a91976544ce56f48a81438",
+      "precompile/v3/native/bridge.c": "44050ae2b6a0874cb29b3496771e3669d0f3d14f6771b553923268d392540ab5",
+      "precompile/v3/native/falcon.go": "d205c4f807203aaf446106557c8011fae6cd17b97c44b1b5cb9c629f2001d86f",
+      "precompile/v3/wallet/main.go": "ef841a316ab423b68db2fcb4ba9968edbc687f851064288d391c7cbcc9a66326",
+      "precompile/v4/mldsa_v4_test.go": "4cf9471c3124f9add868abe335fbb2b35a488ea9702fe9dde7ed41ef58168b73",
+      "precompile/v4/dependency.json": "4af4e3d50417c3febfcbd0243d99c0092d9af4c5f3ec0ee4f375fb152bdc06dd",
+      "precompile/v4/mldsa_v4.go": "2f772280f398c7e7084cdbcfcd3d9a727481a11ae2d3e8860df43a8d900d1a10",
+      "precompile/v4/mldsa_v4_fuzz_test.go": "bd032b6c298b3c6438883d4886fea35c33182d25d39a927baefd43b98a948c9d",
+      "precompile/v4/mldsa_v4_bench_test.go": "060778e8d479530c254f12c70aa8db3c779de414e0f06fc05f04d78c3a5b21dc",
+      "precompile/v4/mldsa_v4_disabled_test.go": "3baf87bfd519c63c1db6cd36dd19752221dc97484514f10a9da4e6c58dade5c9",
+      "precompile/v4/mldsa_v4_disabled.go": "2a7e81fcd580cbfc7f46ebe8ad9d0cf29eddc0bc632fa548778cd7116fcc3e53",
+      "precompile/v4/native/bridge.h": "75abf7a8d8740419c840996ad66dd220f2d90747d20cbfabd18b9eafcdf2dffe",
+      "precompile/v4/native/mldsa.go": "5bdc271b2da2e997de91e78b4eeed6ae9fd270d73668d556921235762aa9f757",
+      "precompile/v4/native/bridge.c": "c1a8ccea64d22e757625c8a4b3fc52cad5268ce890612c00e65068e95d6f7fa2",
+      "precompile/v4/wallet/main.go": "431f5f1f5b9d09e2d2dce5bde5ffd079178910e8c6c3584980cb6bf23b2c2ae3",
+      "precompile/v5/mldsa_v5.go": "8c1ff125be964bfab1c63026a7c3ade46ed3bd271318c8a4f4a4ba734c394de0",
+      "precompile/v5/dependency.json": "6ab6577984cc128e32f2f70cbc440349d58cf5e6f602b00041f805ff7441832f",
+      "precompile/v5/mldsa_v5_fuzz_test.go": "5218cfa9c53e43c082e46335022dbbf6ef37f30f527d0e48a46c3a0301de5656",
+      "precompile/v5/mldsa_v5_test.go": "ac351c660b16b8d2e6cae54d51c5a5da1fb5cb3f92f7dd8386dab817d2c77644",
+      "precompile/v5/mldsa_v5_disabled.go": "4988af40bfbdbb7db59aa0f002f161d74027223a64dbfe9cd04f6e5b10d6c7a8",
+      "precompile/v5/mldsa_v5_bench_test.go": "7100657cb0932b9a362c41fa770f4c812cb5ea52007b1149e2c268f57ffe969d",
+      "precompile/v5/mldsa_v5_disabled_test.go": "ce9eb721b6ac8cd2737377e50dc334c14e1a7a15f6a2e4671a21fa421a4c3043",
+      "precompile/v5/testdata/mldsa65.tsv": "ea17cf5b32fe8b2ec1120df96986168aea0936fd2eca88e94d6943a895e58176",
+      "precompile/v5/testdata/README.md": "dee2ef80cdd4a2ff479d71d6e61d1a1129ee02439bf43295d03c8732bf71e21b",
+      "precompile/v5/native/bridge65.h": "bcf7ed55b27493de7fc2112c40880fa598e922c291e2339b3d4c148422e51bc0",
+      "precompile/v5/native/mldsa65.go": "1319151082c9166b87e4c55b4defc06962e9b80c4c363b25bda2c353df808003",
+      "precompile/v5/native/bridge65.c": "03a8d31b48630175e540427694f30e752ffb74a926a788a4e796564659932fec",
+      "precompile/v5/wallet/main.go": "30505db6d4483724e53ecf23580e2a62231d74c680cf43624dadeb5fbd4c4229",
+      "precompile/v6/dependency.json": "4e856d6c39f038ad8f18509e46f6d8b87b87c5795b49d8e58e0970e0150490cd",
+      "precompile/v6/slh_v6_bench_test.go": "508059767c9d94e63e10208dc38199dc5efe1aa57bce4adfb8693c1d0aa88602",
+      "precompile/v6/slh_v6_test.go": "67904219fd6bb22dd80f2c0e3a98b64eeab9e2684585e6dced0a6085e3e7b804",
+      "precompile/v6/slh_v6_disabled.go": "729d58566d7b2a92aee8bdc2f2fa6dacb64a862918a6e6fe8d230b2ddd3b26e8",
+      "precompile/v6/slh_v6_fuzz_test.go": "1eb957b4328e897c90a1cc7419730e0ccc0331e32fb6ccaa87844bd3f77802a7",
+      "precompile/v6/slh_v6.go": "4c8bf7b2716baea7baaae8a951805f139db173a9b85cef1bc746a8aa69b39f86",
+      "precompile/v6/slh_v6_disabled_test.go": "784705f32e6a4267866031b09747bd4692bcd713e210760361c99ebe1cb77faf"
+    },
+    "build_scripts": {
+      "precompile.py": "7ff656f510ca0be0c067fadea2b130da07cc2890c4dae5d6de25a3c176294f4d",
+      "precompile_v3.py": "8ab27657353bae5c302d95790917b6c320716ef277b4d063e3143693f9b65a0f",
+      "precompile_v4.py": "cd1c367fdc5f5be3a2df155405223ed0e68cd754c1a8162cce095d6e336c0350",
+      "precompile_v5.py": "86891ec23fb3cc3c9d70af2b42a27f04ce371da9d1d3d0e7624f545705abfdde",
+      "precompile_v6.py": "9f61bd911ec0b8d90cedab62753737be4a7ac9415dcf9807b0d585beffc573bb"
+    },
+    "patches": {
+      "bsc-slh-v2.patch": "eed4d1b939eb0cbae94c89986fc5e1a2bb8d5f31c4f636d9563b2896124008c3",
+      "bsc-pq-v3.patch": "50126b8cc2376c57ff1dd34f3480cb53db9e26a19822c418de5f7cb08d2d5346"
+    }
+  },
+  "goTestBinarySha256": "09640c3c8add0f64d32c70aecc4a3e6d2f7e488ed02999e9aaedb0b72a21791b",
+  "benchmarkScriptSha256": "7a0861a77652913c0b3bff05dc49aa2575410330b24746c209b25073b6e3e5fd",
+  "logSha256": "02229788e62e07a4c844ab12d033091583f44c42ee39543a16545e81c98c219a"
+}

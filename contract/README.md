@@ -63,3 +63,7 @@ Falcon 公钥为 896-byte 主体，不能直接使用 common/PQAccount 的 bytes
 ## v5：ML-DSA-65 账户
 
 `src/v5/` 包含 MLDSA65Account、MLDSA65AccountFactory、MLDSA65Precompile。权限模型与 v4 相同，但固定公钥长度为 1,952 bytes，占 62 个存储槽（一个长度槽与 61 个数据槽）；签名为 3,309 bytes。adapter 使用 `0x0104`，原生输入为 `publicKey[1952] || userOpHash[32] || signature[3309]`。本版没有替换 v4 合约、改变旧账户权限或引入算法回退。
+
+## v6：SLH-DSA-SHA2-128f
+
+`src/v6/SLHDSA128fPrecompile.sol` 以 `0x0105` 验证固定 17,088-byte 签名；账户与工厂复用 common 中的 bytes32 公钥版本，公钥通过 immutable 嵌入代码。新部署绑定新的验证器，不改变 v1/v2 账户。历史接口名 `ISLHDSA128s` 仅定义通用的 verify ABI，复用它不表示 v6 使用 128s 算法。无算法回退、管理员或换钥接口。

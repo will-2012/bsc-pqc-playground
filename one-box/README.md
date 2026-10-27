@@ -270,3 +270,16 @@ v5 在 `.runtime/build/v5/` 中构建，复用 v4 的 ML 后端准备流程，�
 配置标记 `pq_precompile=5`，默认 RPC/P2P 各加 40。沿用同一个 `pqTime`，在 SLH / Falcon / ML-DSA-44 之外启用 ML-DSA-65 `0x0104`；三个旧地址与价格保留。Alto 仅在 v5 环境额外识别该地址，safe-mode 保持开启。
 
 输入固定 5,293 bytes：`publicKey[1952] || userOpHash[32] || signature[3309]`，采用 FIPS 204 Pure、空 context。公钥 / 签名尺寸不正确或验签失败返回 32-byte 的 0；成功返回 1。当前整套客户端仍仅验证 macOS arm64。
+
+## v6：SLH-DSA-SHA2-128f
+
+```bash
+./tools/one-box bundler build
+./tools/one-box build --v6
+./tools/one-box --name devnet-v6 init --v6
+./tools/one-box --name devnet-v6 bundler up --port 14387
+./tools/erc4337-wallet test devnet-v6 --version v6
+./tools/one-box --name devnet-v6 down
+```
+
+配置标记 `pq_precompile=6`，默认 RPC/P2P 各加 50。在原有 `pqTime` 同时启用五个预编译，新增 `0x0105`，不改变旧地址或旧价格。原生层与 v2 使用同一固定版本的 Go SLH 后端，构建仍限定 macOS arm64。输入为 `publicKey[32] || userOpHash[32] || signature[17088]`，采用 FIPS 205 Pure、空 context，返回 32-byte 0/1。Alto 仅在该环境额外允许此实验地址，safe-mode 保持开启；同时按 handleOps 编码大小拆包，calldata 上限 130,048 bytes，为 BSC 的 128 KiB 交易上限预留 1 KiB 封装空间。当前钱包不含 7702 授权。
