@@ -8,6 +8,10 @@
 /one-box/**/secrets/
 /one-box/**/*.key
 /one-box/**/*.pem
+/one-box/node_modules/
+/contract/node_modules/
+/contract/out/
+/contract/cache/
 __pycache__/
 *.pyc
 .DS_Store

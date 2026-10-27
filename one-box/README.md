@@ -11,7 +11,7 @@
 需要 Git、Python 3.11 或以上版本、Go（版本要求见 `external/bsc/go.mod`）、Node.js/npm，以及 Foundry 的 `forge`、`cast`。脚本适用于 macOS/Linux，首次构建需要联网下载依赖。
 
 ```bash
-git submodule update --init --recursive
+git submodule update --init
 ./tools/one-box doctor
 ./tools/one-box build
 ./tools/one-box up
@@ -105,7 +105,72 @@ one-box/
 └── .runtime/                密钥、构建、数据库和日志；不提交
 ```
 
-当前仅搭建基础开发链，尚未加入 PQ 预编译、Bundler 或智能账户合约；账户交易、出块、BLS 投票和 P2P 仍使用 BSC 原有机制。
+当前提供 BSC 开发链和 ECDSA 智能账户的 ERC-4337 基线；PQ 预编译和 PQ 智能账户尚未加入。出块、BLS 投票和 P2P 仍使用 BSC 原有机制。
+
+## Alto Bundler 与 ERC-4337
+
+```text
+生成的实验账户 → 签署 UserOperation → Alto Bundler
+                                         ↓ 提交普通交易
+                                  BSC 三验证者网络
+                                         ↓
+                                     EntryPoint
+                                         ↓ 验证并执行
+                                   SimpleAccount
+                                         ↓
+                                   转账 / Counter
+```
+
+固定 Alto **0.0.17**（submodule 提交 `1d330b71…`）和 EntryPoint **v0.7**，沿用此前已跑通的版本组合。使用的是 submodule 源码构建的 Alto，不是另行安装的 Alto npm 发行包。
+
+额外需要 pnpm；Alto 上游 `packageManager` 固定 pnpm 8.15.4。只需初始化顶层 submodule，无需为这条链路拉取 Alto 的测试用嵌套 submodule。
+
+```bash
+./tools/one-box bundler build     # 构建 Alto、安装锁定依赖、编译 contract/
+./tools/one-box bundler up        # 必要时启动验证者；部署合约、充值、启动 Alto
+./tools/one-box bundler test      # 真实 UserOperation 联通及拒绝测试
+./tools/one-box bundler status
+./tools/one-box bundler restart   # 仅重启 Bundler
+./tools/one-box bundler down      # 仅停止 Bundler
+./tools/one-box down              # 先停 Bundler，再停验证者
+```
+
+Bundler 默认地址：`http://127.0.0.1:14337`。默认参数在 [`bundler.json`](bundler.json)，首次使用时复制到当前环境的 `bundler/config.json`，节点 RPC 地址从当前环境配置读取。修改该环境的配置后执行 `bundler restart` 应用；也可通过 `bundler restart --port 14338` 修改端口。多个环境同时运行时，为各环境选择不同端口，例如 `./tools/one-box --name lab bundler up --port 14338`。
+
+`restart` 和客户端 `upgrade` 会恢复原先正在运行的 Bundler。`reset` 会停止 Bundler，并删除该环境的部署记录和密钥；新链上再次执行 `bundler up` 即可重新部署。
+
+部署账户使用本环境自动生成的 `test0` keystore；executor、utility 和收款账户另行随机生成。EntryPoint、工厂、Counter 及 Alto 的 v0.7 模拟合约均通过正常链上交易部署。模拟合约采用 Alto 源码内附的字节码，显式配置地址并关闭自动部署，不依赖固定助记词、预签名部署交易或开放未保护交易。
+
+### 构建与适配
+
+构建时将 Alto 的固定 Git 提交解包到 `one-box/.runtime/build/alto/`，应用 [`alto-localhost.patch`](patches/alto-localhost.patch)，再按上游锁文件构建。补丁只将监听地址从 `0.0.0.0` 改为 `127.0.0.1`；`safe-mode` 保持开启，仍执行完整的签名、opcode 和 storage 模拟检查。ESM 包标记沿用上游发布流程。
+
+修改 Alto 源码后，先在 submodule 内提交，再执行 `bundler build`；构建记录保存实际提交和补丁校验值。重建共享 Alto 前需要停止本仓库所有环境中的 Bundler。
+
+### 测试与运行数据
+
+每次 `bundler test` 使用新的工厂 salt，依次验证：
+
+1. 预充值尚未部署的智能账户。
+2. Bundler 估算 gas，拒绝错误 owner 的签名。
+3. 首次 UserOperation 通过工厂创建账户，并转出 0.01 BNB。
+4. 第二次 UserOperation 调用 Counter，确认直接调用者是智能账户。
+5. 拒绝重复 nonce，并核对所有验证者的交易区块和合约状态一致。
+
+智能账户自己支付 UserOperation 的费用；Bundler executor 先支付外层交易 gas，再由 EntryPoint 结算。本基线没有 Paymaster。
+
+| 内容 | 路径（相对当前环境目录） |
+| --- | --- |
+| 合约地址、部署交易和代码校验值 | `bundler/deployment.json` |
+| 当前环境的 Bundler 参数 | `bundler/config.json` |
+| executor、utility、收款账户私钥 | `bundler/private.json`，仅本地保存 |
+| 包含密钥的 Alto 运行配置 | `bundler/alto.json`，仅本地保存 |
+| UserOperation 测试结果 | `bundler/result.json` |
+| Alto 日志 | `logs/alto.log` |
+
+以上全部位于被 Git 忽略的 `one-box/.runtime/<环境名>/`；公共模板不含私钥。
+
+版本选择、适配原因和实测范围见 [ERC-4337 验收记录](docs/erc4337-verification.md)。
 
 ## 验证
 

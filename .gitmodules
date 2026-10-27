@@ -5,3 +5,6 @@
 	path = external/bsc
 	url = https://github.com/bnb-chain/bsc.git
 	shallow = true
+[submodule "external/alto"]
+	path = external/alto
+	url = https://github.com/pimlicolabs/alto.git

@@ -11,11 +11,13 @@ import sys
 import socket
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "one-box/scripts"))
 from devnet import MUTABLE, RUNTIME, free_ports, node_config, validate  # noqa: E402
 from genesis import rlp  # noqa: E402
+import devnet  # noqa: E402
 
 
 class ConfigTests(unittest.TestCase):
@@ -92,9 +94,19 @@ class RlpTests(unittest.TestCase):
             self.assertEqual(rlp(value).hex(), expected)
 
 
+class HealthTests(unittest.TestCase):
+    def test_progress_retries_transient_startup_snapshot(self):
+        before = {"nodes": [{"height": 10, "finalized": 9}]}
+        after = {"nodes": [{"height": 12, "finalized": 11}]}
+        with patch.object(devnet, "check", side_effect=[RuntimeError("peer reconnect"), before, after]):
+            with patch.object(devnet.time, "sleep"):
+                self.assertEqual(devnet.check_progress(None), after)
+
+
 class GitExclusionTests(unittest.TestCase):
     def test_runtime_and_key_paths_are_ignored_and_untracked(self):
         paths = ["one-box/.runtime/devnet/node0/password.txt", "one-box/.runtime/build/geth",
+                 "one-box/.runtime/devnet/bundler/private.json", "one-box/.runtime/devnet/bundler/alto.json",
                  "one-box/runtime/test.json", "one-box/keystore/test.json", "one-box/nodekey",
                  "one-box/password.txt", "one-box/private/test.json", "one-box/secrets/test.json",
                  "one-box/test.key", "one-box/test.pem"]

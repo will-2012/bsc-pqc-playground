@@ -86,7 +86,7 @@ def doctor():
             raise RuntimeError(f"Missing dependency: {tool}")
     for source in ("bsc", "genesis-contracts"):
         if not (ROOT / "external" / source / ".git").exists():
-            raise RuntimeError("Run git submodule update --init --recursive first")
+            raise RuntimeError("Run git submodule update --init first")
     print("Dependencies and submodules: OK", flush=True)
 
 
@@ -346,7 +346,7 @@ def register(env, manifest, cfg):
 
 
 def check_progress(env):
-    before = check(env)
+    before = wait_for("consistent node snapshot", lambda: check(env), 60)
 
     def advanced():
         after = check(env)
@@ -411,6 +411,8 @@ def up(env):
 
 
 def down(env):
+    from bundler import stop
+    stop(env)
     manifest = read(env / "environment.json")
     pids = [(i, process(env, i)) for i in range(len(manifest["nodes"]))]
     for i, pid in pids:
@@ -432,6 +434,8 @@ def down(env):
 
 
 def upgrade(env, candidate):
+    from bundler import process as bundler_process, start as start_bundler
+    resume_bundler = bool(bundler_process(env))
     manifest, _ = load(env)
     info = binary_info(candidate)
     # Preserve both binaries before touching any running process.
@@ -445,6 +449,8 @@ def upgrade(env, candidate):
     write(env / "environment.json", manifest)
     try:
         up(env)
+        if resume_bundler:
+            start_bundler(env)
     except Exception:
         down(env)
         shutil.copy2(env / "bin/geth.previous", env / "bin/geth")
@@ -471,6 +477,9 @@ def main():
     p.add_argument("value", nargs="?", type=int)
     p = sub.add_parser("upgrade")
     p.add_argument("--binary", type=Path, required=True, help="Replacement geth, same supported hardfork profile")
+    p = sub.add_parser("bundler", help="Build, deploy and manage Alto and the ERC-4337 demo")
+    p.add_argument("operation", choices=["build", "deploy", "up", "down", "restart", "status", "test"])
+    p.add_argument("--port", type=int, help="Set this environment's port with up, restart or deploy")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,39}", args.name) or args.name in ("build", "locks"):
         parser.error("Invalid or reserved environment name")
@@ -478,7 +487,7 @@ def main():
     RUNTIME.mkdir(exist_ok=True)
     locks = RUNTIME / "locks"
     locks.mkdir(exist_ok=True)
-    lockname = "build" if args.action == "build" else args.name
+    lockname = "build-bundler" if args.action == "bundler" and args.operation == "build" else "build" if args.action == "build" else args.name
     with (locks / (lockname + ".lock")).open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         if args.action == "doctor":
@@ -506,8 +515,42 @@ def main():
         elif args.action == "down":
             down(env)
         elif args.action == "restart":
+            from bundler import process as bundler_process, start as start_bundler
+            resume_bundler = bool(bundler_process(env))
             down(env)
             up(env)
+            if resume_bundler:
+                start_bundler(env)
+        elif args.action == "bundler":
+            import bundler
+            operation = args.operation
+            if args.port is not None and operation not in ("up", "restart", "deploy"):
+                raise ValueError("--port is only valid with bundler up/restart/deploy")
+            if operation == "build":
+                bundler.build()
+            elif operation in ("up", "restart", "deploy"):
+                if operation == "restart":
+                    bundler.stop(env)
+                if not env.exists():
+                    init(env, ROOT / "one-box/config.json")
+                if any(process(env, i) is None for i in range(read(env / "config.json")["validators"])):
+                    up(env)
+                else:
+                    check_progress(env)
+                if args.port is not None:
+                    if bundler.process(env):
+                        raise RuntimeError("Use bundler restart --port to change a running bundler's port")
+                    bundler.settings(env, args.port)
+                if operation == "deploy":
+                    bundler.run_script(env, "deploy")
+                else:
+                    bundler.start(env)
+            elif operation == "down":
+                bundler.stop(env)
+            elif operation == "status":
+                bundler.status(env)
+            else:
+                bundler.run_script(env, "test")
         elif args.action == "upgrade":
             upgrade(env, args.binary.resolve())
         elif args.action == "config":
@@ -539,6 +582,9 @@ def main():
                     print(json.dumps({"node": i, "pid": process(env, i), "height": rpc(cfg, i, "eth_blockNumber")}))
                 except (OSError, RuntimeError):
                     print(json.dumps({"node": i, "pid": process(env, i), "rpc": "unavailable"}))
+            if (env / "bundler/deployment.json").exists():
+                from bundler import status as bundler_status
+                bundler_status(env)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,7 @@
+--- a/src/rpc/server.ts
++++ b/src/rpc/server.ts
+@@ -160,3 +160,3 @@
+     public start(): void {
+-        this.fastify.listen({ port: this.config.port, host: "0.0.0.0" })
++        this.fastify.listen({ port: this.config.port, host: "127.0.0.1" })
+     }
