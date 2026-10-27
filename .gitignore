@@ -17,3 +17,4 @@ __pycache__/
 .DS_Store
 
 /tools/crypto-bench/.runtime/
+/erc4337-wallet/node_modules/

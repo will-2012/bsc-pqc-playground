@@ -105,7 +105,7 @@ one-box/
 └── .runtime/                密钥、构建、数据库和日志；不提交
 ```
 
-当前提供 BSC 开发链和 ECDSA 智能账户的 ERC-4337 基线；PQ 预编译和 PQ 智能账户尚未加入。出块、BLS 投票和 P2P 仍使用 BSC 原有机制。
+当前提供 BSC 开发链、ECDSA 智能账户基线和 SLH-DSA PQ 智能账户。PQ 账户采用 Solidity 验签，不新增 PQ 预编译。出块、BLS 投票和 P2P 仍使用 BSC 原有机制。
 
 ## Alto Bundler 与 ERC-4337
 
@@ -143,7 +143,7 @@ Bundler 默认地址：`http://127.0.0.1:14337`。默认参数在 [`bundler.json
 
 ### 构建与适配
 
-构建时将 Alto 的固定 Git 提交解包到 `one-box/.runtime/build/alto/`，应用 [`alto-localhost.patch`](patches/alto-localhost.patch)，再按上游锁文件构建。补丁只将监听地址从 `0.0.0.0` 改为 `127.0.0.1`；`safe-mode` 保持开启，仍执行完整的签名、opcode 和 storage 模拟检查。ESM 包标记沿用上游发布流程。
+构建时将 Alto 的固定 Git 提交解包到 `one-box/.runtime/build/alto/`，应用 [`alto-localhost.patch`](patches/alto-localhost.patch) 和 [`alto-timeout.patch`](patches/alto-timeout.patch)，再按上游锁文件构建。前者将监听地址改为 `127.0.0.1`；后者允许本地配置更长的 RPC 和 trace 超时，供 Solidity PQ 验签使用。`safe-mode` 保持开启，仍执行签名、opcode 和 storage 模拟检查。ESM 包标记沿用上游发布流程；构建记录保存源码提交和两个补丁的 hash。
 
 修改 Alto 源码后，先在 submodule 内提交，再执行 `bundler build`；构建记录保存实际提交和补丁校验值。重建共享 Alto 前需要停止本仓库所有环境中的 Bundler。
 
@@ -171,6 +171,14 @@ Bundler 默认地址：`http://127.0.0.1:14337`。默认参数在 [`bundler.json
 以上全部位于被 Git 忽略的 `one-box/.runtime/<环境名>/`；公共模板不含私钥。
 
 版本选择、适配原因和实测范围见 [ERC-4337 验收记录](docs/erc4337-verification.md)。
+
+### PQ 智能账户
+
+`./tools/one-box bundler up --pq` 在当前环境合并 [`pq-bundler.json`](pq-bundler.json) 的实验预算；已运行时使用 `bundler restart --pq`。公共默认配置不变，当前环境的配置会持久保存。
+
+该 profile 将验证模拟预算设为 16M gas、估算总预算 35M gas，每 bundle 最多一个 UserOperation，RPC / trace 超时 180 秒。它不关闭安全模拟，不修改 EntryPoint，也不修改 BSC。Alto 0.0.17 的实际行为不代表符合公共内存池所有大小和 gas 限制；这里只验证独立本地 Bundler。
+
+`bundler build` 还会安装锁定的钱包依赖、编译 PQ 合约。创建账户、转账和批量实验使用外部入口 `tools/erc4337-wallet`、`tools/chain-bench/run`，详见 [钱包说明](../erc4337-wallet/README.md) 和 [PQ 验收记录](../docs/chain-bench/README.md)。
 
 ## 验证
 

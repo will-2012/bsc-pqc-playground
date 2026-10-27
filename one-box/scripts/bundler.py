@@ -17,9 +17,11 @@ WORK = BUILD / "alto"
 CLI = WORK / "src/esm/cli/alto.js"
 
 
-def settings(env, port=None):
+def settings(env, port=None, pq=False):
     path = env / "bundler/config.json"
     config = read(path) if path.exists() else read(BOX / "bundler.json")
+    if pq:
+        config.update(read(BOX / "pq-bundler.json"))
     if port is not None:
         config["port"] = port
     if type(config["port"]) is not int or not 1024 <= config["port"] < 65536:
@@ -63,6 +65,8 @@ def build():
     log = BUILD / "alto-build.log"
     patch = BOX / "patches/alto-localhost.patch"
     command(["patch", "--batch", "--forward", "-p1", "-i", patch], log, WORK)
+    timeout_patch = BOX / "patches/alto-timeout.patch"
+    command(["patch", "--batch", "--forward", "-p1", "-i", timeout_patch], log, WORK)
     # Do not run upstream prepare or the unrelated e2e workspaces.
     command(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"], log, WORK, timeout=900)
     command(["pnpm", "--filter", "@pimlico/alto", "build:esm"], log, WORK, timeout=300)
@@ -70,12 +74,13 @@ def build():
     package = read(WORK / "src/package.json")
     package["type"] = "module"
     write(WORK / "src/package.json", package)
-    for path in (BOX, ROOT / "contract"):
+    for path in (BOX, ROOT / "contract", ROOT / "erc4337-wallet"):
         command(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], log, path, timeout=600)
     command(["forge", "build"], log, ROOT / "contract", timeout=300)
     write(BUILD / "alto.json", {
         "source_commit": command(["git", "rev-parse", "HEAD"], cwd=SOURCE).strip(),
         "version": package["version"], "localhost_patch_sha256": digest(patch),
+        "timeout_patch_sha256": digest(timeout_patch),
     })
     print("Built Alto from submodule and compiled ERC-4337 contracts", flush=True)
 
@@ -116,6 +121,9 @@ def start(env):
     child_env = {k: v for k, v in os.environ.items()
                  if not k.startswith(("ALTO_", "SENTRY_", "OTEL_"))}
     child_env["DOTENV_CONFIG_PATH"] = os.devnull
+    if config.get("timeout"):
+        child_env["ALTO_LOCAL_TRACE_TIMEOUT"] = f'{config["timeout"]}ms'
+        child_env["ALTO_LOCAL_RPC_TIMEOUT"] = str(config["timeout"])
     with (env / "logs/alto.log").open("a") as output:
         child = subprocess.Popen(["node", str(CLI), "run", "--config", str(env / "bundler/alto.json")],
                                  cwd=WORK, env=child_env, stdout=output, stderr=subprocess.STDOUT, start_new_session=True)

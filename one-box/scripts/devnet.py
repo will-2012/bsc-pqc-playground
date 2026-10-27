@@ -480,6 +480,7 @@ def main():
     p = sub.add_parser("bundler", help="Build, deploy and manage Alto and the ERC-4337 demo")
     p.add_argument("operation", choices=["build", "deploy", "up", "down", "restart", "status", "test"])
     p.add_argument("--port", type=int, help="Set this environment's port with up, restart or deploy")
+    p.add_argument("--pq", action="store_true", help="Use local PQ simulation budgets with safe-mode enabled")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,39}", args.name) or args.name in ("build", "locks"):
         parser.error("Invalid or reserved environment name")
@@ -526,6 +527,8 @@ def main():
             operation = args.operation
             if args.port is not None and operation not in ("up", "restart", "deploy"):
                 raise ValueError("--port is only valid with bundler up/restart/deploy")
+            if args.pq and operation not in ("up", "restart", "deploy"):
+                raise ValueError("--pq is only valid with bundler up/restart/deploy")
             if operation == "build":
                 bundler.build()
             elif operation in ("up", "restart", "deploy"):
@@ -537,10 +540,10 @@ def main():
                     up(env)
                 else:
                     check_progress(env)
-                if args.port is not None:
+                if args.port is not None or args.pq:
                     if bundler.process(env):
-                        raise RuntimeError("Use bundler restart --port to change a running bundler's port")
-                    bundler.settings(env, args.port)
+                        raise RuntimeError("Use bundler restart to change a running bundler's configuration")
+                    bundler.settings(env, args.port, pq=args.pq)
                 if operation == "deploy":
                     bundler.run_script(env, "deploy")
                 else:

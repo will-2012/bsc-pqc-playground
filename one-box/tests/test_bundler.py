@@ -30,6 +30,17 @@ class BundlerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 bundler.settings(env, 0)
 
+    def test_pq_profile_is_local_and_preserves_safe_mode(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            env = Path(temporary)
+            config = bundler.settings(env, pq=True)
+            self.assertTrue(config["safe-mode"])
+            self.assertFalse(config["deploy-simulations-contract"])
+            self.assertEqual(config["max-bundle-size"], 1)
+            self.assertEqual(config["simulation-verification-gas-limit"], "16000000")
+            self.assertEqual(bundler.settings(env)["timeout"], 180000)
+            self.assertNotIn("simulation-verification-gas-limit", json.loads((ROOT / "one-box/bundler.json").read_text()))
+
     def test_stop_never_signals_an_unrelated_pid(self):
         with tempfile.TemporaryDirectory() as temporary:
             env = Path(temporary)

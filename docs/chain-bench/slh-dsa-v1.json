@@ -1,0 +1,116 @@
+{
+  "checkedAt": "2026-10-27T06:09:56.362Z",
+  "chainId": 714,
+  "genesisHash": "0x746ef8820c50065da60cb0bd13914fc8871bb8bf04dcf702693bd3390c46e8f5",
+  "profile": "slh-dsa-v1",
+  "algorithm": "SLH-DSA-SHA2-128s",
+  "mode": "sequential, Solidity verifier, includes signing/simulation/inclusion",
+  "count": 3,
+  "rows": [
+    {
+      "createMs": 62426.15425,
+      "transferMs": 61636.210041,
+      "created": {
+        "id": "f37e3ef9fa104d2dc8b732ef",
+        "address": "0x3371E2032B6D77Aa7Bd563C32B3f27B7973d766E",
+        "publicKey": "0xb053c87ade007f324d6a85d38b59cfc0993c1e8f30122483ce698923b5215363",
+        "userOperationHash": "0xbc12acd36f45b5da65531645f335301c6e34a6883e3050f5c146ad1a101d98cf",
+        "transactionHash": "0x9a4cc9793c2b202a5f9a7251c783ac912619dad0f7fc69bf95f926c9bcf9e9e0",
+        "blockHash": "0x97b046cd78fb489c972a04bbcc106d52bae77a94e30d8df2d2b031a063ac38e9",
+        "blockNumber": "3571",
+        "actualGasUsed": "6950431",
+        "actualGasCost": "6950431000000000",
+        "outerTransactionGas": "6791680",
+        "verificationGasLimit": "9857248",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8576
+      },
+      "transferred": {
+        "id": "f37e3ef9fa104d2dc8b732ef",
+        "from": "0x3371E2032B6D77Aa7Bd563C32B3f27B7973d766E",
+        "to": "0x5e700BD4D36a3841041618cCd8371e3404436CD4",
+        "amountWei": "10000000000000000",
+        "userOperationHash": "0x3432fd21c06e1b7e2b1526899a29e66cdf7927b36181ec3c77d46eb55c013242",
+        "transactionHash": "0xc7c2b192192fa335d3b6a80ad3604235026ec6e0b12e238094fa46354ff7c1b3",
+        "blockHash": "0x06c6c52918af8937400834f47f70e68846e1ce0c528aae247a3b181d63065a88",
+        "blockNumber": "3708",
+        "actualGasUsed": "6395119",
+        "actualGasCost": "6395119000000000",
+        "outerTransactionGas": "6237303",
+        "verificationGasLimit": "9055245",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8480
+      }
+    },
+    {
+      "createMs": 61869.89874999999,
+      "transferMs": 58726.18154199998,
+      "created": {
+        "id": "8bc0fb2aea12482a75f5770a",
+        "address": "0xb1052dff6d44E4DCeD2e02608469010bbF7e8E96",
+        "publicKey": "0x20d498daa5516d7bd60dde6e98290a5b47ecfe4cfa08d5f59bbadf78c395f75e",
+        "userOperationHash": "0xe01bd73cbd3954ff02b485da407aff0ecec861ab4c1c5885ff9953e70a7fe342",
+        "transactionHash": "0xa189a762d4dce8b51d55a4f14e5d49c9dbc1d796404d52b42263228d3d8f4020",
+        "blockHash": "0xf798b939d94615bca8a25a994765e06df69ced84fea9f754a0a4ff588fa27207",
+        "blockNumber": "3845",
+        "actualGasUsed": "6914191",
+        "actualGasCost": "6914191000000000",
+        "outerTransactionGas": "6755355",
+        "verificationGasLimit": "10604319",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8576
+      },
+      "transferred": {
+        "id": "8bc0fb2aea12482a75f5770a",
+        "from": "0xb1052dff6d44E4DCeD2e02608469010bbF7e8E96",
+        "to": "0x5e700BD4D36a3841041618cCd8371e3404436CD4",
+        "amountWei": "10000000000000000",
+        "userOperationHash": "0xdb510faacd5d432e0062df8a77d96f38d726ac21aaa18be4d1a0520b69163175",
+        "transactionHash": "0x526e5d4acd3c5604e6cc61a679bc7f983cc579093c11a0ba9b8ebbfbb9aa5a2e",
+        "blockHash": "0xe23a3e96b4e99141f0b7137dba8c8bcb93b0ceabae4f9e5503a0d83286481335",
+        "blockNumber": "3976",
+        "actualGasUsed": "6179044",
+        "actualGasCost": "6179044000000000",
+        "outerTransactionGas": "6021264",
+        "verificationGasLimit": "8824533",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8480
+      }
+    },
+    {
+      "createMs": 61563.120209000015,
+      "transferMs": 56796.43145799998,
+      "created": {
+        "id": "d80d1b87c9a95c973e6b719f",
+        "address": "0xa13f3e677C2bd6f98BeA018d30338a175E080A9E",
+        "publicKey": "0xe72a5e825e947873cb7ff2f310236f58c7732478c32b196af14cc8052830ac55",
+        "userOperationHash": "0xcf5d558cc0d68832baac9299ede067003c7ac4438dd83fc1c5033ccfee8550df",
+        "transactionHash": "0x0137172e222dedac916242e42c0dc0241678b23470642fcb6b30362aa52f4ca5",
+        "blockHash": "0xa50f3224c304db8aefd5f260a26dd7c92e400966b9861816de964e96c57431cb",
+        "blockNumber": "4112",
+        "actualGasUsed": "6661528",
+        "actualGasCost": "6661528000000000",
+        "outerTransactionGas": "6502632",
+        "verificationGasLimit": "9747384",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8576
+      },
+      "transferred": {
+        "id": "d80d1b87c9a95c973e6b719f",
+        "from": "0xa13f3e677C2bd6f98BeA018d30338a175E080A9E",
+        "to": "0x5e700BD4D36a3841041618cCd8371e3404436CD4",
+        "amountWei": "10000000000000000",
+        "userOperationHash": "0xb35e34d0472668f03f5da633c7aac73aafcb05d54f7b5343362096d1c4bc0737",
+        "transactionHash": "0xeaee0c4e2c562edca876de9fc838242f1bbfa787afa16b8f076079226f6886f7",
+        "blockHash": "0xc41bf97b2422ad25d5c03e3c5695f07c5c275db27fc84ceb31daa0bee081fbc4",
+        "blockNumber": "4238",
+        "actualGasUsed": "5894574",
+        "actualGasCost": "5894574000000000",
+        "outerTransactionGas": "5736926",
+        "verificationGasLimit": "9055245",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8480
+      }
+    }
+  ]
+}

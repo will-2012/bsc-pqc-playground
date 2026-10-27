@@ -1,0 +1,9 @@
+{
+  "max-bundle-size": 1,
+  "max-gas-per-bundle": "25000000",
+  "simulation-verification-gas-limit": "16000000",
+  "simulation-call-gas-limit": "300000",
+  "fixed-gas-limit-for-estimation": "35000000",
+  "v7-verification-gas-limit-multiplier": "150",
+  "timeout": 180000
+}

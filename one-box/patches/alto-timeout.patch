@@ -1,0 +1,27 @@
+diff --git a/src/rpc/validation/tracer.ts b/src/rpc/validation/tracer.ts
+--- a/src/rpc/validation/tracer.ts
++++ b/src/rpc/validation/tracer.ts
+@@ -35,6 +35,9 @@ export async function debug_traceCall(
+     // biome-ignore lint/suspicious/noExplicitAny: it's a generic type
+ ): Promise<any> {
+     const traceOptions = tracer2string(options)
++    if (process.env.ALTO_LOCAL_TRACE_TIMEOUT) {
++        traceOptions.timeout = process.env.ALTO_LOCAL_TRACE_TIMEOUT
++    }
+     const ret = await client
+         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+         // @ts-ignore
+diff --git a/src/cli/customTransport.ts b/src/cli/customTransport.ts
+--- a/src/cli/customTransport.ts
++++ b/src/cli/customTransport.ts
+@@ -76,7 +76,9 @@ export function customTransport(
+ 
+     return ({ chain, retryCount: retryCount_, timeout: timeout_ }) => {
+         const retryCount = config.retryCount ?? retryCount_
+-        const timeout = timeout_ ?? config.timeout ?? 10_000
++        const timeout = process.env.ALTO_LOCAL_RPC_TIMEOUT
++            ? Number(process.env.ALTO_LOCAL_RPC_TIMEOUT)
++            : (timeout_ ?? config.timeout ?? 10_000)
+         const url = url_ || chain?.rpcUrls.default.http[0]
+         if (!url) {
+             throw new UrlRequiredError()
