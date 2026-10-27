@@ -211,18 +211,18 @@ NOTES=[
     'BSC / Ethereum EOA 签名基准；本表测已知公钥验签。',
     '本地 v3；TRON TIP-899 / Nile 代码采用此参数。',
     '本地 v4；TRON TIP-899 的另一选项。',
-    '本地 v5；Sui 原生账户选型。',
+    '本地 v5；Sui 原生账户选型：Devnet 已启用，主网 / Testnet 未启用。',
     '本地 v1 / v2；Sui Move 金库选型。',
-    '本地 v6；与 128s 对照签名大小和耗时。',
+    '本地 v6；相比 128s，签名更快，但签名更大、验签更慢，链上账户场景优势有限，仅作对照。',
 ]
 def render(data):
     foundations = {
-        'ECDSA-secp256k1': ('椭圆曲线离散对数问题', False),
-        'Falcon-512': ('NTRU 格上的短向量问题', True),
-        'ML-DSA-44': ('模格问题（Module-LWE / Module-SIS）', True),
-        'ML-DSA-65': ('模格问题（Module-LWE / Module-SIS）', True),
-        'SLH-DSA-SHA2-128s': ('哈希函数（SHA-2）与 Merkle 树', True),
-        'SLH-DSA-SHA2-128f': ('哈希函数（SHA-2）与 Merkle 树', True),
+        'ECDSA-secp256k1': ('椭圆曲线离散对数问题', False, '不属于 PQC 标准', '不适用'),
+        'Falcon-512': ('NTRU 格上的短向量问题', True, '已入选，FIPS 206 制定中', '1'),
+        'ML-DSA-44': ('模格问题（Module-LWE / Module-SIS）', True, 'FIPS 204，已发布', '2'),
+        'ML-DSA-65': ('模格问题（Module-LWE / Module-SIS）', True, 'FIPS 204，已发布', '3'),
+        'SLH-DSA-SHA2-128s': ('哈希函数（SHA-2）与 Merkle 树', True, 'FIPS 205，已发布', '1'),
+        'SLH-DSA-SHA2-128f': ('哈希函数（SHA-2）与 Merkle 树', True, 'FIPS 205，已发布', '1'),
     }
     def cell(item,op,baseline):
         label='baseline' if baseline else f'{item[op]["ecdsa_ratio"]:,.2f} 倍 baseline'
@@ -230,10 +230,12 @@ def render(data):
     rows='';details=''
     for i,item in enumerate(data['summary']):
         sig=f'{item["signature_min_bytes"]:,}' if item['signature_min_bytes']==item['signature_max_bytes'] else f'{item["signature_min_bytes"]:,}–{item["signature_max_bytes"]:,}'
-        math_basis, quantum_resistant = foundations[item['algorithm']]
+        math_basis, quantum_resistant, nist_status, category = foundations[item['algorithm']]
         algorithm_cell = (f'<td class="algorithm">{html.escape(item["algorithm"])}'
                           f'<small>基础：{html.escape(math_basis)}</small>'
-                          f'<small>抗量子：{"是" if quantum_resistant else "否"}</small></td>')
+                          f'<small>抗量子：{"是" if quantum_resistant else "否"}</small>'
+                          f'<small>NIST：{html.escape(nist_status)}</small>'
+                          f'<small>NIST 安全类别：{category}</small></td>')
         rows+=f'<tr>{algorithm_cell}<td>{item["private_key_bytes"]:,} bytes</td><td>{item["public_key_bytes"]:,} bytes</td><td>{sig} bytes</td><td>{cell(item,"sign",i==0)}</td><td>{cell(item,"verify",i==0)}</td><td>{NOTES[i]}</td></tr>'
         for op in ['sign','verify']:
             vals=item[op]
@@ -249,30 +251,47 @@ def render(data):
     page=f'''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Go 签名算法对比 · {profile}</title>
 <style>body{{font:15px/1.75 system-ui;max-width:1440px;margin:32px auto;padding:0 24px;color:#243447}}h1,h2{{line-height:1.4}}table{{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}}td,th{{padding:10px;border:1px solid #dce3eb;text-align:right;vertical-align:top}}td:first-child,th:first-child,td:last-child{{text-align:left}}th{{background:#edf3f8}}.scroll{{overflow:auto}}a{{color:#146caa}}.note{{padding:16px;background:#edf4fa;border-left:4px solid #3477a4}}details{{margin:24px 0}}pre{{white-space:pre-wrap}}small{{color:#526477}}.algorithm{{min-width:180px}}.algorithm small{{display:block;margin-top:4px;font-size:12px;line-height:1.5;overflow-wrap:anywhere}}</style>
 <h1>签名算法对比 · Go 接口</h1><p>{html.escape(env['cpu'])} · {profile} · {html.escape(data['started_at'].split('T')[0])}</p>
-<div class="note">六项算法共用 Go 接口，每次 Sign / Verify 调用一次 C 后端，计入 Go 和 CGO 开销。密钥生成和可复用对象创建不计时，ECDSA 复用已解析的公钥对象。这是本机热密钥测试，完整交易 gas 见<a href="../chain-bench/report.html">链路报告</a>。</div>
-<h2>测试结果</h2><p>耗时越小越快；签名和验签分别以本次 ECDSA 为 baseline。每轮逐批平均后取中位数，再取各轮中位数。</p>
+<div class="note">本报告为 BSC 的 ERC-4337 抗量子账户选型提供参考，比较签名大小与本机计算成本。六项算法共用 Go 接口，每次签名 / 验签调用一次 C 后端，计入 Go 和 CGO 开销；不含密钥生成和可复用对象创建。完整交易 gas 见<a href="../chain-bench/report.html">链路报告</a>。</div>
+<h2>测试结果</h2><p>耗时越小越快；签名和验签分别以本次 ECDSA 为 baseline。每批先计算单次平均耗时，每轮取各批中位数，主表再取各轮中位数。</p>
 <div class="scroll"><table><thead><tr><th rowspan="2">算法 / 参数</th><th colspan="3" style="text-align:center">存储</th><th colspan="2" style="text-align:center">计算</th><th rowspan="2">备注</th></tr><tr><th>私钥编码</th><th>公钥</th><th>签名</th><th>签名 CPU</th><th>验签 CPU</th></tr></thead><tbody>{rows}</tbody></table></div>
-<p>“抗量子”指在相应参数与安全假设下，抵抗目前已知的量子攻击，不是无条件安全保证。</p>
-<p>“存储”列是本实验使用的编码大小，不是对象内存或链上存储 gas。ML 私钥列为展开编码，不能与 32 bytes 种子备份直接比较。SLH 的 64 bytes 私钥编码包含 32 bytes 公钥；ECDSA 的 64 bytes 签名不含恢复位。</p>
-<p>Falcon 公钥 / 私钥省略固定的 1-byte 头，完整编码为 897 / 1,281 bytes。签名保留头部；617–667 bytes 是本适配器接受范围，本轮正式签名实际为 {observed_falcon} bytes。它不是 Falcon 的通用长度上限，也不是 TVM 的固定 666-byte 槽。</p>
-<h2>测试口径</h2><ul>
-<li>同一 Go 可执行文件、单线程顺序测试；GOMAXPROCS(1)、LockOSThread，计时循环预分配缓冲区并关闭 Go GC。没有在 C 内部批量操作以摊薄 CGO。</li>
-<li>使用同一 4,096 条、每条 32 bytes 的公开语料池。每项 {cfg['rounds']} 轮 × {cfg['samples']} 批，每批签名 {cfg['sign_count']} 次、验签 {cfg['verify_count']} 次；每轮换钥并轮转算法顺序。本轮签名实际覆盖 {message_counts['sign']:,} 条消息；验签每轮循环最后 32 对消息和签名，共覆盖 {message_counts['verify']:,} 条消息。各算法使用相同索引。</li>
-<li>ECDSA 签署 32 bytes 摘要；其余签同一 32 bytes 原始消息。ML / SLH 是 Pure、空上下文，内部哈希计入。安全随机数、拒绝采样、签名编码与验签均不省略。ECDSA 是确定性 nonce，ML / Falcon 读取系统新熵，SLH 使用 OpenSSL 安全 DRBG；随机数需求与实现不同，不宣称等量随机计算。</li>
-<li>密钥生成和可复用对象创建不计时；SLH 每次调用的 EVP reset / Init 仍计时。ECDSA 公钥对象和 ML 展开密钥可复用。Falcon 每次动态签名都重新解码密钥，不缓存展开的 FFT 密钥。不同算法的初始化成本并未全部放入主表。</li>
-<li>共同 C 编译参数：<code>{html.escape(' '.join(data['build']['identity']['flags']))}</code>。各库保留适合 ARM 的汇编 / NEON，编译选项相同不代表内部优化程度完全相同。</li>
-<li>ECDSA 用 libsecp256k1；ML 两参数用同一 mldsa-native；Falcon 用原版 Falcon NEON；SLH 用 OpenSSL C / ARM SHA-256。外层接口相同，底层实现与优化程度不同。</li>
-</ul><p>线程 CPU 由相同 CGO 时钟接口读取，锁定同一 OS 线程；另存墙钟及进程 CPU。macOS 不保证固定性能核和频率，环境、电源与温度快照保存在原始数据中。</p>
-<h2>验证与判断</h2><p>每轮 32 个正例及消息篡改、签名篡改、截短、错钥四类负例；所有计时调用检查成功，签名每批末重新验签。ML 两参数与 OpenSSL 互验；Falcon 通过公开 Falcon KAT 及 NEON 上游测试。每项正式签名 {cfg['rounds']*cfg['samples']*cfg['sign_count']:,} 次、验签 {cfg['rounds']*cfg['samples']*cfg['verify_count']:,} 次。原始数据复算同时检查语料索引、次数、尺寸、顺序和 ECDSA 倍数。</p>
-<p>本轮 128f 比 128s 签名快，但签名更大、验签更慢；两者均为 NIST 类别 1。ML-DSA-44 / 65 分属类别 2 / 3，较大参数带来更多计算和数据。Falcon 签名小、验签快，但签名采样实现较复杂。耗时排名不等于安全等级，也不能直接换算交易 gas。</p>
-<h2>与链路报告怎么对照</h2>
-<p><a href="../chain-bench/report.html">链路报告</a>测实际 BSC 预编译和完整交易。两页用途不同，CPU 数字不能直接横比：</p>
-<div class="scroll"><table><tr><th>项目</th><th>本报告</th><th>链路报告</th></tr><tr><td>SLH 后端</td><td>OpenSSL C / ARM SHA-256</td><td>Trail of Bits Go</td></tr><tr><td>CPU 主指标</td><td>线程 CPU；Go GC 关闭</td><td>进程 CPU；Go GC 开启</td></tr><tr><td>ECDSA 操作</td><td>已知公钥验签</td><td>ECRECOVER，恢复公钥并计算地址</td></tr><tr><td>计时范围</td><td>当前 Sign / Verify 接口调用</td><td>CPU 表测 Run；gas 表测完整外层交易</td></tr></table></div>
-<p>因此，SLH 在两页的耗时差异不能归结为“接入预编译后变慢”。本页的相对 ECDSA 倍数也不用于链上的 ECRECOVER 定价。</p>
-<details><summary>五轮统计、墙钟与进程 CPU</summary><div class="scroll"><table><tr><th>算法</th><th>操作</th><th>每轮线程 CPU 中位数</th><th>墙钟主值</th><th>进程 CPU 主值</th></tr>{details}</table></div><p>Go 后台线程的 CPU 不在主线程 CPU 内；进程 CPU 是辅助观察，不直接替换主表。无锁频、无硬核亲和，少量波动不应解释为普适优势。</p></details>
-<details><summary>算法定义、采用场景与来源</summary><p>ML / SLH 分别依据 <a href="https://doi.org/10.6028/NIST.FIPS.204">FIPS 204</a> / <a href="https://doi.org/10.6028/NIST.FIPS.205">FIPS 205</a>；本表采用原版 Falcon-512；<a href="https://csrc.nist.gov/projects/post-quantum-cryptography/post-quantum-cryptography-standardization/selected-algorithms">NIST 页面</a>在本次核查时仍将其对应 FIPS 列为待发布，不能等同 FN-DSA 定稿实现。采用场景依据下列提案与固定提交：TIP-899 仍是草案，不表示 TRON 主网已启用；所引 Sui 提交仅对 Devnet 启用 ML65，Move 金库选型不证明主网部署或使用量。</p><p><a href="https://github.com/tronprotocol/tips/issues/899">TRON TIP-899</a> · <a href="https://github.com/tron-nile-testnet/nile-testnet/tree/bc7752b638d9aa4da413c78645dcff1a1aa8e40a/crypto/src/main/java/org/tron/common/crypto/pqc">Nile 固定实现</a> · <a href="https://www.sui.io/blog/suis-post-quantum-signature-schemes">Sui 选型</a> · <a href="https://github.com/MystenLabs/sui/blob/16d2dc1e05edcf600320a82e17b9392edb0983a5/crates/sui-protocol-config/src/lib.rs#L4901">Sui Devnet 启用条件</a> · <a href="https://github.com/MystenLabs/mysten-mldsa-native-rs/blob/e6451eca50f8a2d7b7d455fa44530357d0b626a3/PROVENANCE.md">Sui 后端来源</a> · <a href="https://pq-code-package.github.io/mldsa-native/dev/bench/">ML 官方性能</a> · <a href="https://csrc.nist.gov/csrc/media/Events/2022/fourth-pqc-standardization-conference/documents/papers/fast-falcon-signature-generation-and-verification-pqc2022.pdf">Falcon ARM 论文</a> · <a href="https://github.com/manel1874/slh-dsa-bench">SLH 公开评测</a>。</p><ul>{source_links}</ul></details>
-<h2>环境与复现</h2><p>本次仅测 macOS arm64。Linux x86_64 尚未接入和验证 Falcon 后端，脚本会拒绝运行该配置。机器、编译参数、依赖和测量时源码快照保存在原始记录中；文档修订不改写历史样本或源码摘要。</p>
-<p>入口：<code>python3 tools/crypto-bench/run.py --profile macos-arm64</code>；复核：<code>python3 tools/crypto-bench/run.py --verify</code>。<a href="{profile}/results.json">原始样本、统计、环境、构建命令与源码快照</a> · <a href="{profile}/checks.txt">验证日志</a>。两份报告的交叉复核：<code>python3 tools/chain-bench/audit.py</code>。</p></html>'''
+<h2>权衡与启发</h2>
+<p><strong>本项目可优先探索“ERC-4337 智能账户承载 PQ 金库”的路径，重点比较 ML-DSA-44 与 SLH-DSA-SHA2-128s。</strong>前者侧重较低的计算和数据成本，后者提供基于哈希的安全假设。算法选择之外，还要结合完整交易费用、授权设计和钱包使用成本判断。</p>
+<ol>
+<li><strong>TRON：侧重紧凑签名与验签效率。</strong><a href="https://github.com/tronprotocol/tips/issues/899">TIP-899</a>因 Falcon-512 的数据体积较小而优先选择它，同时实现 ML-DSA-44 作为已标准化的备选；Nile 已先启用 Falcon 路径。本轮 Falcon 的验签表现也较好，但这不是 TRON 客户端的性能实测。其取舍是接受较复杂的签名采样实现，以及对应 FN-DSA 标准尚未定稿带来的适配和审计风险。Falcon 已被 NIST 选中，不能简单称为“未经标准化评审的算法”。两种备选都属于格密码，尚未提供格与哈希两类安全假设的选择。</li>
+<li><strong>Sui：留安全余量，按用途选择算法。</strong><a href="https://www.sui.io/blog/suis-post-quantum-signature-schemes">官方方案</a>为原生账户选择类别 3 的 ML-DSA-65，接受更大的公钥和签名，为密码分析进展留余量；为高价值金库选择在 Move 合约中验证 SLH-DSA-SHA2-128s。日常交易与资产保管因此可以采用不同方案。这里的“更保守”是指哈希安全假设，并非金库的 NIST 类别更高：128s 为类别 1，ML-DSA-65 为类别 3。两类算法可选，也不等于同一账户受到双重保护。</li>
+<li><strong>对 BSC 的启发：先提供可选金库，再逐步扩大覆盖。</strong>ERC-4337 允许智能账户自定义授权，资金可以由 PQ 签名控制，不要求所有用户同时更换账户。它是承载金库的框架，不是现成的金库产品；支出策略、密钥保管和恢复机制仍需另行设计。这是本项目的研究建议，不是 BSC 官方路线。<a href="https://eips.ethereum.org/EIPS/eip-4337">ERC-4337 规范</a></li>
+</ol>
+<div class="scroll"><table><tr><th>优先评估的方案</th><th>理由</th><th>需要接受的成本</th></tr>
+<tr><td>ML-DSA-44，v4</td><td>FIPS 204；在本轮 PQ 方案中计算开销较低，签名小于两种 SLH；适合兼顾使用成本的金库</td><td>依赖格问题；公钥较大，当前账户将其写入存储，创建费用较高</td></tr>
+<tr><td>SLH-DSA-SHA2-128s，v2</td><td>FIPS 205；基于哈希，适合偏好保守安全假设、低频支出的金库</td><td>签名大、签名等待较长；本次转账费用由 calldata floor 主导，仅降低验签价格不能消除数据成本</td></tr>
+</table></div>
+<p>ML-DSA-65 可作为更高安全类别的选择；Falcon 保留为紧凑签名对照；128f 则主要用于观察签名延迟的取舍。本轮 128f 比 128s 签名约快 20.8 倍，但签名约大 2.18 倍、验签耗时约为 2.84 倍，对低频金库的优势有限。</p>
+<p><strong>为什么同时保留格与哈希？</strong>格密码已有数十年研究，不能简单称为研究时间短或不安全；但具体构造和实现仍需持续审视，经典与量子密码分析也在发展。部分格签名的分析进展不代表攻击适用于 ML-DSA 或 Falcon。哈希签名可追溯至 20 世纪 70 年代，主要依赖哈希函数的安全性质，通常被视为更保守的路线，但具体构造和实现仍需审查。提供两种选项，是保留不同安全假设下的选择，不是否定格签名。若要求两类签名共同保护同一金库，需要两者同时通过；允许任一签名授权不具备这种保护。<a href="https://www.rfc-editor.org/info/rfc9958/">研究背景</a></p>
+<p><strong>优先保护高价值资产，是迁移顺序，不是小额账户的安全保证。</strong>可以先保护储备资金、项目金库和重要管理权限，再逐步覆盖日常账户。量子攻击若成本较高，攻击者通常更有动力选择预期收益高的目标；但未来成本尚不确定，小额账户也可能控制大额资产的授权，不能只按账户余额判断风险。</p>
+<p><strong>本地验证到哪里，方案就说明到哪里。</strong>当前已验证 PQ 签名、Bundler、EntryPoint 和智能账户的创建与转账链路；账户固定公钥和验证器，没有升级、恢复或换钥入口，也尚未实现完整金库产品。v2 / v4 依赖修改后的 BSC 客户端提供实验预编译，不能直接部署到未支持这些预编译的网络；v1 的 Solidity 验签无需新增 PQ 预编译，但成本较高。本地 Bundler 使用实验预算，联通成功不代表兼容公共 Bundler，详见<a href="../chain-bench/report.html">链路报告</a>和<a href="../../erc4337-wallet/README.md">钱包说明</a>。</p>
+<p>生产金库还需覆盖所有资产转出与权限变更路径：传统签名不能通过升级、恢复、管理员权限或已有代币授权绕过 PQ 校验。ERC-4337 本身不提供抗量子保证，账户授权改造也不解决 BSC 共识、P2P 和 Bundler 外层交易的量子风险。</p>
+<h2>测试说明与参考</h2>
+<p><strong>结果用于本机实现对比。</strong>耗时排名不代表安全等级，不能直接换算交易 gas，也不能与链路报告的 CPU 数据直接横比。</p>
+<p><strong>安全标注。</strong>“抗量子”指在相应参数与安全假设下抵抗目前已知的量子攻击，不是无条件安全。NIST 类别 1–5 不是直接标注的 bit 安全强度，ECDSA 不适用；标准发布也不代表本实验实现通过 FIPS 认证。128s / 128f 同属类别 1，ML-DSA-44 / 65 分属类别 2 / 3。</p>
+<p><strong>大小口径。</strong>“存储”指编码大小，不是对象内存或链上存储 gas。ML 私钥为展开编码，不应与 32 bytes 种子备份直接比较；SLH 的 64 bytes 私钥含 32 bytes 公钥；ECDSA 的 64 bytes 签名不含恢复位。Falcon 公钥 / 私钥省略固定的 1-byte 头，完整编码为 897 / 1,281 bytes；签名保留头部。617–667 bytes 是本适配器接受范围，本轮实测 {observed_falcon} bytes，并非通用长度上限或 TVM 的固定 666-byte 槽。</p>
+<details><summary>测试方法与验证</summary><ul>
+<li><strong>执行与计时：</strong>同一 Go 程序单线程顺序运行，设置 GOMAXPROCS(1) 和 LockOSThread；循环预分配缓冲区、关闭 Go GC。每次调用一次 C 后端，不在 C 内批量摊薄 CGO。主指标由同一 CGO 时钟接口读取线程 CPU，另存墙钟和进程 CPU。Go 后台线程不计入主线程 CPU；进程 CPU 仅作辅助。</li>
+<li><strong>数据与轮次：</strong>共用 4,096 条、每条 32 bytes 的公开语料及相同索引。每项 {cfg['rounds']} 轮 × {cfg['samples']} 批，每批签名 {cfg['sign_count']} 次、验签 {cfg['verify_count']} 次；每轮换钥并轮转算法顺序。共签名 {cfg['rounds']*cfg['samples']*cfg['sign_count']:,} 次、覆盖 {message_counts['sign']:,} 条消息；验签 {cfg['rounds']*cfg['samples']*cfg['verify_count']:,} 次，每轮复用最后 32 对消息和签名，覆盖 {message_counts['verify']:,} 条消息。</li>
+<li><strong>签名输入：</strong>ECDSA 将这 32 bytes 作为摘要，其余作为原始消息；ML / SLH 使用 Pure 模式和空上下文，内部哈希计时。随机数、拒绝采样、编码及验签均保留。ECDSA 使用确定性 nonce，ML / Falcon 读取系统新熵，SLH 使用 OpenSSL 安全 DRBG；随机数开销并不相同。</li>
+<li><strong>初始化边界：</strong>密钥生成、可复用对象创建不计时。ECDSA 复用公钥对象，ML 复用展开密钥；SLH 每次 EVP reset / Init 计时；Falcon 每次签名重新解码密钥，不缓存展开的 FFT 密钥。主表不包含各算法全部初始化成本。</li>
+<li><strong>后端与编译：</strong>ECDSA 用 libsecp256k1，ML 两参数用 mldsa-native，Falcon 用原版 Falcon NEON，SLH 用 OpenSSL C / ARM SHA-256。共同 C 参数为 <code>{html.escape(' '.join(data['build']['identity']['flags']))}</code>，保留 ARM 汇编 / NEON；统一接口和编译参数不代表底层优化程度相同。</li>
+<li><strong>正确性检查：</strong>每轮 32 个正例，以及消息篡改、签名篡改、截短和错钥四类负例。计时调用均检查成功，每批签名结束后重新验签；ML 与 OpenSSL 互验，Falcon 通过公开 KAT 和 NEON 上游测试。原始数据复算检查索引、次数、尺寸、顺序及 ECDSA 倍数。</li>
+</ul><p>macOS 不保证固定性能核或频率；环境、电源和温度快照保存在原始记录中，少量波动不能解释为普适优势。</p></details>
+<details><summary>与链路报告的区别</summary>
+<p><a href="../chain-bench/report.html">链路报告</a>测 BSC 预编译和完整交易。后端、计时范围和指标不同，两页的耗时及 ECDSA 倍数不能直接互用：</p>
+<div class="scroll"><table><tr><th>项目</th><th>本报告</th><th>链路报告</th></tr><tr><td>SLH 后端</td><td>OpenSSL C / ARM SHA-256</td><td>Trail of Bits Go</td></tr><tr><td>CPU 主指标</td><td>线程 CPU；Go GC 关闭</td><td>进程 CPU；Go GC 开启</td></tr><tr><td>ECDSA 操作</td><td>已知公钥验签</td><td>ECRECOVER，恢复公钥并计算地址</td></tr><tr><td>计时范围</td><td>Sign / Verify 接口调用</td><td>CPU 表测 Run；gas 表测完整外层交易</td></tr></table></div>
+<p>SLH 耗时差异不能归因于“接入预编译后变慢”；本页相对 ECDSA 的倍数不用于 ECRECOVER 定价。</p></details>
+<details><summary>五轮统计、墙钟与进程 CPU</summary><div class="scroll"><table><tr><th>算法</th><th>操作</th><th>每轮线程 CPU 中位数</th><th>墙钟主值</th><th>进程 CPU 主值</th></tr>{details}</table></div></details>
+<details><summary>算法定义、采用场景与来源</summary><p>ML / SLH 分别依据 <a href="https://doi.org/10.6028/NIST.FIPS.204">FIPS 204</a> / <a href="https://doi.org/10.6028/NIST.FIPS.205">FIPS 205</a>；本表采用原版 Falcon-512；<a href="https://csrc.nist.gov/projects/post-quantum-cryptography/post-quantum-cryptography-standardization/selected-algorithms">NIST 页面</a>在本次核查时仍将其对应 FIPS 列为待发布，不能等同 FN-DSA 定稿实现。采用场景依据下列提案与固定提交：TIP-899 仍是草案，不表示 TRON 主网已启用；截至 2026-10-27，Sui 发布配置仅在 Devnet 启用 ML-DSA-65，主网 / Testnet 尚未启用。Move 金库选型不证明主网部署或使用量。</p><p><a href="https://github.com/tronprotocol/tips/issues/899">TRON TIP-899</a> · <a href="https://github.com/tron-nile-testnet/nile-testnet/tree/bc7752b638d9aa4da413c78645dcff1a1aa8e40a/crypto/src/main/java/org/tron/common/crypto/pqc">Nile 固定实现</a> · <a href="https://www.sui.io/blog/suis-post-quantum-signature-schemes">Sui 选型</a> · <a href="https://github.com/MystenLabs/sui/releases/tag/devnet-v1.82.0">Sui Devnet 发布记录</a> · <a href="https://github.com/MystenLabs/sui/blob/mainnet-v1.82.3/crates/sui-protocol-config/src/lib.rs">Sui 主网配置</a> · <a href="https://github.com/MystenLabs/sui/blob/testnet-v1.82.2/crates/sui-protocol-config/src/lib.rs">Sui Testnet 配置</a> · <a href="https://github.com/MystenLabs/mysten-mldsa-native-rs/blob/e6451eca50f8a2d7b7d455fa44530357d0b626a3/PROVENANCE.md">Sui 后端来源</a> · <a href="https://pq-code-package.github.io/mldsa-native/dev/bench/">ML 官方性能</a> · <a href="https://csrc.nist.gov/csrc/media/Events/2022/fourth-pqc-standardization-conference/documents/papers/fast-falcon-signature-generation-and-verification-pqc2022.pdf">Falcon ARM 论文</a> · <a href="https://github.com/manel1874/slh-dsa-bench">SLH 公开评测</a>。</p><ul>{source_links}</ul></details>
+<details><summary>环境、原始记录与复现</summary>
+<p>本次仅测 macOS arm64；Linux x86_64 的 Falcon 后端尚未接入验证，脚本会拒绝该配置。机器、编译参数、依赖、构建命令及测量时源码快照均在<a href="{profile}/results.json">原始记录</a>中，另附<a href="{profile}/checks.txt">验证日志</a>。文档修订不改写历史样本或源码摘要。</p>
+<ul><li>运行：<code>python3 tools/crypto-bench/run.py --profile macos-arm64</code></li><li>复核原始数据：<code>python3 tools/crypto-bench/run.py --verify</code></li><li>交叉复核两份报告：<code>python3 tools/chain-bench/audit.py</code></li></ul></details>
+</html>'''
     (DOCS/'comparison.html').write_text(page)
 
 def main():
