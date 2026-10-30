@@ -13,6 +13,26 @@
     nav ol { margin: 0; padding-left: 24px; }
     nav li { padding: 4px 0; }
     .placeholder { color: #687887; }
+    .bsc-takeaway { margin: 20px 0; padding: 16px 20px; background: #f1f7f4; border-left: 3px solid #5e8c77; border-radius: 0 8px 8px 0; }
+    .bsc-takeaway > p { margin: 0; }
+    .bsc-takeaway > p > strong:first-child { color: #285e49; }
+    .bsc-takeaway ol { margin: 10px 0 0; padding-left: 24px; }
+    .bsc-takeaway li + li { margin-top: 8px; }
+    .cost-table-wrap { margin: 14px 0; overflow-x: auto; border: 1px solid #dce3eb; border-radius: 8px; }
+    .cost-table { width: 100%; min-width: 580px; border-collapse: collapse; font-size: 15px; line-height: 1.7; }
+    .cost-table th, .cost-table td { padding: 13px 16px; text-align: left; vertical-align: top; border-bottom: 1px solid #e3eaf0; }
+    .cost-table thead th { background: #edf4fa; font-weight: 600; }
+    .cost-table tbody th { width: 16%; white-space: nowrap; }
+    .cost-table td { width: 42%; }
+    .cost-table tr:last-child > * { border-bottom: 0; }
+    .algorithm-bench { width: 100%; min-width: 1100px; border-collapse: collapse; font-size: 14px; line-height: 1.65; font-variant-numeric: tabular-nums; }
+    .algorithm-bench th, .algorithm-bench td { padding: 12px 10px; border: 1px solid #dce3eb; text-align: right; vertical-align: top; }
+    .algorithm-bench th { background: #edf4fa; }
+    .algorithm-bench td:first-child, .algorithm-bench th:first-child, .algorithm-bench td:last-child { text-align: left; }
+    .algorithm-bench .algorithm { min-width: 175px; }
+    .algorithm-bench .algorithm small { display: block; margin-top: 4px; color: #526477; font-size: 12px; line-height: 1.5; }
+    .algorithm-bench td:last-child { min-width: 175px; }
+    .algorithm-bench .selected-algorithm td { background: #f1f7f4; }
     .crypto-diagram { margin: 16px 0; padding: 10px; border: 1px solid #dce3eb; border-radius: 10px; overflow-x: auto; }
     .crypto-diagram svg { display: block; width: 100%; max-width: 820px; min-width: 640px; height: auto; margin: auto; }
     .pqc-roadmap svg { max-width: 820px; min-width: 680px; }
@@ -26,8 +46,13 @@
       <ol>
         <li><a href="#background">背景：量子风险与迁移需求</a></li>
         <li><a href="#industry">业界进展、技术取舍及对 BSC 的启发</a></li>
-        <li><a href="#bsc-plan">BSC 抗量子方案思路</a></li>
-        <li><a href="#crypto-bench">本地算法基准：存储与计算成本</a></li>
+        <li><a href="#bsc-plan">BSC 抗量子方案思路</a>
+          <ul>
+            <li><a href="#bsc-selection">3.1 选型及权衡</a></li>
+            <li><a href="#crypto-bench">3.2 本地算法基准：存储与计算成本</a></li>
+            <li><a href="#erc4337-plan">3.3 ERC-4337 抗量子方案</a></li>
+          </ul>
+        </li>
         <li><a href="#chain-bench">链路基准：预编译与 ERC-4337 交易成本</a></li>
       </ol>
     </nav>
@@ -140,9 +165,34 @@
           <g text-anchor="middle" font-size="14">
             <text x="265" y="207">核心协议：哈希签名与证明聚合</text>
             <text x="580" y="207">用户账户：哈希、格等方案可选</text>
+            <text x="812" y="152" style="fill:#16735b;font-size:17px">核心统一，账户可扩展</text>
+            <text x="812" y="178" style="fill:#16735b;font-size:14px">模型简洁，兼顾一致性与灵活性</text>
           </g>
         </svg>
       </figure>
+      <p><strong style="color:#c62828">核心性能挑战：计算成本＋数据成本。</strong></p>
+      <div class="cost-table-wrap">
+        <table class="cost-table" aria-label="抗量子改造的两类核心性能成本">
+          <thead>
+            <tr><th scope="col">维度</th><th scope="col">主要开销</th><th scope="col">对 ETH 的影响</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">计算成本</th>
+              <td>签名、验签、证明生成、递归聚合与证明验证；还需关注内存需求。</td>
+              <td>能否在出块时限内完成，以及节点参与所需的硬件门槛。</td>
+            </tr>
+            <tr>
+              <th scope="row">数据成本</th>
+              <td>公钥、签名、证明及必要元数据的传输、缓存与持久化。</td>
+              <td>网络带宽、传播延迟、磁盘占用与同步成本。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>应对思路：用聚合缓解数据膨胀，将新增计算分层承担。</strong>更大的签名带来突出的传播与存储压力。ETH 的研究路线是将大量交易签名、验证者投票的有效性汇总为证明，减少原始签名的重复传播与全网验签，但会增加证明生成的计算。</p>
+      <p>为减轻出块时的计算压力，交易在内存池传播阶段提前聚合，投票由具备算力的聚合节点分层处理，再由构块者或提议者完成最终汇总。聚合在链下进行，但仍须满足出块时限。</p>
+      <p><strong>具体草案如下：</strong></p>
       <ol>
         <li><strong>账户层：账户抽象＋签名与证明聚合。</strong><br>
           <a href="https://eips.ethereum.org/EIPS/eip-8141">EIP-8141</a>：原生账户抽象；<a href="https://eips.ethereum.org/EIPS/eip-8288">EIP-8288</a>：交易签名与证明的递归聚合。
@@ -157,17 +207,112 @@
           <a href="https://ethresear.ch/t/exploring-signature-free-post-quantum-rlpx-handshake/24413">抗量子 RLPx 握手研究</a>：探索基于 KEM 的执行层节点认证与密钥协商。
         </li>
       </ol>
+      <h4>2.1.3 对 BSC 的启发</h4>
+      <p><strong>ETH 的优势：覆盖全面，核心一致，账户灵活。</strong>各层协同迁移，尽量共享密码学与证明基础设施，同时保留账户的算法选择能力，整体设计较为统一。</p>
+      <p><strong>代价：系统复杂，迁移周期较长，关键环节仍需验证。</strong>原生账户抽象的协议集成、递归证明的性能，以及聚合节点的算力供给与激励，都影响落地进度。将计算交给聚合节点，可以减轻普通节点负担，但也引入可用性与集中化问题。</p>
+      <aside class="bsc-takeaway" aria-label="ETH 对 BSC 的启发">
+        <p><strong>对 BSC 的启发：长期跟进，短期聚焦。</strong></p>
+        <ol>
+          <li><strong>长期尽量跟进 ETH 路线。</strong>复用成熟方案，保持兼容，并结合 BSC 的出块时限与节点条件，分层、逐步迁移。</li>
+          <li><strong>短期先探索高价值账户的量子安全保护。</strong>借鉴账户抽象思路，通过 <a href="https://eips.ethereum.org/EIPS/eip-4337">ERC-4337</a> 智能合约金库接入抗量子签名，无需等待全链改造完成，再用实验验证安全性与成本。</li>
+        </ol>
+      </aside>
+      <h3>2.2 TRON</h3>
+      <p><strong>思路：直接扩展协议签名能力，优先控制数据与验签成本。</strong><a href="https://github.com/tronprotocol/tips/issues/899">TIP-899</a> 覆盖交易、出块、节点中继握手及合约验签，先建立基础抗量子能力，不以证明聚合为前提。</p>
+      <ol>
+        <li><strong>协议改造：</strong>在现有 Transaction、BlockHeader、HelloMessage 中增加 <code>PQAuthSig</code>，携带算法标识、公钥与签名；按算法分派验签，并补充 TVM 预编译。这里扩展的是签名字段，并非新增交易类型。</li>
+        <li><strong>账户迁移：</strong>复用现有 Permission，通过权限更新配置抗量子密钥对应的地址与权重，保留原账户地址和资产。Account／Permission 结构不变；第一阶段每笔交易携带完整公钥。</li>
+        <li><strong>算法选择：</strong>支持 Falcon-512 和 ML-DSA-44，分别控制启用。Nile 已有 Falcon 启用测试记录；Falcon 体积小、验签快，但对应的 FN-DSA 标准尚未定稿。ML-DSA-44 已标准化，作为备选，代价是公钥与签名更大。</li>
+      </ol>
+      <p><strong>取舍：路径直接，优先性能与落地。</strong>这一阶段无需等待 ETH 的账户抽象与证明聚合路线成熟，但仍需承担大签名的传播与存储成本。两种算法均属格密码，尚未提供哈希签名这一不同安全假设的选择；这不意味着格密码已被量子算法攻破。</p>
+      <aside class="bsc-takeaway" aria-label="TRON 对 BSC 的启发">
+        <p><strong>对 BSC 的启发：</strong>ML-DSA-44 可作为金库的候选算法，在标准化、计算成本与签名大小之间取得平衡，并与哈希签名方案对照验证。</p>
+      </aside>
+      <p class="placeholder">参考：<a href="https://github.com/tronprotocol/tips/issues/899">TIP-899 及 Nile 测试讨论</a> · <a href="https://csrc.nist.gov/projects/post-quantum-cryptography/post-quantum-cryptography-standardization/selected-algorithms">NIST 标准化状态</a>。</p>
+      <h3>2.3 SUI</h3>
+      <p><strong>思路：原生账户兼顾性能与安全余量，合约金库提供不同安全假设的选择。</strong>Sui 选择两种已标准化的算法，分别用于原生账户认证和 Move 金库。</p>
+      <ol>
+        <li><strong>原生账户：ML-DSA-65。</strong>采用格密码，遵循 FIPS 204；选择 NIST 安全类别 3，较 ML-DSA-44 留出更多安全余量，同时保持较低的验签开销。这里改造的是账户认证，不代表共识签名也已替换。</li>
+        <li><strong>高价值金库：SLH-DSA-SHA2-128s。</strong>采用基于哈希的 FIPS 205 算法，通过 Move 合约控制资产操作。安全假设较保守，且合约方案便于适配后续算法；代价是签名更大、验签更贵。</li>
+        <li><strong>进展：</strong><a href="https://github.com/MystenLabs/sui/releases/tag/devnet-v1.82.0">Devnet v1.82.0</a> 已加入 ML-DSA-65 相关接口与验签支持；金库是单独的合约路线，不能由原生账户的 Devnet 进展推断其主网上线状态。</li>
+      </ol>
+      <p><strong>取舍：标准化、算法多样性与安全余量并重。</strong>格密码与哈希密码提供不同的安全假设，用户可按用途选择；这不意味着哈希方案在所有方面都更安全，也不是每个账户必须同时使用两种签名。</p>
+      <aside class="bsc-takeaway" aria-label="SUI 对 BSC 的启发">
+        <p><strong>对 BSC 的启发：</strong>借鉴“标准算法＋不同安全假设＋合约金库”的组合，先通过 ERC-4337 金库探索高价值账户的量子安全保护。ML-DSA-44 与 SLH-DSA-SHA2-128s 可作为两条实验路线，对照安全类别、签名大小和交易成本。</p>
+      </aside>
+      <p class="placeholder">参考：<a href="https://www.sui.io/blog/suis-post-quantum-signature-schemes">Sui 官方选型与权衡</a> · <a href="https://github.com/MystenLabs/sui/releases/tag/devnet-v1.82.0">Devnet 发布记录</a>。</p>
     </section>
     <section id="bsc-plan">
       <h2>3. BSC 抗量子方案思路</h2>
-      <p class="placeholder">待补充。</p>
-    </section>
-    <section id="crypto-bench">
-      <h2>4. 本地算法基准：存储与计算成本</h2>
-      <p class="placeholder">待补充。</p>
+      <h3 id="bsc-selection">3.1 选型及权衡</h3>
+      <p><strong>长期跟进 ETH，短期先做抗量子金库。</strong>长期尽量复用 ETH 的成熟技术，分层推进协议迁移；短期借鉴账户抽象与合约金库模式，优先探索高价值资产的量子安全保护。</p>
+      <figure class="crypto-diagram">
+        <svg viewBox="0 0 900 300" role="img" aria-labelledby="bsc-selection-title bsc-selection-desc">
+          <title id="bsc-selection-title">从 ETH、TRON 和 Sui 的经验形成 BSC 短期方案</title>
+          <desc id="bsc-selection-desc">ETH 提供账户抽象与算法灵活性思路，TRON 提供 ML-DSA-44 候选，Sui 提供合约金库与安全假设多样性思路。三者汇合为 BSC 的 ERC-4337 金库方案，分别探索 ML-DSA-44 和 SLH-DSA-SHA2-128s 两条签名路线。</desc>
+          <g fill="#edf5fc" stroke="#c5d9e9">
+            <rect x="15" y="10" width="275" height="68" rx="8"/>
+            <rect x="312" y="10" width="275" height="68" rx="8"/>
+            <rect x="610" y="10" width="275" height="68" rx="8"/>
+          </g>
+          <g text-anchor="middle" font-size="18" font-weight="600">
+            <text x="152" y="37">ETH</text><text x="450" y="37">TRON</text><text x="748" y="37">Sui</text>
+          </g>
+          <g text-anchor="middle" font-size="15">
+            <text x="152" y="61">账户抽象 · 算法灵活</text>
+            <text x="450" y="61">ML-DSA-44 · 性能与标准化</text>
+            <text x="748" y="61">合约金库 · 不同安全假设</text>
+          </g>
+          <g fill="none" stroke="#91adc3" stroke-width="1.6">
+            <path d="M152 78 V96 H748 V78 M450 78 V119"/>
+            <path d="M444 112 L450 119 L456 112"/>
+            <path d="M450 181 V203 M225 216 V203 H675 V216"/>
+            <path d="M219 209 L225 216 L231 209 M669 209 L675 216 L681 209"/>
+          </g>
+          <rect x="180" y="122" width="540" height="59" rx="8" fill="#f1f7f4" stroke="#b8d3c4"/>
+          <g text-anchor="middle">
+            <text x="450" y="147" style="fill:#285e49;font-size:19px;font-weight:600">BSC：ERC-4337 智能合约金库</text>
+            <text x="450" y="169" font-size="14">通过合约实现账户抽象，按需迁入高价值资产</text>
+          </g>
+          <g fill="#f6f9fc" stroke="#dce5ed">
+            <rect x="45" y="220" width="360" height="65" rx="8"/>
+            <rect x="495" y="220" width="360" height="65" rx="8"/>
+          </g>
+          <g text-anchor="middle" font-size="17">
+            <text x="225" y="247">ML-DSA-44</text>
+            <text x="675" y="247">SLH-DSA-SHA2-128s</text>
+            <text x="225" y="271" font-size="14">格签名 · 较低计算与数据成本</text>
+            <text x="675" y="271" font-size="14">哈希签名 · 较保守的安全假设</text>
+          </g>
+        </svg>
+      </figure>
+      <p><strong>短期方案：ERC-4337＋两种可选的标准签名。</strong>通过用户态账户抽象，由智能合约钱包验证抗量子签名，Bundler 负责提交交易。高价值账户可将资产迁入金库，按需选择 ML-DSA-44 或 SLH-DSA-SHA2-128s。</p>
+      <aside class="bsc-takeaway" aria-label="BSC 短期方案的价值与边界">
+        <p><strong>价值：先保护重点资产，保留后续演进空间。</strong>无需等待原生账户抽象与全链迁移完成，即可验证金库方案；账户可自定义验签的方向与 ETH 长期路线一致，未来协议与接口仍需适配。成本则通过后续算法基准和链路实验量化。</p>
+      </aside>
+      <p class="placeholder">依据：<a href="https://eips.ethereum.org/EIPS/eip-4337">ERC-4337</a>。算法与交易成本见第 3.2、4 节。</p>
+      <section id="crypto-bench">
+        <h3>3.2 本地算法基准：存储与计算成本</h3>
+        <p>Apple M1 Pro · macOS arm64。统一 Go 接口，测量线程 CPU 时间；签名和验签分别以 ECDSA 为 baseline，耗时越小越快。</p>
+        <div class="cost-table-wrap" tabindex="0" role="region" aria-label="算法对比表，可横向滚动"><table class="algorithm-bench" aria-label="本地签名算法存储与计算成本对比"><thead><tr><th rowspan="2">算法 / 参数</th><th colspan="3" style="text-align:center">存储</th><th colspan="2" style="text-align:center">计算</th><th rowspan="2">备注</th></tr><tr><th>私钥编码</th><th>公钥</th><th>签名</th><th>签名 CPU</th><th>验签 CPU</th></tr></thead><tbody><tr><td class="algorithm">ECDSA-secp256k1<small>基础：椭圆曲线离散对数问题</small><small>NIST：不属于 PQC 标准</small><small>NIST 安全类别：不适用</small></td><td>32 bytes</td><td>33 bytes</td><td>64 bytes</td><td>20.50 us, baseline</td><td>24.06 us, baseline</td><td>BSC / Ethereum EOA 签名基准；本表测已知公钥验签。</td></tr><tr><td class="algorithm">Falcon-512<small>基础：NTRU 格上的短向量问题</small><small>NIST：已入选，FIPS 206 制定中</small><small>NIST 安全类别：1</small></td><td>1,280 bytes</td><td>896 bytes</td><td>617–667 bytes</td><td>143.85 us, 7.02 倍 baseline</td><td>9.85 us, 0.41 倍 baseline</td><td>TRON TIP-899 / Nile 代码采用此参数。</td></tr><tr class="selected-algorithm"><td class="algorithm">ML-DSA-44<small>基础：模格问题（Module-LWE / Module-SIS）</small><small>NIST：FIPS 204，已发布</small><small>NIST 安全类别：2</small></td><td>2,560 bytes</td><td>1,312 bytes</td><td>2,420 bytes</td><td>46.46 us, 2.27 倍 baseline</td><td>15.41 us, 0.64 倍 baseline</td><td>TRON TIP-899 的另一选项。</td></tr><tr><td class="algorithm">ML-DSA-65<small>基础：模格问题（Module-LWE / Module-SIS）</small><small>NIST：FIPS 204，已发布</small><small>NIST 安全类别：3</small></td><td>4,032 bytes</td><td>1,952 bytes</td><td>3,309 bytes</td><td>69.76 us, 3.40 倍 baseline</td><td>25.59 us, 1.06 倍 baseline</td><td>Sui 原生账户选型：Devnet 已启用，主网 / Testnet 未启用。</td></tr><tr class="selected-algorithm"><td class="algorithm">SLH-DSA-SHA2-128s<small>基础：哈希函数（SHA-2）与 Merkle 树</small><small>NIST：FIPS 205，已发布</small><small>NIST 安全类别：1</small></td><td>64 bytes</td><td>32 bytes</td><td>7,856 bytes</td><td>189,568.39 us, 9,249.00 倍 baseline</td><td>194.56 us, 8.08 倍 baseline</td><td>Sui Move 金库选型；与 ETH 研究中的 leanSPHINCS 同源。</td></tr><tr><td class="algorithm">SLH-DSA-SHA2-128f<small>基础：哈希函数（SHA-2）与 Merkle 树</small><small>NIST：FIPS 205，已发布</small><small>NIST 安全类别：1</small></td><td>64 bytes</td><td>32 bytes</td><td>17,088 bytes</td><td>9,130.84 us, 445.49 倍 baseline</td><td>553.39 us, 23.00 倍 baseline</td><td>相比 128s，签名更快，但签名更大、验签更慢，链上账户场景优势有限，仅作对照。</td></tr></tbody></table></div>
+        <p class="placeholder">详情见<a href="crypto-bench/comparison.html">完整算法报告</a>。</p>
+      </section>
+      <h3 id="erc4337-plan">3.3 ERC-4337 抗量子方案</h3>
+      <p><strong>将资产放入智能合约账户，由抗量子签名决定能否动用。</strong>钱包生成密钥、签署操作；Bundler 将操作打包为普通交易；链上的 EntryPoint 与账户合约完成验证和执行。</p>
+      <h4>3.3.1 整体架构</h4>
+      <figure class="crypto-diagram"><svg viewBox="0 0 900 510" role="img" aria-labelledby="pq-system-title pq-system-desc"><title id="pq-system-title">整体架构：谁在链外，谁在链上</title><desc id="pq-system-desc">钱包向 Bundler 发送 PQ 操作，Bundler 向 BSC 验证者网络提交普通交易。验证者执行 EntryPoint、Factory、PQAccount 和验签合约。</desc><defs><marker id="pq-system-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#91adc3"/></marker></defs><rect x="20" y="55" width="170" height="75" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="105.0" y="80" text-anchor="middle" font-size="17" font-weight="600">PQ 钱包</text><text x="105.0" y="103" text-anchor="middle" font-size="13">本地密钥 · PQ 签名</text><rect x="290" y="55" width="170" height="75" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="375.0" y="80" text-anchor="middle" font-size="17" font-weight="600">Bundler</text><text x="375.0" y="103" text-anchor="middle" font-size="13">估算 · 模拟 · 打包</text><path d="M190 92 H280" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-system-arrow)"/><text x="240" y="72" text-anchor="middle" font-size="13" style="fill:#243447">PQ 操作</text><path d="M460 92 H590" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-system-arrow)"/><text x="525" y="65" text-anchor="middle" font-size="13" style="fill:#243447">普通交易</text><text x="525" y="83" text-anchor="middle" font-size="13" style="fill:#243447">handleOps</text><rect x="600" y="20" width="280" height="155" rx="9" fill="#f1f7f4" stroke="#b8d3c4"/><text x="740" y="48" text-anchor="middle" font-size="18" style="fill:#285e49">BSC 验证者网络</text><rect x="620" y="67" width="65" height="44" rx="5" fill="#fff" stroke="#9cbdad"/><text x="652" y="94" text-anchor="middle" font-size="14" style="fill:#243447">节点</text><rect x="705" y="67" width="65" height="44" rx="5" fill="#fff" stroke="#9cbdad"/><text x="737" y="94" text-anchor="middle" font-size="14" style="fill:#243447">节点</text><rect x="790" y="67" width="65" height="44" rx="5" fill="#fff" stroke="#9cbdad"/><text x="822" y="94" text-anchor="middle" font-size="14" style="fill:#243447">节点</text><text x="740" y="137" text-anchor="middle" font-size="14" style="fill:#243447">执行交易 · 校验区块 · 参与共识</text><text x="740" y="159" text-anchor="middle" font-size="13" style="fill:#243447">维护相同的链上状态</text><path d="M740 175 V215" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-system-arrow)"/><text x="730" y="201" text-anchor="end" font-size="13" style="fill:#243447">节点上的 EVM 执行下方合约</text><rect x="365" y="220" width="515" height="240" rx="9" fill="#f6f9fc" stroke="#dce5ed"/><text x="385" y="245" text-anchor="start" font-size="15" style="fill:#243447">链上合约：验证权限、持有资产、执行操作</text><rect x="385" y="265" width="130" height="60" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="450.0" y="290" text-anchor="middle" font-size="17" font-weight="600">EntryPoint</text><text x="450.0" y="313" text-anchor="middle" font-size="13">统一入口</text><rect x="565" y="265" width="140" height="60" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="635.0" y="290" text-anchor="middle" font-size="17" font-weight="600">PQAccount</text><text x="635.0" y="313" text-anchor="middle" font-size="13">公钥与资产</text><rect x="750" y="265" width="110" height="60" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="805.0" y="290" text-anchor="middle" font-size="17" font-weight="600">业务合约</text><text x="805.0" y="313" text-anchor="middle" font-size="13">或收款地址</text><path d="M515 294 H555" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-system-arrow)"/><path d="M705 294 H740" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-system-arrow)"/><rect x="385" y="375" width="130" height="60" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="450.0" y="400" text-anchor="middle" font-size="17" font-weight="600">Factory</text><text x="450.0" y="423" text-anchor="middle" font-size="13">首次创建</text><rect x="555" y="375" width="305" height="60" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="707.5" y="400" text-anchor="middle" font-size="17" font-weight="600">PQ 验证器 → 预编译</text><text x="707.5" y="423" text-anchor="middle" font-size="13">ML-DSA-44 / SLH-DSA-SHA2-128s</text><path d="M450 325 V365" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-system-arrow)"/><path d="M515 405 H535 V315 H555" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-system-arrow)"/><path d="M635 325 V365" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-system-arrow)"/><text x="645" y="350" text-anchor="start" font-size="13" style="fill:#243447">验签</text><rect x="20" y="230" width="315" height="194" rx="8" fill="#f6f9fc" stroke="#dce5ed"/><text x="38" y="258" text-anchor="start" font-size="17" style="fill:#243447">两层签名，作用不同</text><text x="38" y="294" text-anchor="start" font-size="14" style="fill:#243447">外层：Bundler 的 ECDSA 签名</text><text x="38" y="317" text-anchor="start" font-size="13" style="fill:#243447">提交普通交易，不授予金库控制权</text><text x="38" y="355" text-anchor="start" font-size="14" style="fill:#243447">内层：用户的 PQ 签名</text><text x="38" y="378" text-anchor="start" font-size="13" style="fill:#243447">授权具体的转账或合约调用</text><text x="450" y="488" text-anchor="middle" font-size="14" style="fill:#243447">私钥留在钱包；资产由链上 PQAccount 持有；Bundler 不持有 PQ 私钥。</text></svg></figure>
+      <h4>3.3.2 创建 PQ 智能账户</h4>
+      <p>共享的 EntryPoint、Factory 和验证器先行部署。用户随后生成自己的密钥，预测账户地址，并通过首笔 UserOperation 完成账户创建。</p>
+      <figure class="crypto-diagram"><svg viewBox="0 0 900 515" role="img" aria-labelledby="pq-create-flow-title pq-create-flow-desc"><title id="pq-create-flow-title">首次创建 PQ 账户的参与者与执行顺序</title><desc id="pq-create-flow-desc">依次生成密钥、预测地址、充值、签署首笔操作、Bundler 提交、工厂创建、链上验证执行。</desc><defs><marker id="pq-create-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#91adc3"/></marker></defs><text x="22" y="27" text-anchor="start" font-size="18" style="fill:#243447">首次创建：首笔操作内完成部署与验证</text><path d="M165 65 V455" fill="none" stroke="#c5d9e9" stroke-width="2"/><text x="130" y="74" text-anchor="end" font-size="14" style="fill:#146caa">钱包</text><circle cx="165" cy="68" r="12" fill="#edf5fc" stroke="#91adc3"/><text x="165" y="73" text-anchor="middle" font-size="13" style="fill:#243447">1</text><text x="195" y="71" text-anchor="start" font-size="16" style="fill:#243447">生成 PQ 密钥</text><text x="195" y="93" text-anchor="start" font-size="14" style="fill:#687887">私钥留在本地，公钥用于绑定账户身份。</text><text x="130" y="134" text-anchor="end" font-size="14" style="fill:#146caa">钱包</text><circle cx="165" cy="128" r="12" fill="#edf5fc" stroke="#91adc3"/><text x="165" y="133" text-anchor="middle" font-size="13" style="fill:#243447">2</text><text x="195" y="131" text-anchor="start" font-size="16" style="fill:#243447">预测账户地址</text><text x="195" y="153" text-anchor="start" font-size="14" style="fill:#687887">Factory 根据公钥、salt 与部署代码计算 CREATE2 地址。</text><text x="130" y="194" text-anchor="end" font-size="14" style="fill:#146caa">资金账户</text><circle cx="165" cy="188" r="12" fill="#edf5fc" stroke="#91adc3"/><text x="165" y="193" text-anchor="middle" font-size="13" style="fill:#243447">3</text><text x="195" y="191" text-anchor="start" font-size="16" style="fill:#243447">向预测地址充值 BNB</text><text x="195" y="213" text-anchor="start" font-size="14" style="fill:#687887">本地用测试资金账户充值，供金库支付操作费用。</text><text x="130" y="254" text-anchor="end" font-size="14" style="fill:#146caa">钱包</text><circle cx="165" cy="248" r="12" fill="#edf5fc" stroke="#91adc3"/><text x="165" y="253" text-anchor="middle" font-size="13" style="fill:#243447">4</text><text x="195" y="251" text-anchor="start" font-size="16" style="fill:#243447">构造并签署首笔 UserOperation</text><text x="195" y="273" text-anchor="start" font-size="14" style="fill:#687887">携带工厂部署参数；估算 gas 后用 PQ 私钥签名。</text><text x="130" y="314" text-anchor="end" font-size="14" style="fill:#146caa">Bundler</text><circle cx="165" cy="308" r="12" fill="#edf5fc" stroke="#91adc3"/><text x="165" y="313" text-anchor="middle" font-size="13" style="fill:#243447">5</text><text x="195" y="311" text-anchor="start" font-size="16" style="fill:#243447">模拟并发送普通交易</text><text x="195" y="333" text-anchor="start" font-size="14" style="fill:#687887">检查操作与费用预算，提交 EntryPoint.handleOps。</text><text x="130" y="374" text-anchor="end" font-size="14" style="fill:#285e49">BSC 链上</text><circle cx="165" cy="368" r="12" fill="#edf5fc" stroke="#91adc3"/><text x="165" y="373" text-anchor="middle" font-size="13" style="fill:#243447">6</text><text x="195" y="371" text-anchor="start" font-size="16" style="fill:#243447">EntryPoint 经 Factory 创建账户</text><text x="195" y="393" text-anchor="start" font-size="14" style="fill:#687887">经 SenderCreator 调用工厂，部署账户并写入公钥。</text><text x="130" y="434" text-anchor="end" font-size="14" style="fill:#285e49">BSC 链上</text><circle cx="165" cy="428" r="12" fill="#edf5fc" stroke="#91adc3"/><text x="165" y="433" text-anchor="middle" font-size="13" style="fill:#243447">7</text><text x="195" y="431" text-anchor="start" font-size="16" style="fill:#243447">验证并执行首笔操作</text><text x="195" y="453" text-anchor="start" font-size="14" style="fill:#687887">检查签名、nonce 与费用，执行后返回操作收据。</text><text x="195" y="493" text-anchor="start" font-size="14" style="fill:#285e49">账户创建成功后，后续操作不再携带部署参数。</text></svg></figure>
+      <p>创建由 EntryPoint 经 SenderCreator 调用 Factory 完成，账户地址由工厂、部署代码、公钥与 salt 等共同确定。本地创建命令的首笔操作为零金额自调用，用来验证“部署＋授权”链路；已有账户后续不再携带部署参数。</p>
+      <h4>3.3.3 发送 PQ 操作</h4>
+      <figure class="crypto-diagram"><svg viewBox="0 0 900 550" role="img" aria-labelledby="pq-send-flow-title pq-send-flow-desc"><title id="pq-send-flow-title">已有账户：发送 PQ 操作的时序</title><desc id="pq-send-flow-desc">钱包构造并签署操作，Bundler 模拟提交，EntryPoint 调用账户并通过预编译验签，然后执行业务调用，钱包查询结果。</desc><defs><marker id="pq-send-flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#91adc3"/></marker></defs><rect x="415" y="8" width="470" height="490" rx="9" fill="#f1f7f4" stroke="#b8d3c4"/><text x="650" y="32" text-anchor="middle" font-size="15" style="fill:#285e49">BSC 链上：节点执行合约</text><rect x="5" y="48" width="170" height="42" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="90.0" y="73" text-anchor="middle" font-size="17" font-weight="600">钱包</text><path d="M90 90 V475" fill="none" stroke="#bacbd7" stroke-dasharray="4 5"/><rect x="205" y="48" width="170" height="42" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="290.0" y="73" text-anchor="middle" font-size="17" font-weight="600">Bundler</text><path d="M290 90 V475" fill="none" stroke="#bacbd7" stroke-dasharray="4 5"/><rect x="425" y="48" width="170" height="42" rx="8" fill="#f1f7f4" stroke="#b8d3c4"/><text x="510.0" y="73" text-anchor="middle" font-size="17" font-weight="600">EntryPoint / 账户</text><path d="M510 90 V475" fill="none" stroke="#bacbd7" stroke-dasharray="4 5"/><rect x="685" y="48" width="170" height="42" rx="8" fill="#f1f7f4" stroke="#b8d3c4"/><text x="770.0" y="73" text-anchor="middle" font-size="17" font-weight="600">验签器 / 预编译</text><path d="M770 90 V475" fill="none" stroke="#bacbd7" stroke-dasharray="4 5"/><rect x="12" y="112" width="156" height="66" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="90.0" y="137" text-anchor="middle" font-size="17" font-weight="600">构造操作</text><text x="90.0" y="160" text-anchor="middle" font-size="13">目标、金额、nonce</text><rect x="12" y="194" width="156" height="66" rx="8" fill="#edf5fc" stroke="#c5d9e9"/><text x="90.0" y="219" text-anchor="middle" font-size="17" font-weight="600">估算后 PQ 签名</text><text x="90.0" y="242" text-anchor="middle" font-size="13">绑定 userOpHash</text><path d="M90 296 H280" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-send-flow-arrow)"/><text x="190" y="282" text-anchor="middle" font-size="14" style="fill:#243447">提交 UserOperation</text><text x="290" y="321" text-anchor="middle" font-size="13" style="fill:#243447">模拟、检查预算</text><path d="M290 353 H500" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-send-flow-arrow)"/><text x="400" y="340" text-anchor="middle" font-size="14" style="fill:#243447">外层交易：handleOps</text><path d="M510 395 H760" fill="none" stroke="#91adc3" stroke-width="1.6" marker-end="url(#pq-send-flow-arrow)"/><text x="640" y="382" text-anchor="middle" font-size="14" style="fill:#243447">账户请求 PQ 验签</text><path d="M770 428 H520" fill="none" stroke="#91adc3" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#pq-send-flow-arrow)"/><text x="640" y="419" text-anchor="middle" font-size="13" style="fill:#243447">返回验签结果</text><text x="650" y="465" text-anchor="middle" font-size="14" style="fill:#285e49">通过验证与费用检查后：账户 execute</text><path d="M510 526 H90" fill="none" stroke="#91adc3" stroke-width="1.6" stroke-dasharray="5 5" marker-end="url(#pq-send-flow-arrow)"/><text x="300" y="514" text-anchor="middle" font-size="14" style="fill:#243447">查询 UserOperation 收据，确认执行结果</text></svg></figure>
+      <p><strong>模拟不是最终授权。</strong>区块执行时仍由 EntryPoint 调用账户验签，验证通过后才能执行；验签通过也不代表业务调用一定成功，需要检查 UserOperation 的执行结果。</p>
+      <p><strong>费用：</strong>本地未使用 Paymaster。Bundler 先垫付外层交易 gas，EntryPoint 再从账户的预付资金中结算。</p>
+      <p class="placeholder">实现依据：<a href="../erc4337-wallet/README.md">本地钱包流程</a> · <a href="../contract/src/common/PQAccount.sol">PQAccount</a> · <a href="../contract/src/common/PQAccountFactory.sol">Factory</a> · <a href="../contract/src/v4/MLDSAAccount.sol">ML-DSA-44 账户</a> · <a href="https://eips.ethereum.org/EIPS/eip-4337">ERC-4337</a>。</p>
     </section>
     <section id="chain-bench">
-      <h2>5. 链路基准：预编译与 ERC-4337 交易成本</h2>
+      <h2>4. 链路基准：预编译与 ERC-4337 交易成本</h2>
       <p class="placeholder">待补充。</p>
     </section>
   </main>
