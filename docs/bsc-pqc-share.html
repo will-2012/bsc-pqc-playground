@@ -13,6 +13,9 @@
     nav ol { margin: 0; padding-left: 24px; }
     nav li { padding: 4px 0; }
     .placeholder { color: #687887; }
+    .proposal-details { margin: 16px 0; }
+    .proposal-details summary { cursor: pointer; font-weight: 600; }
+    .proposal-details summary:focus-visible { outline: 2px solid #146caa; outline-offset: 4px; }
     .bsc-takeaway { margin: 20px 0; padding: 16px 20px; background: #f1f7f4; border-left: 3px solid #5e8c77; border-radius: 0 8px 8px 0; }
     .bsc-takeaway > p { margin: 0; }
     .bsc-takeaway > p > strong:first-child { color: #285e49; }
@@ -62,6 +65,9 @@
       <h2>1. 背景：量子风险与迁移需求</h2>
       <p>量子计算的发展对 BSC 的长期安全提出了挑战。未来，足够强的量子计算机可利用 Shor 算法破解账户签名和共识投票所依赖的椭圆曲线密码学，威胁资金与共识安全。目前尚无量子计算机能在实际条件下完成这类攻击。</p>
       <p>密码学迁移需要时间。BSC 应参考业界进展，提前验证抗量子方案及其成本，优先探索金库等高价值资产的保护方式，为分阶段迁移做好准备。</p>
+      <aside class="bsc-takeaway">
+        <p><strong>本次探索：</strong>通过 ERC-4337 智能合约金库，接入 ML-DSA-44 与 SLH-DSA-SHA2-128s，验证高价值账户的抗量子方案及其成本。</p>
+      </aside>
       <p class="placeholder">参考：<a href="https://www.bnbchain.org/en/blog/bsc-post-quantum-cryptography-migration-report">BNB Chain 抗量子迁移报告</a> · <a href="https://github.com/bnb-chain/BEPs/pull/707">BEP-707：BNB Chain 整体迁移路线</a> · <a href="https://github.com/bnb-chain/BEPs/pull/713">BEP-713：BSC 迁移路线</a>。</p>
     </section>
     <section id="industry">
@@ -192,21 +198,23 @@
       </div>
       <p><strong>应对思路：用聚合缓解数据膨胀，将新增计算分层承担。</strong>更大的签名带来突出的传播与存储压力。ETH 的研究路线是将大量交易签名、验证者投票的有效性汇总为证明，减少原始签名的重复传播与全网验签，但会增加证明生成的计算。</p>
       <p>为减轻出块时的计算压力，交易在内存池传播阶段提前聚合，投票由具备算力的聚合节点分层处理，再由构块者或提议者完成最终汇总。聚合在链下进行，但仍须满足出块时限。</p>
-      <p><strong>具体草案如下：</strong></p>
-      <ol>
-        <li><strong>账户层：账户抽象＋签名与证明聚合。</strong><br>
-          <a href="https://eips.ethereum.org/EIPS/eip-8141">EIP-8141</a>：原生账户抽象；<a href="https://eips.ethereum.org/EIPS/eip-8288">EIP-8288</a>：交易签名与证明的递归聚合。
-        </li>
-        <li><strong>共识层：哈希签名＋投票证明聚合，配套密钥管理与随机数改造。</strong><br>
-          <a href="https://eips.ethereum.org/EIPS/eip-8450">EIP-8450</a>：验证者 PQ 公钥登记；<a href="https://eips.ethereum.org/EIPS/eip-8292">EIP-8292</a>：投票证明聚合角色；<a href="https://eips.ethereum.org/EIPS/eip-8310">EIP-8310</a>：有状态签名密钥管理；<a href="https://eips.ethereum.org/EIPS/eip-8321">EIP-8321</a>：哈希链 RANDAO。具体签名与共识规则见 <a href="https://github.com/leanEthereum/leanSpec">leanSpec</a>。
-        </li>
-        <li><strong>数据层：抗量子承诺＋数据可用性抽样。</strong><br>
-          <a href="https://ethresear.ch/t/leanda-design-and-benchmark/25642">LeanDA 研究</a>：用纠删码、哈希承诺与编码正确性证明，探索替代 KZG 的抗量子方案。
-        </li>
-        <li><strong>网络层：抗量子认证＋密钥协商，不强求全部使用哈希方案。</strong><br>
-          <a href="https://ethresear.ch/t/exploring-signature-free-post-quantum-rlpx-handshake/24413">抗量子 RLPx 握手研究</a>：探索基于 KEM 的执行层节点认证与密钥协商。
-        </li>
-      </ol>
+      <details class="proposal-details">
+        <summary>具体草案</summary>
+        <ol>
+          <li><strong>账户层：账户抽象＋签名与证明聚合。</strong><br>
+            <a href="https://eips.ethereum.org/EIPS/eip-8141">EIP-8141</a>：原生账户抽象；<a href="https://eips.ethereum.org/EIPS/eip-8288">EIP-8288</a>：交易签名与证明的递归聚合。
+          </li>
+          <li><strong>共识层：哈希签名＋投票证明聚合，配套密钥管理与随机数改造。</strong><br>
+            <a href="https://eips.ethereum.org/EIPS/eip-8450">EIP-8450</a>：验证者 PQ 公钥登记；<a href="https://eips.ethereum.org/EIPS/eip-8292">EIP-8292</a>：投票证明聚合角色；<a href="https://eips.ethereum.org/EIPS/eip-8310">EIP-8310</a>：有状态签名密钥管理；<a href="https://eips.ethereum.org/EIPS/eip-8321">EIP-8321</a>：哈希链 RANDAO。具体签名与共识规则见 <a href="https://github.com/leanEthereum/leanSpec">leanSpec</a>。
+          </li>
+          <li><strong>数据层：抗量子承诺＋数据可用性抽样。</strong><br>
+            <a href="https://ethresear.ch/t/leanda-design-and-benchmark/25642">LeanDA 研究</a>：用纠删码、哈希承诺与编码正确性证明，探索替代 KZG 的抗量子方案。
+          </li>
+          <li><strong>网络层：抗量子认证＋密钥协商，不强求全部使用哈希方案。</strong><br>
+            <a href="https://ethresear.ch/t/exploring-signature-free-post-quantum-rlpx-handshake/24413">抗量子 RLPx 握手研究</a>：探索基于 KEM 的执行层节点认证与密钥协商。
+          </li>
+        </ol>
+      </details>
       <h4>2.1.3 对 BSC 的启发</h4>
       <p><strong>ETH 的优势：覆盖全面，核心一致，账户灵活。</strong>各层协同迁移，尽量共享密码学与证明基础设施，同时保留账户的算法选择能力，整体设计较为统一。</p>
       <p><strong>代价：系统复杂，迁移周期较长，关键环节仍需验证。</strong>原生账户抽象的协议集成、递归证明的性能，以及聚合节点的算力供给与激励，都影响落地进度。将计算交给聚合节点，可以减轻普通节点负担，但也引入可用性与集中化问题。</p>
@@ -219,11 +227,14 @@
       </aside>
       <h3>2.2 TRON</h3>
       <p><strong>思路：直接扩展协议签名能力，优先控制数据与验签成本。</strong><a href="https://github.com/tronprotocol/tips/issues/899">TIP-899</a> 覆盖交易、出块、节点中继握手及合约验签，先建立基础抗量子能力，不以证明聚合为前提。</p>
-      <ol>
-        <li><strong>协议改造：</strong>在现有 Transaction、BlockHeader、HelloMessage 中增加 <code>PQAuthSig</code>，携带算法标识、公钥与签名；按算法分派验签，并补充 TVM 预编译。这里扩展的是签名字段，并非新增交易类型。</li>
-        <li><strong>账户迁移：</strong>复用现有 Permission，通过权限更新配置抗量子密钥对应的地址与权重，保留原账户地址和资产。Account／Permission 结构不变；第一阶段每笔交易携带完整公钥。</li>
-        <li><strong>算法选择：</strong>支持 Falcon-512 和 ML-DSA-44，分别控制启用。Nile 已有 Falcon 启用测试记录；Falcon 体积小、验签快，但对应的 FN-DSA 标准尚未定稿。ML-DSA-44 已标准化，作为备选，代价是公钥与签名更大。</li>
-      </ol>
+      <details class="proposal-details">
+        <summary>具体方案</summary>
+        <ol>
+          <li><strong>协议改造：</strong>在现有 Transaction、BlockHeader、HelloMessage 中增加 <code>PQAuthSig</code>，携带算法标识、公钥与签名；按算法分派验签，并补充 TVM 预编译。这里扩展的是签名字段，并非新增交易类型。</li>
+          <li><strong>账户迁移：</strong>复用现有 Permission，通过权限更新配置抗量子密钥对应的地址与权重，保留原账户地址和资产。Account／Permission 结构不变；第一阶段每笔交易携带完整公钥。</li>
+          <li><strong>算法选择：</strong>支持 Falcon-512 和 ML-DSA-44，分别控制启用。Nile 已有 Falcon 启用测试记录；Falcon 体积小、验签快，但对应的 FN-DSA 标准尚未定稿。ML-DSA-44 已标准化，作为备选，代价是公钥与签名更大。</li>
+        </ol>
+      </details>
       <p><strong>取舍：路径直接，优先性能与落地。</strong>这一阶段无需等待 ETH 的账户抽象与证明聚合路线成熟，但仍需承担大签名的传播与存储成本。两种算法均属格密码，尚未提供哈希签名这一不同安全假设的选择；这不意味着格密码已被量子算法攻破。</p>
       <aside class="bsc-takeaway" aria-label="TRON 对 BSC 的启发">
         <p><strong>对 BSC 的启发：</strong>ML-DSA-44 可作为金库的候选算法，在标准化、计算成本与签名大小之间取得平衡，并与哈希签名方案对照验证。</p>
@@ -231,11 +242,14 @@
       <p class="placeholder">参考：<a href="https://github.com/tronprotocol/tips/issues/899">TIP-899 及 Nile 测试讨论</a> · <a href="https://csrc.nist.gov/projects/post-quantum-cryptography/post-quantum-cryptography-standardization/selected-algorithms">NIST 标准化状态</a>。</p>
       <h3>2.3 SUI</h3>
       <p><strong>思路：原生账户兼顾性能与安全余量，合约金库提供不同安全假设的选择。</strong>Sui 选择两种已标准化的算法，分别用于原生账户认证和 Move 金库。</p>
-      <ol>
-        <li><strong>原生账户：ML-DSA-65。</strong>采用格密码，遵循 FIPS 204；选择 NIST 安全类别 3，较 ML-DSA-44 留出更多安全余量，同时保持较低的验签开销。这里改造的是账户认证，不代表共识签名也已替换。</li>
-        <li><strong>高价值金库：SLH-DSA-SHA2-128s。</strong>采用基于哈希的 FIPS 205 算法，通过 Move 合约控制资产操作。安全假设较保守，且合约方案便于适配后续算法；代价是签名更大、验签更贵。</li>
-        <li><strong>进展：</strong><a href="https://github.com/MystenLabs/sui/releases/tag/devnet-v1.82.0">Devnet v1.82.0</a> 已加入 ML-DSA-65 相关接口与验签支持；金库是单独的合约路线，不能由原生账户的 Devnet 进展推断其主网上线状态。</li>
-      </ol>
+      <details class="proposal-details">
+        <summary>具体方案</summary>
+        <ol>
+          <li><strong>原生账户：ML-DSA-65。</strong>采用格密码，遵循 FIPS 204；选择 NIST 安全类别 3，较 ML-DSA-44 留出更多安全余量，同时保持较低的验签开销。这里改造的是账户认证，不代表共识签名也已替换。</li>
+          <li><strong>高价值金库：SLH-DSA-SHA2-128s。</strong>采用基于哈希的 FIPS 205 算法，通过 Move 合约控制资产操作。安全假设较保守，且合约方案便于适配后续算法；代价是签名更大、验签更贵。</li>
+          <li><strong>进展：</strong><a href="https://github.com/MystenLabs/sui/releases/tag/devnet-v1.82.0">Devnet v1.82.0</a> 已加入 ML-DSA-65 相关接口与验签支持；金库是单独的合约路线，不能由原生账户的 Devnet 进展推断其主网上线状态。</li>
+        </ol>
+      </details>
       <p><strong>取舍：标准化、算法多样性与安全余量并重。</strong>格密码与哈希密码提供不同的安全假设，用户可按用途选择；这不意味着哈希方案在所有方面都更安全，也不是每个账户必须同时使用两种签名。</p>
       <aside class="bsc-takeaway" aria-label="SUI 对 BSC 的启发">
         <p><strong>对 BSC 的启发：</strong>借鉴“标准算法＋不同安全假设＋合约金库”的组合，先通过 ERC-4337 金库探索高价值账户的量子安全保护。ML-DSA-44 与 SLH-DSA-SHA2-128s 可作为两条实验路线，对照安全类别、签名大小和交易成本。</p>
