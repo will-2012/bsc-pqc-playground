@@ -326,6 +326,9 @@ def serve(path, role):
             ],
         )
     require(role == "bench", "Unknown role")
+    job = runtime / "load-job.json"
+    if job.exists():
+        os.execv(d["node"], [d["node"], str(root / "tools/chain-bench/load/run.mjs"), c["name"], str(job)])
     bench = c["bench"]
     for _ in range(bench["rounds"]):
         subprocess.run(
@@ -366,6 +369,31 @@ def perform(action, p):
                     require(check_service(c, role), "Service is not installed")
                     run(["systemctl", action, unit(c, role)])
             result = {r: property_value(unit(c, r), "ActiveState") for r in roles}
+        elif action in ("load-config", "load-status", "load-clear"):
+            require("bench" in h["roles"], "Not a bench host")
+            job = b / "runtime/load-job.json"
+            active = property_value(unit(c, "bench"), "ActiveState")
+            if action == "load-status":
+                spec = read(job) if job.exists() else {}
+                progress = b / "runtime/load" / spec.get("dataset", "none") / "runs" / spec.get("run", "none") / "progress.json"
+                data = read(progress) if progress.exists() else {}
+                allowed = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt")
+                result = {"service": active, "run": spec.get("run"), "dataset": spec.get("dataset"),
+                          "progress": {k: data[k] for k in allowed if k in data}}
+            else:
+                require(active not in ("active", "activating", "deactivating"), "Stop bench before changing workload")
+                if action == "load-clear":
+                    require(not (b / "runtime/load/unresolved.json").exists(),
+                            "Reconcile unresolved load before legacy bench")
+                    job.unlink(missing_ok=True)
+                else:
+                    import re
+                    spec = p["spec"]
+                    for key in ("dataset", "run"):
+                        require(isinstance(spec.get(key), str) and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}", spec[key]), "Invalid load path")
+                    require((b / "current/tools/chain-bench/load/run.mjs").is_file(), "Upgrade release to include load runner")
+                    write(job, spec)
+                result = {"configured": True}
         elif action == "rpc":
             result = rpc(p["url"], p["method"], p.get("params"))
         elif action == "bootstrap":
@@ -412,7 +440,30 @@ def perform(action, p):
             cfg = read(dest / "config.json") if (dest / "config.json").exists() else {}
             write(dest / "config.json", {**cfg, **p["bundler_config"]})
             result = {"configured": True}
+        elif action == "load-smoke":
+            import uuid
+            require("bench" in h["roles"], "Not a bench host")
+            require(property_value(unit(c, "bench"), "ActiveState") not in
+                    ("active", "activating", "deactivating"), "Stop bench before acceptance")
+            tag = uuid.uuid4().hex[:12]
+            for algorithm in ("ecdsa", "ml", "slh"):
+                dataset = f"accept-{tag}-{algorithm}"
+                for step in ("prepare", "create", "transfer"):
+                    spec = dict(action=step, algorithm=algorithm, dataset=dataset, run=step,
+                                accounts=1, count=1, qps=1, workers=1, cacheAccounts=4,
+                                fundWei="100000000000000000", valueWei="1", startAt=0)
+                    file = b / "runtime/load-checks" / tag / f"{algorithm}-{step}.json"
+                    write(file, spec)
+                    run([h.get("node", "node"), b / "current/tools/chain-bench/load/run.mjs",
+                         c["name"], file])
+                    progress = read(b / "runtime/load" / dataset / "runs" / step / "progress.json")
+                    require(progress["status"] == "complete" and progress["confirmed"] == 1
+                            and progress["pending"] == 0 and progress["failed"] == 0,
+                            "Load acceptance failed")
+            result = {"passed": ["ecdsa", "ml", "slh"]}
         elif action == "smoke":
+            require(not (b / "runtime/load/unresolved.json").exists(),
+                    "Reconcile unresolved load before smoke")
             for version in ["v4", "v7"]:
                 run(
                     [

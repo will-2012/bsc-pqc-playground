@@ -1,0 +1,55 @@
+{
+  "checkedAt": "2026-11-02T09:07:12.981Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M1 Pro",
+  "node": "v25.9.0",
+  "count": 12,
+  "rows": [
+    {
+      "workers": 1,
+      "realStub": true,
+      "count": 12,
+      "seconds": 33.936725375,
+      "signaturesPerSecond": 0.35359923113972513,
+      "processCpuSeconds": 33.812083,
+      "rssStartMiB": 69.734375,
+      "rssPeakMiB": 73.34375
+    },
+    {
+      "workers": 1,
+      "realStub": false,
+      "count": 12,
+      "seconds": 17.224984958,
+      "signaturesPerSecond": 0.6966624371086432,
+      "processCpuSeconds": 16.952149,
+      "rssStartMiB": 73.765625,
+      "rssPeakMiB": 73.9375
+    },
+    {
+      "workers": 2,
+      "realStub": false,
+      "count": 12,
+      "seconds": 8.615830125,
+      "signaturesPerSecond": 1.3927851206328188,
+      "processCpuSeconds": 17.073736,
+      "rssStartMiB": 84.921875,
+      "rssPeakMiB": 85.96875
+    },
+    {
+      "workers": 4,
+      "realStub": false,
+      "count": 12,
+      "seconds": 5.101825916000002,
+      "signaturesPerSecond": 2.3520990715042647,
+      "processCpuSeconds": 18.750022,
+      "rssStartMiB": 123.796875,
+      "rssPeakMiB": 124.609375
+    }
+  ],
+  "dependencies": {
+    "post-quantum": "0.7.1",
+    "hashes": "2.4.0"
+  },
+  "sourceSha256": "2552eeb83fd7e0908f20b4010c04a9d51c6139f1b51c88d0380f4c736e631ed8"
+}

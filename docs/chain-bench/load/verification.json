@@ -1,0 +1,150 @@
+{
+  "checkedAt": "2026-11-02T09:29:51.634Z",
+  "platform": "darwin",
+  "arch": "arm64",
+  "node": "v25.9.0",
+  "sourceSha256": {
+    "tools/chain-bench/load/core.mjs": "5fceff3776aa8cfd21be43502e7d43c1e5ef87a98c3e71e03339464a08865113",
+    "tools/chain-bench/load/run.mjs": "4aaedf86fbe751599a2af187a8bf7fc855c6238b38d95424ed99ec9de4310727",
+    "tools/chain-bench/load/worker.mjs": "39aab3a5b1a4517c6a5fc9aebff6bb296ad9c5cfba3441b3bd65cf95aa225e51",
+    "erc4337-wallet/common/wallet.mjs": "65beab97fe195b8332bb9cb972725bd0ce4d5e7e2f0cf0a3f08fbd4c49c95847"
+  },
+  "rows": [
+    {
+      "algorithm": "ecdsa",
+      "action": "create",
+      "count": 3,
+      "elapsedSeconds": 1.126,
+      "cacheHits": 0,
+      "cacheMisses": 0,
+      "targetQps": 5,
+      "acceptedPerSecond": 2.664298401420959,
+      "confirmedPerSecond": 2.664298401420959
+    },
+    {
+      "algorithm": "ecdsa",
+      "action": "transfer",
+      "count": 6,
+      "elapsedSeconds": 1.922,
+      "cacheHits": 0,
+      "cacheMisses": 6,
+      "targetQps": 5,
+      "acceptedPerSecond": 3.121748178980229,
+      "confirmedPerSecond": 3.121748178980229
+    },
+    {
+      "algorithm": "ml",
+      "action": "create",
+      "count": 3,
+      "elapsedSeconds": 3.384,
+      "cacheHits": 0,
+      "cacheMisses": 0,
+      "targetQps": 5,
+      "acceptedPerSecond": 0.8865248226950355,
+      "confirmedPerSecond": 0.8865248226950355
+    },
+    {
+      "algorithm": "ml",
+      "action": "transfer",
+      "count": 6,
+      "elapsedSeconds": 3.987,
+      "cacheHits": 2,
+      "cacheMisses": 4,
+      "targetQps": 5,
+      "acceptedPerSecond": 1.5048908954100828,
+      "confirmedPerSecond": 1.5048908954100828
+    },
+    {
+      "algorithm": "slh",
+      "action": "create",
+      "count": 3,
+      "elapsedSeconds": 5.366,
+      "cacheHits": 0,
+      "cacheMisses": 0,
+      "targetQps": 5,
+      "acceptedPerSecond": 0.5590756615728663,
+      "confirmedPerSecond": 0.5590756615728663
+    },
+    {
+      "algorithm": "slh",
+      "action": "transfer",
+      "count": 6,
+      "elapsedSeconds": 9.882,
+      "cacheHits": 2,
+      "cacheMisses": 4,
+      "targetQps": 5,
+      "acceptedPerSecond": 0.6071645415907712,
+      "confirmedPerSecond": 0.6071645415907712
+    }
+  ],
+  "cacheRows": [
+    {
+      "algorithm": "ecdsa",
+      "cacheHits": 3,
+      "cacheMisses": 3,
+      "confirmed": 6,
+      "elapsedSeconds": 3.265
+    },
+    {
+      "algorithm": "ml",
+      "cacheHits": 3,
+      "cacheMisses": 3,
+      "confirmed": 6,
+      "elapsedSeconds": 7.831
+    },
+    {
+      "algorithm": "slh",
+      "cacheHits": 3,
+      "cacheMisses": 3,
+      "confirmed": 6,
+      "elapsedSeconds": 16.917
+    }
+  ],
+  "checks": [
+    "ecdsa: independent persistent keys; recipient balance; duplicate-run rejection; pending receipt recovery without resending; skip existing accounts",
+    "scheduled start cancellation: zero dispatched operations",
+    "graceful stop: dispatch halted, in-flight drained, balance matched, reconcile did not resend",
+    "ecdsa: bounded cache reused signing context; fresh nonces and balances verified",
+    "ml: independent persistent keys; recipient balance; duplicate-run rejection; pending receipt recovery without resending; skip existing accounts",
+    "ml: bounded cache reused signing context; fresh nonces and balances verified",
+    "slh: independent persistent keys; recipient balance; duplicate-run rejection; pending receipt recovery without resending; skip existing accounts",
+    "slh: bounded cache reused signing context; fresh nonces and balances verified"
+  ],
+  "configuration": {
+    "validators": 3,
+    "benchClients": 1,
+    "accountsPerAlgorithm": 3,
+    "transferCountPerAlgorithm": 6,
+    "workers": 2,
+    "targetQps": 5,
+    "tests": {
+      "remoteOffline": 43,
+      "oneboxRegression": 19,
+      "loadCore": 6
+    }
+  },
+  "upgradeReview": {
+    "checkedAt": "2026-11-02T09:22:15.816464+00:00",
+    "remoteOfflineTests": 42,
+    "oneboxTests": 19,
+    "loadTests": 6,
+    "agentLoadSmoke": "Passed on local three-validator devnet; systemd/base path mocked; real transactions for all three algorithms",
+    "remoteExecution": false,
+    "sourceSha256": {
+      "one-box/remote/agent.py": "10cbb94025aff88fdaecac04bd766c11cf167b8963d29d126e174e351310c9dc",
+      "one-box/remote/cluster.py": "f6037383ab8aab8e8acd6036fc623aea6ca6b391bee8d92787d55b0fbbc69174",
+      "one-box/remote/load_bench.py": "b374cda9ed68a6dbe57a79983fc0385516048b9669e93ff6e0b0e6ca23b3ab21"
+    }
+  },
+  "latestOfflineReview": {
+    "checkedAt": "2026-11-02T09:32:04.426490+00:00",
+    "remoteOfflineTests": 43,
+    "oneboxTests": 19,
+    "loadTests": 6,
+    "sourceSha256": {
+      "one-box/remote/agent.py": "e7b3c0dcd1279525fd5c27786d5d78601cb77a265464d20589e240fb7e4cf235",
+      "one-box/remote/cluster.py": "71c72a5dfb898c083f2adde3c715e1ee6232549ec4f6c6080a50307f3b215d98",
+      "one-box/remote/load_bench.py": "28337fb144dd67dbe56586b89f60f8ad7e81f449b6107fafce60b84b6475f432"
+    }
+  }
+}

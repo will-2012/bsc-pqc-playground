@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import {isMainThread} from 'node:worker_threads';
 import {randomBytes} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {Wallet} from 'ethers';
@@ -12,7 +13,7 @@ import {
 import {privateKeyToAccount} from 'viem/accounts';
 import {createBundlerClient, getUserOperationHash} from 'viem/account-abstraction';
 
-process.umask(0o077);
+if (isMainThread) process.umask(0o077);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
 export function write(p, data) {
@@ -106,7 +107,7 @@ function identityPath(ctx, id) {
 }
 
 // Generate keys only at runtime. Never use deterministic demo seeds or an ECDSA owner.
-async function newIdentity(ctx) {
+export async function newIdentity(ctx) {
   const d = ctx.deployment || await deployment(ctx);
   const id = randomBytes(12).toString('hex');
   const {publicKey, secretKey} = await ctx.profile.keygen();
@@ -132,8 +133,8 @@ export async function smartAccount(ctx, identity) {
   return ctx.profile.smartAccount(ctx, identity);
 }
 
-export async function prepare(ctx, identity, call) {
-  const smart = await smartAccount(ctx, identity);
+export async function prepare(ctx, identity, call, preparedAccount) {
+  const smart = preparedAccount || await smartAccount(ctx, identity);
   const fee = BigInt(ctx.config.gas_price_wei);
   const operation = await ctx.bundler.prepareUserOperation({account: smart, calls: [call], maxFeePerGas: fee, maxPriorityFeePerGas: fee});
   operation.signature = await smart.signUserOperation(operation);

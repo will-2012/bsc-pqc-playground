@@ -202,6 +202,36 @@ class LifecycleTests(unittest.TestCase):
         self.assertFalse(self.obj.state["ready"])
         self.assertTrue(any(x.args[1] == "rollback" for x in call.call_args_list))
 
+    def test_upgrade_acceptance_precedes_ready(self):
+        self.obj.state["ready"] = False
+        actions = []
+        def call(host, action, **kwargs):
+            actions.append(action)
+            if action == "load-smoke":
+                self.assertFalse(self.obj.state["ready"])
+            return {}
+        with patch.object(self.obj, "precheck"), patch.object(self.obj, "package", return_value=("file", "hash")), \
+             patch.object(self.obj, "control"), patch.object(self.obj, "overlay", return_value={}), \
+             patch.object(self.obj, "check_chain"), patch.object(self.obj, "call", side_effect=call), contextlib_redirect():
+            self.obj.upgrade()
+        self.assertTrue(self.obj.state["ready"])
+        self.assertEqual(actions.count("bench-config"), 3)
+        self.assertEqual(actions.count("load-smoke"), 3)
+        self.assertLess(actions.index("bench-config"), actions.index("load-smoke"))
+
+    def test_smoke_failure_does_not_mark_upgrade_ready(self):
+        def call(host, action, **kwargs):
+            if action == "load-smoke":
+                raise RuntimeError("test failure")
+            return {}
+        with patch.object(self.obj, "precheck"), patch.object(self.obj, "package", return_value=("file", "hash")), \
+             patch.object(self.obj, "control"), patch.object(self.obj, "overlay", return_value={}), \
+             patch.object(self.obj, "check_chain"), patch.object(self.obj, "call", side_effect=call):
+            with self.assertRaisesRegex(RuntimeError, "rollback attempted"):
+                self.obj.upgrade()
+        self.assertFalse(self.obj.state["ready"])
+        self.assertEqual(len(self.obj.state["rollback"]), 3)
+
 
 def contextlib_redirect():
     return __import__("contextlib").redirect_stdout(io.StringIO())
@@ -497,7 +527,9 @@ class ReleaseSourceTests(unittest.TestCase):
             destination = Path(directory) / "release"
             destination.mkdir()
             subprocess.run(["git", "init", "-q", str(root)], check=True)
-            for name in ("one-box/remote/agent.py", "erc4337-wallet/cli.mjs"):
+            for name in ("one-box/remote/agent.py", "erc4337-wallet/cli.mjs", "one-box/remote/load_bench.py",
+                         "tools/chain-bench/load/core.mjs", "tools/chain-bench/load/run.mjs",
+                         "tools/chain-bench/load/worker.mjs"):
                 file = root / name
                 file.parent.mkdir(parents=True, exist_ok=True)
                 file.write_text("public source")
@@ -508,6 +540,15 @@ class ReleaseSourceTests(unittest.TestCase):
             self.assertTrue((destination / "one-box/remote/agent.py").exists())
             self.assertFalse((destination / "erc4337-wallet/.env").exists())
             self.assertFalse((destination / "one-box/remote/private.json").exists())
+
+    def test_missing_runner_fails_before_release(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "one-box/remote").mkdir(parents=True)
+            (root / "one-box/remote/agent.py").write_text("fixture")
+            with patch.object(cluster.subprocess, "check_output", return_value=b"one-box/remote/agent.py\0"):
+                with self.assertRaisesRegex(ValueError, "Release source missing"):
+                    cluster.copy_project_sources(root, root / "release")
 
     def test_tracked_link_cannot_read_outside_repository(self):
         import subprocess

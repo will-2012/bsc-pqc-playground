@@ -45,6 +45,7 @@ def copy_project_sources(root, destination):
         "one-box/remote/",
         "one-box/precompile/v2/testdata/",
         "tools/chain-bench/common/",
+        "tools/chain-bench/load/",
     )
     tracked = subprocess.check_output(["git", "ls-files", "-z"], cwd=root).decode().split("\0")
     for name in tracked:
@@ -54,10 +55,12 @@ def copy_project_sources(root, destination):
         require(source.resolve().is_relative_to(root.resolve()), "Source link escapes repository")
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target, follow_symlinks=False)
-    require(
-        (destination / "one-box/remote/agent.py").is_file(),
-        "Remote source is not tracked; commit it before packaging a release",
-    )
+    for required in ("one-box/remote/agent.py", "one-box/remote/load_bench.py",
+                     "tools/chain-bench/load/core.mjs", "tools/chain-bench/load/run.mjs",
+                     "tools/chain-bench/load/worker.mjs"):
+        require((destination / required).is_file(),
+                "Release source missing; commit all load runner files before packaging")
+
 
 
 class Cluster:
@@ -472,27 +475,15 @@ class Cluster:
                 )
         finally:
             devnet.rpc = original
-        deployments = {}
-        for h in self.c["hosts"]:
-            if "bundler" in h["roles"]:
-                deployments[h["id"]] = self.call(h, "bootstrap")
-                self.call(h, "start", roles=["bundler"])
-                print(h["id"] + ": bundler started")
+        self.start_bundlers()
         for h in self.c["hosts"]:
             if "bench" in h["roles"]:
-                bh = by_id(self.c, h["bundler_node"])
-                self.call(
-                    h,
-                    "bench-config",
-                    deployment=deployments[bh["id"]],
-                    bundler_config={"port": bh["ports"]["bundler"]},
-                )
-                self.call(h, "bundler-ready")
                 self.call(h, "smoke")
                 print(h["id"] + ": v4/v7 create and transfer passed")
+        self.check_load()
         self.state["ready"] = True
         self.save()
-        print("Deployment verified. Bench services remain stopped; start with bench.")
+        print("Deployment verified. Bench services remain stopped; use load for distributed testing.")
 
     def control(self, action, roles=None):
         # Finish one role across the cluster before moving to the next.
@@ -511,6 +502,26 @@ class Cluster:
                     if action not in ("stop", "status"):
                         raise
         require(not failures, "Service action failed for: " + ", ".join(failures))
+
+    def start_bundlers(self):
+        # Bootstrap is idempotent; repair bench bindings after a partial deployment too.
+        deployments = {}
+        for h in self.c["hosts"]:
+            if "bundler" in h["roles"]:
+                deployments[h["id"]] = self.call(h, "bootstrap")
+                self.call(h, "start", roles=["bundler"])
+        for h in self.c["hosts"]:
+            if "bench" in h["roles"]:
+                bh = by_id(self.c, h["bundler_node"])
+                self.call(h, "bench-config", deployment=deployments[bh["id"]],
+                          bundler_config={"port": bh["ports"]["bundler"]})
+        self.check_bundlers()
+
+    def check_load(self):
+        for h in self.c["hosts"]:
+            if "bench" in h["roles"]:
+                self.call(h, "load-smoke")
+                print(h["id"] + ": ECDSA / ML / SLH load create and transfer passed")
 
     def check_bundlers(self):
         for h in self.c["hosts"]:
@@ -665,12 +676,8 @@ class Cluster:
             if "validator" in h["roles"]:
                 self.call(h, "start", roles=["validator"])
         self.check_chain()
-        # Refresh fee/config-dependent runtime settings without replacing keys/contracts.
-        for h in self.c["hosts"]:
-            if "bundler" in h["roles"]:
-                self.call(h, "bootstrap")
-                self.call(h, "start", roles=["bundler"])
-        self.check_bundlers()
+        self.start_bundlers()
+        self.check_load()
         self.state["inventory"] = self.c
         self.state["ready"] = True
         self.save()
@@ -699,8 +706,8 @@ class Cluster:
                 if "validator" in h["roles"]:
                     self.call(h, "start", roles=["validator"])
             self.check_chain()
-            self.control("start", roles=["bundler"])
-            self.check_bundlers()
+            self.start_bundlers()
+            self.check_load()
         except Exception:
             self.state["rollback"] = {}
             for h in reversed(changed):
@@ -736,12 +743,24 @@ def main():
             "reset",
             "bench",
             "collect",
+            "load",
             "configure",
             "upgrade",
         ],
     )
     p.add_argument("--config", required=True, type=Path)
     p.add_argument("--confirm")
+    p.add_argument("--load-action", choices=["prepare", "create", "transfer", "reconcile", "status", "stop"], default="status")
+    p.add_argument("--algorithm", choices=["ecdsa", "ml", "slh"], default="ml")
+    p.add_argument("--dataset", default="accounts")
+    p.add_argument("--run", default="run1")
+    p.add_argument("--accounts", type=int, default=1000, help="Total accounts across all bench clients")
+    p.add_argument("--count", type=int, help="Total operations; defaults to accounts")
+    p.add_argument("--qps", type=float, default=100, help="Total target send rate across all bench clients")
+    p.add_argument("--workers", type=int, default=8, help="Concurrent operations per bench client")
+    p.add_argument("--cache-accounts", type=int, default=64, help="Cached accounts per worker; 0 disables caching")
+    p.add_argument("--fund-wei", default="100000000000000000")
+    p.add_argument("--value-wei", default="1")
     args = p.parse_args()
     c = load(args.config)
     # Require inventory to live outside tracked project files or in an ignored path.
@@ -802,7 +821,10 @@ def main():
             cluster.configure()
             return
         cluster.assert_config()
-        if args.command in ("status", "stop"):
+        if args.command == "load":
+            from load_bench import execute
+            execute(cluster, args)
+        elif args.command in ("status", "stop"):
             cluster.control(args.command)
         elif args.command in ("start", "restart"):
             cluster.control("stop", roles=["bench", "bundler"])
@@ -812,6 +834,9 @@ def main():
             cluster.check_bundlers()
         elif args.command == "bench":
             require(cluster.state.get("ready"), "Run successful deploy before bench")
+            for h in cluster.c["hosts"]:
+                if "bench" in h["roles"]:
+                    cluster.call(h, "load-clear")
             cluster.check_chain()
             cluster.check_bundlers()
             cluster.control("start", roles=["bench"])
