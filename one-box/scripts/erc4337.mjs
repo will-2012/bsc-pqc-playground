@@ -25,7 +25,9 @@ const write = (p, data) => {
 };
 const manifest = read(path.join(env, 'environment.json'));
 const config = read(path.join(env, 'config.json'));
-const rpcUrl = `http://127.0.0.1:${config.rpc_port}`;
+const remotePath = path.join(env, "remote.json");
+const remote = fs.existsSync(remotePath) ? read(remotePath) : {};
+const rpcUrl = remote.rpc || `http://127.0.0.1:${config.rpc_port}`;
 const chain = defineChain({
   id: config.chain_id, name: `BSC local ${name}`,
   nativeCurrency: {name: 'BNB', symbol: 'BNB', decimals: 18},
@@ -135,7 +137,7 @@ async function setup() {
 async function test() {
   assert(deployment.entryPoint, 'Deploy the contracts first');
   const bundlerConfig = read(path.join(stateDir, 'alto.json'));
-  const transport = http(`http://127.0.0.1:${bundlerConfig.port}`);
+  const transport = http(remote.bundler || `http://127.0.0.1:${bundlerConfig.port}`);
   const probe = createBundlerClient({chain, client, transport});
   const supported = await probe.getSupportedEntryPoints();
   assert(supported.some(a => a.toLowerCase() === deployment.entryPoint.toLowerCase()));
@@ -194,7 +196,7 @@ async function test() {
   assert(replayRejected, 'Old nonce was accepted');
   const nodes = [];
   for (let i = 0; i < config.validators; i++) {
-    const node = createPublicClient({chain, transport: http(`http://127.0.0.1:${config.rpc_port + 2*i}`), pollingInterval: 500});
+    const node = createPublicClient({chain, transport: http(remote.validators?.[i] || `http://127.0.0.1:${config.rpc_port + 2*i}`), pollingInterval: 500});
     const tr = await node.waitForTransactionReceipt({hash: transfer.receipt.transactionHash});
     const cr = await node.waitForTransactionReceipt({hash: counterReceipt.receipt.transactionHash});
     assert.equal(tr.status, 'success');

@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "name": "ap-pq",
+  "shared_controller": "/mnt/efs/bsc-pqc",
+  "min_free_gib": 40,
+  "cache_mb": 2048,
+  "gas_limit": 70000000,
+  "gas_price_wei": 1000000000,
+  "jenner_delay": 600,
+  "pq_delay": 660,
+  "bench": {
+    "version": "v4",
+    "accounts": 3,
+    "rounds": 1
+  },
+  "hosts": [
+    {
+      "id": "ap-0",
+      "instance_id": "INSTANCE_ID",
+      "region": "ap-northeast-1",
+      "address": "PRIVATE_ADDRESS",
+      "arch": "x86_64",
+      "shared": "/mnt/efs/bsc-pqc",
+      "roles": [
+        "validator",
+        "bundler",
+        "bench"
+      ],
+      "rpc_node": "ap-0",
+      "bundler_node": "ap-0",
+      "ports": {
+        "rpc": 29545,
+        "p2p": 33311,
+        "metrics": 29660,
+        "pprof": 29661,
+        "bundler": 24337
+      }
+    },
+    {
+      "id": "ap-1",
+      "instance_id": "INSTANCE_ID",
+      "region": "ap-northeast-1",
+      "address": "PRIVATE_ADDRESS",
+      "arch": "x86_64",
+      "shared": "/mnt/efs/bsc-pqc",
+      "roles": [
+        "validator",
+        "bundler",
+        "bench"
+      ],
+      "rpc_node": "ap-1",
+      "bundler_node": "ap-1",
+      "ports": {
+        "rpc": 29545,
+        "p2p": 33311,
+        "metrics": 29660,
+        "pprof": 29661,
+        "bundler": 24337
+      }
+    },
+    {
+      "id": "ap-2",
+      "instance_id": "INSTANCE_ID",
+      "region": "ap-northeast-1",
+      "address": "PRIVATE_ADDRESS",
+      "arch": "x86_64",
+      "shared": "/mnt/efs/bsc-pqc",
+      "roles": [
+        "validator",
+        "bundler",
+        "bench"
+      ],
+      "rpc_node": "ap-2",
+      "bundler_node": "ap-2",
+      "ports": {
+        "rpc": 29545,
+        "p2p": 33311,
+        "metrics": 29660,
+        "pprof": 29661,
+        "bundler": 24337
+      }
+    }
+  ]
+}

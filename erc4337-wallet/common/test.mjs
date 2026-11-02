@@ -105,7 +105,7 @@ export async function accountFlow(ctx, details = {}) {
   const nodes = [];
   for (let i = 0; i < ctx.config.validators; i++) {
     const node = createPublicClient({chain: ctx.chain, pollingInterval: 500,
-      transport: http(`http://127.0.0.1:${ctx.config.rpc_port + 2 * i}`)});
+      transport: http(ctx.validatorRpcs[i])});
     const cr = await node.waitForTransactionReceipt({hash: counter.transactionHash});
     const tr = await node.waitForTransactionReceipt({hash: transferred.transactionHash});
     const ar = await node.waitForTransactionReceipt({hash: created.transactionHash});

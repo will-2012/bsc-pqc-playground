@@ -146,15 +146,17 @@ def render(env, manifest, cfg):
         (env / f"node{i}/config.toml").write_text(node_config(cfg, i, [e for j, e in enumerate(enodes) if i != j]))
 
 
-def init(env, config_path):
+def init(env, config_path, *, selected_binary=None):
     cfg = dict(config_path) if isinstance(config_path, dict) else read(config_path)
     validate(cfg)
     doctor()
     if env.exists():
         raise RuntimeError(f"Environment already exists: {env}. Use up/restart or explicit reset --yes")
     version = {1: 2, 3: 3, 4: 4, 5: 5, 6: 6}.get(cfg.get("pq_precompile"))
-    selected = BUILD / (f"v{version}/geth" if version else "geth")
+    selected = Path(selected_binary) if selected_binary else BUILD / (f"v{version}/geth" if version else "geth")
     if not selected.exists():
+        if selected_binary:
+            raise RuntimeError("Selected binary does not exist")
         if version:
             from importlib import import_module
             import_module("precompile" if version == 2 else f"precompile_v{version}").build()

@@ -27,9 +27,12 @@ export async function context(name = 'devnet', profileId = DEFAULT_PROFILE) {
   const env = path.join(ROOT, 'one-box/.runtime', name);
   const manifest = read(path.join(env, 'environment.json'));
   const config = read(path.join(env, 'config.json'));
-  const base = read(path.join(env, 'bundler/deployment.json'));
-  const alto = read(path.join(env, 'bundler/config.json'));
-  const rpc = `http://127.0.0.1:${config.rpc_port}`;
+  const remotePath = path.join(env, "remote.json");
+  const remote = fs.existsSync(remotePath) ? read(remotePath) : {};
+  const serviceDir = remote.bench ? 'bench' : 'bundler';
+  const base = read(path.join(env, serviceDir, 'deployment.json'));
+  const alto = read(path.join(env, serviceDir, 'config.json'));
+  const rpc = remote.rpc || `http://127.0.0.1:${config.rpc_port}`;
   const chain = defineChain({id: config.chain_id, name: `BSC local ${name}`,
     nativeCurrency: {name: 'BNB', symbol: 'BNB', decimals: 18}, rpcUrls: {default: {http: [rpc]}}});
   const client = createPublicClient({chain, transport: http(rpc, {timeout: 180000}), pollingInterval: 500});
@@ -45,11 +48,12 @@ export async function context(name = 'devnet', profileId = DEFAULT_PROFILE) {
   assert.equal(owner.address.toLowerCase(), info.address.toLowerCase());
   const wallet = createWalletClient({chain, account: owner, transport: http(rpc)});
   const bundler = createBundlerClient({chain, client, pollingInterval: 500,
-    transport: http(`http://127.0.0.1:${alto.port}`, {timeout: 180000, retryCount: 0})});
+    transport: http(remote.bundler || `http://127.0.0.1:${alto.port}`, {timeout: 180000, retryCount: 0})});
   assert.equal(base.entryPointVersion, profile.entryPointVersion, 'Incompatible EntryPoint version');
   const dir = path.join(env, 'wallet', profile.id);
   fs.mkdirSync(dir, {recursive: true, mode: 0o700});
   return {name, env, dir, profile, chain, client, wallet, bundler, manifest, config, base,
+    validatorRpcs: remote.validators || Array.from({length: config.validators}, (_,i) => `http://127.0.0.1:${config.rpc_port + 2*i}`),
     fee: {type: 'legacy', gasPrice: BigInt(config.gas_price_wei)}};
 }
 
