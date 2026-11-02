@@ -17,7 +17,7 @@ NAME = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}")
 HEX_HASH = re.compile(r"0x[0-9a-fA-F]{64}")
 PROGRESS = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted",
             "confirmed", "failed", "skipped", "pending", "inflight", "targetQps",
-            "startedAt", "updatedAt", "elapsedSeconds", "startLagMs", "acceptedPerSecond",
+            "durationSeconds", "cancelled", "endReason", "startedAt", "updatedAt", "elapsedSeconds", "startLagMs", "acceptedPerSecond",
             "confirmedPerSecond", "cacheHits", "cacheMisses")
 
 
@@ -277,6 +277,16 @@ class Collector:
                     output[key] = {"number": number(value["number"]), "hash": value["hash"]}
                 else:
                     output["errors"].append(key + "_unavailable")
+            # Pool telemetry is optional: failure must not discard chain observations.
+            output["txpool"] = None
+            try:
+                pool = self._batch([("txpool_status", [])])[0]
+                counts = {key: number(pool[key]) for key in ("pending", "queued")}
+                if any(value < 0 for value in counts.values()):
+                    raise ValueError("negative pool count")
+                output["txpool"] = counts
+            except (KeyError, TypeError, ValueError, OSError):
+                output["errors"].append("txpool_unavailable")
             raw, peers = self._batch([("eth_getBlockByNumber", ["latest", False]), ("net_peerCount", [])])
             current = header(raw)
             output["head"] = {k: current[k] for k in ("number", "hash", "parentHash", "timestampMs")}

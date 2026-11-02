@@ -214,18 +214,75 @@ class SharedSamples:
         return rows
 
 
-def print_report(result, rows):
-    def fmt(value, digits=1):
-        return '?' if value is None else f'{value:.{digits}f}'
+def workload_label(result, rows):
+    """Separate workload activity from chain health; missing samples are not idle."""
+    states = []
+    unknown = not rows
+    for row in rows.values():
+        bench = row.get('bench') or {}
+        service = (row.get('components') or {}).get('bench', {}).get('service', bench.get('service'))
+        if row.get('error'):
+            unknown = True
+        elif service == 'active':
+            states.append((bench.get('progress') or {}).get('status', 'unknown'))
+        elif service not in ('inactive', 'failed'):
+            unknown = True
+    if any(state == 'running' for state in states):
+        return '压测中', 36
+    if 'draining' in states:
+        return '收尾中', 36
+    if 'starting' in states:
+        return '准备中', 36
+    if states or unknown:
+        return '负载未知', 33
+    window = result.get('window') or {}
+    if window.get('complete') and window.get('blocks') and window.get('transactions') is not None:
+        return ('空载', 32) if window['transactions'] == 0 else ('链上有流量', 36)
+    return '未压测', 33
+
+
+def print_report(result, rows, settings=None):
+    from monitor_model import DEFAULTS
+    config = {**DEFAULTS, **(settings or {})}
+    color = sys.stdout.isatty() and 'NO_COLOR' not in os.environ
+
+    def mark(value, ok=None):
+        text = '?' if value is None else str(value)
+        if not color or value is None or ok is None:
+            return text
+        return f"\033[{32 if ok else 31}m{text}\033[0m"
+
+    def fmt(value, ok=None):
+        return mark(None if value is None else f'{value:.1f}', ok)
+
+    reasons = result.get('reasons', [])
     window, bench = result.get('window') or {}, result.get('bench') or {}
-    print(time.strftime('%H:%M:%S'), result['status'], 'stop=' + str(result.get('stop', False)),
-          'reasons=' + ','.join(result.get('reasons', [])), flush=True)
+    healthy = result['status'] == 'HEALTHY'
+    status_ok = True if healthy else False if result['status'] == 'UNSTABLE' else None
+    label, shade = workload_label(result, rows)
+    load = f"\033[{shade}m{label}\033[0m" if color else label
+    print()
+    print(time.strftime('%H:%M:%S'), 'load=' + load,
+          'receiptTPS=' + fmt(bench.get('confirmedQps')),
+          'health=' + mark(result['status'], status_ok),
+          'stop=' + mark(result.get('stop', False), not result.get('stop', False)),
+          'reasons=' + ','.join(mark(r, None if r == 'BENCH_BACKLOG' else False) for r in reasons), flush=True)
     ratio = window.get('gasRatio')
-    print(f"  chain: blocks={window.get('blocks')} tx={window.get('transactions')} "
-          f"userOps={window.get('userOps')} gas={fmt(None if ratio is None else ratio*100)}% "
-          f"interval p50/p95/max={fmt(window.get('intervalP50Ms'))}/"
-          f"{fmt(window.get('intervalP95Ms'))}/{fmt(window.get('intervalMaxMs'))} ms "
-          f"outOfTurn={window.get('outOfTurn')} slash={window.get('slashEvents')}", flush=True)
+    complete = window.get('complete') is True
+    blocks, transactions = window.get('blocks'), window.get('transactions')
+    per_block = transactions / blocks if blocks and transactions is not None else None
+    def interval(key):
+        value = window.get(key)
+        return fmt(value, value > 0 and value <= config['expected_block_ms'] * config['slow_block_factor']
+                   if value is not None and complete else None)
+    print(f"  chain: blocks={mark(window.get('blocks'), True if complete else None)} "
+          f"tx={mark(window.get('transactions'), True if complete else None)} "
+          f"tx/block={fmt(per_block, True if complete else None)} "
+          f"userOps={mark(window.get('userOps'), True if complete else None)} "
+          f"gas={fmt(None if ratio is None else ratio*100, True if healthy else None)}% "
+          f"interval p50/p95/max={interval('intervalP50Ms')}/{interval('intervalP95Ms')}/{interval('intervalMaxMs')} ms "
+          f"outOfTurn={mark(window.get('outOfTurn'), window.get('outOfTurn') == 0)} "
+          f"slash={mark(window.get('slashEvents'), window.get('slashEvents') == 0)}", flush=True)
     print(f"  bench: target={fmt(bench.get('targetQps'))} accepted={fmt(bench.get('acceptedQps'))} "
           f"receipt={fmt(bench.get('confirmedQps'))} /s hints={','.join(bench.get('hints', []))}", flush=True)
     alignment = result.get('reconciliation', {})
@@ -233,13 +290,27 @@ def print_report(result, rows):
     for host, row in rows.items():
         head, safe, final = row.get('head') or {}, row.get('safe') or {}, row.get('finalized') or {}
         resource = row.get('resources') or {}
-        print(f"  {host}: head/safe/final={head.get('number')}/{safe.get('number')}/{final.get('number')} "
-              f"peers={row.get('peers')} hostCPU={fmt(resource.get('cpuBusyPct'))}% "
-              f"iowait={fmt(resource.get('iowaitPct'))}% stop={row.get('stopState')} "
-              f"error={row.get('error')} age={row.get('ageSeconds', 0):.1f}s", flush=True)
+        host_bad = bool(row.get('error')) or any(r.startswith(host + ':') for r in reasons)
+        host_ok = False if host_bad else True if healthy else None
+        print(f"  {host}: head/safe/final={mark(head.get('number'), host_ok)}/{mark(safe.get('number'), host_ok)}/{mark(final.get('number'), host_ok)} "
+              f"peers={mark(row.get('peers'), row.get('peers', 0) > 0 if row.get('peers') is not None else None)} "
+              f"hostCPU={fmt(resource.get('cpuBusyPct'))}% iowait={fmt(resource.get('iowaitPct'))}% "
+              f"stop={mark(row.get('stopState'))} error={mark(row.get('error'), False)} "
+              f"age={fmt(row.get('ageSeconds'))}s", flush=True)
+        pool = result.get('hosts', {}).get(host, {}).get('txpool') or {}
+        pool_ok = False if pool.get('sustained') else True if pool.get('available') else None
+        delta = pool.get('delta')
+        print(f"    txpool: pending={mark(pool.get('pending'), pool_ok)} "
+              f"queued={mark(pool.get('queued'), pool_ok)} total={mark(pool.get('total'), pool_ok)} "
+              f"delta={mark(None if delta is None else f'{delta:+d}', pool_ok)} "
+              f"growth={mark(pool.get('growth'), pool_ok)} "
+              f"growingFor={fmt(pool.get('growthSeconds'), pool_ok)}s", flush=True)
         components = row.get('components') or {}
-        print('    ' + ' | '.join(f"{role}: {value.get('service')} CPU={fmt(value.get('cpuPct'))}%"
-                                 for role, value in components.items()), flush=True)
+        def service(role, value):
+            state = value.get('service')
+            ok = True if state == 'active' else None if role == 'bench' and state == 'inactive' else False
+            return f"{role}: {mark(state, ok)} CPU={fmt(value.get('cpuPct'))}%"
+        print('    ' + ' | '.join(service(role, value) for role, value in components.items()), flush=True)
         def mib(key):
             value = resource.get(key)
             return fmt(None if value is None else value / 1024**2)
@@ -319,7 +390,7 @@ def execute(cluster, args):
             write(output / 'latest.json', record)
             with (output / 'windows.jsonl').open('a') as stream:
                 stream.write(json.dumps(record) + '\n')
-            print_report(result, rows)
+            print_report(result, rows, settings)
             if args.duration and now - started >= args.duration:
                 break
             time.sleep(max(0, args.interval - (time.monotonic() - now)))

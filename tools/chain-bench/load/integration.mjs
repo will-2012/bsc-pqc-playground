@@ -116,8 +116,31 @@ for (const algorithm of Object.keys(profiles)) {
   assert.equal(await ctx.client.getBalance({address: recipient}) - beforeCache, 6n);
   output.cacheRows.push({algorithm, cacheHits: cacheResult.cacheHits, cacheMisses: cacheResult.cacheMisses,
     confirmed: cacheResult.confirmed, elapsedSeconds: cacheResult.elapsedSeconds});
+  const beforeTimed = await ctx.client.getBalance({address: recipient});
+  await execute({...spec, action: 'transfer', run: 'timed', count: 100, qps: 20, durationSeconds: 2});
+  const timed = read(path.join(dir, 'runs/timed/progress.json'));
+  assert.equal(timed.status, 'complete'); assert.equal(timed.endReason, 'duration');
+  assert.equal(timed.failed, 0); assert.equal(timed.pending, 0); assert.equal(timed.inflight, 0);
+  assert.ok(timed.elapsedSeconds >= 2 && timed.confirmed < 100);
+  assert.equal(timed.dispatched, timed.confirmed + timed.cancelled);
+  assert.equal(await ctx.client.getBalance({address: recipient}) - beforeTimed, BigInt(timed.confirmed));
+  assert.ok(!fs.existsSync(path.join(runtime, 'unresolved.json')));
+  output.checks.push(`${algorithm}: timed dispatch stopped, unsent work cancelled, receipts drained and balance matched`);
   output.checks.push(`${algorithm}: bounded cache reused signing context; fresh nonces and balances verified`);
   console.log(`${algorithm}: PASS`);
 }
+const partial = {algorithm: 'ecdsa', dataset: `verify-${stamp}-timed-create`, run: 'prepare', action: 'prepare',
+  accounts: 6, count: 6, workers: 3, qps: 1, startAt: 0, fundWei: '100000000000000000', valueWei: '1'};
+await execute(partial);
+await execute({...partial, action: 'create', run: 'limited', durationSeconds: 1.5});
+const created = read(path.join(runtime, partial.dataset, 'runs/limited/progress.json'));
+assert.equal(created.endReason, 'duration'); assert.equal(created.failed, 0); assert.equal(created.pending, 0);
+assert.ok(created.confirmed < 6);
+await execute({...partial, action: 'create', run: 'remaining', qps: 10});
+const remaining = read(path.join(runtime, partial.dataset, 'runs/remaining/progress.json'));
+assert.equal(remaining.confirmed + created.confirmed, 6);
+assert.equal(remaining.skipped, created.confirmed);
+assert.equal(remaining.failed, 0); assert.equal(remaining.pending, 0);
+output.checks.push('timed ECDSA creation: no faucet nonce gap; next run completes remaining accounts');
 save(path.join(runtime, `verification-${stamp}.json`), output);
 console.log(JSON.stringify(output));

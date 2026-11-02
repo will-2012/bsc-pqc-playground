@@ -61,6 +61,25 @@ CONFIG=one-box/.runtime/cluster-config/ap-pq.json
 
 `--workers` 是**每台客户端**的并发上限（1–64）。工作线程并行完成签名与 RPC；同一账户只允许一笔在途操作，避免 nonce 冲突。各客户端使用独立的预充值账户。共享文件系统只用于既有部署分发；压测账户和发送日志应落在目标机本地磁盘。
 
+## 按持续时间压测
+
+转账可用 `--duration` 指定秒数。例如，用已有 1 万个 ECDSA 账户，以总目标 100 QPS 运行 10 分钟：
+
+```bash
+./tools/cluster load --config "$CONFIG" --load-action transfer \
+  --algorithm ecdsa --dataset ecdsa-10000 --run transfer-10m \
+  --accounts 10000 --qps 100 --workers 32 --duration 600
+```
+
+每个客户端在 worker 就绪、预定启动时间到达后，用单调时钟计时。600 秒不包含启动等待，也不包含最后的回执等待。到时不再派发任务或发放发送许可；未获许可的操作计入 `cancelled`，已获许可的操作继续完成。进程调度、签名与 RPC 有延迟，因此不是承诺最后一笔交易恰好在第 600 秒上链。
+
+- `--duration` 支持创建和转账，范围为 0–86,400 秒；0 表示沿用按数量运行。准备密钥不使用此参数。
+- 同时指定 `--count` 与 `--duration` 时，先达到的限制生效。创建仍以账户数为上限，到时可能只创建部分账户。
+- 只指定时长的转账，脚本根据 QPS、时长和客户端数生成带舍入余量的数量上限。`total` 是上限，不是必须完成的数量；实际操作数取决于吞吐。
+- 正常到时并排空后为 `complete`、`endReason: duration`；按数量完成为 `endReason: count`。`cancelled` 是未发送操作，不是链上失败。出现发送或回执错误仍按原逻辑保留现场。
+
+每轮使用新的 run 名称。`monitor --duration` 限制监控时长，`load --duration` 限制压测派发时长，两者独立。
+
 ## 并发与内存复用
 
 `--workers` 控制每台并行操作数；`--cache-accounts` 控制每个 worker 最多缓存多少个账户，默认 64、上限 4096，设为 0 可关闭缓存进行对照。按 LRU 淘汰，不会自动把整个账户池读入内存。

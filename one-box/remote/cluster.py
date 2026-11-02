@@ -767,7 +767,7 @@ def main():
     p.add_argument("--fund-wei", default="100000000000000000")
     p.add_argument("--value-wei", default="1")
     p.add_argument("--interval", type=float, default=10, help="Monitor report interval in seconds")
-    p.add_argument("--duration", type=float, default=0, help="Monitor duration; 0 until interrupted")
+    p.add_argument("--duration", type=float, default=0, help="Seconds: monitor lifetime or load create/transfer dispatch window; 0 disables limit")
     p.add_argument("--auto-stop", action="store_true", help="Stop only the explicitly bound load run on instability")
     p.add_argument("--monitor-dataset", help="Dataset protected by auto-stop")
     p.add_argument("--monitor-run", help="Run protected by auto-stop")

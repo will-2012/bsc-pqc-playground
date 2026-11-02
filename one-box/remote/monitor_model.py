@@ -10,6 +10,8 @@ import math
 DEFAULTS = {
     "interval": 10.0,
     "warmup": 30.0,
+    "txpool_growth_seconds": 60.0,
+    "txpool_growth_min": 100,
     "consecutive": 3,
     "bench_stale_seconds": 30.0,
     "expected_block_ms": 450.0,
@@ -223,6 +225,33 @@ class MonitorModel:
                 "targetQps": target if complete else None,
                 "note": "receipt confirmations are not finality; backlog proxy is accepted minus successful receipts, not exact mempool size"}
 
+    def _pool(self, sample, state, now):
+        pool = sample.get("txpool")
+        if (sample.get("error") or not isinstance(pool, dict) or any(
+                type(pool.get(k)) is not int or pool[k] < 0 for k in ("pending", "queued"))):
+            state.pop("pool", None)
+            return {"available": False}
+        total = pool["pending"] + pool["queued"]
+        previous = state.get("pool")
+        if previous and sample.get("sampledAt") is not None and previous.get("sampledAt") == sample["sampledAt"]:
+            return {"available": False}
+        delta = total - previous["total"] if previous else None
+        continuous = previous and 0 < now - previous["time"] <= self.config["interval"] * 2
+        if continuous and delta > 0:
+            since = previous["since"] if previous["since"] is not None else previous["time"]
+            baseline = previous["baseline"] if previous["since"] is not None else previous["total"]
+        else:
+            since, baseline = None, total
+        seconds = now - since if since is not None else 0
+        growth = total - baseline
+        result = {"available": True, **pool, "total": total, "delta": delta,
+                  "growthSeconds": seconds, "growth": growth,
+                  "sustained": seconds >= self.config["txpool_growth_seconds"]
+                               and growth >= self.config["txpool_growth_min"]}
+        state["pool"] = {"total": total, "time": now, "since": since, "baseline": baseline,
+                         "sampledAt": sample.get("sampledAt"), "result": result}
+        return result
+
     def observe(self, samples, now, benches=None):
         if not isinstance(now, (int, float)) or not math.isfinite(now) or (self.last_now is not None and now <= self.last_now):
             raise ValueError("now must increase monotonically")
@@ -231,14 +260,19 @@ class MonitorModel:
         self.last_now = now
         warmup = now - self.started < self.config["warmup"]
         faults, reasons, immediate = set(), set(), set()
-        host_rows, windows, valid_heights = {}, {}, {}
+        host_rows, windows, valid_heights, pools = {}, {}, {}, {}
         if not samples or set(self.hosts) - set(samples):
             faults.add("observation_unavailable")
             for host in set(self.hosts) - set(samples):
                 reasons.add(host + ":observation_unavailable")
                 host_rows[host] = {"available": False, "reason": "missing_host"}
+                self.hosts[host].pop("pool", None)
         for host, sample in samples.items():
             state = self.hosts.setdefault(host, {})
+            pool = self._pool(sample, state, now)
+            pools[host] = pool
+            if pool.get("sustained"):
+                faults.add(host + ":txpool_growing")
             try:
                 if sample.get("error"):
                     raise ValueError("collector_error")
@@ -326,6 +360,8 @@ class MonitorModel:
                 host_rows[host] = {"available": False, "reason": str(error)}
                 # Keep the prior cursor so a recovered overlapping ring can fill
                 # the gap; missing samples are not a new history baseline.
+        for host, row in host_rows.items():
+            row["txpool"] = pools.get(host, {"available": False})
         if valid_heights:
             maximum = max(valid_heights.values())
             for host, height in valid_heights.items():

@@ -1,5 +1,7 @@
 """Transport and guard tests: no AWS or service mutations."""
 import json
+import io
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -8,6 +10,47 @@ import monitor
 
 
 class MonitorTests(unittest.TestCase):
+    def test_report_colors_and_spacing(self):
+        result = {'status': 'HEALTHY', 'window': {'complete': True, 'blocks': 22,
+                  'transactions': 1000, 'intervalP95Ms': 450, 'intervalMaxMs': 2000,
+                  'outOfTurn': 0, 'slashEvents': 1}}
+        output = io.StringIO()
+        with patch('monitor.sys.stdout', output), patch.object(output, 'isatty', return_value=True), patch.dict(os.environ, {}, clear=True):
+            monitor.print_report(result, {})
+        text = output.getvalue()
+        self.assertTrue(text.startswith('\n'))
+        self.assertIn('\033[32m450.0\033[0m', text)
+        self.assertIn('\033[31m2000.0\033[0m', text)
+        self.assertIn('slash=\033[31m1\033[0m', text)
+        self.assertNotIn('\033[32m?\033[0m', text)
+        for tty, env in ((False, {}), (True, {'NO_COLOR': '1'})):
+            output = io.StringIO()
+            with patch('monitor.sys.stdout', output), patch.object(output, 'isatty', return_value=tty), patch.dict(os.environ, env, clear=True):
+                monitor.print_report(result, {})
+            self.assertNotIn('\033[', output.getvalue())
+
+    def test_workload_label_distinguishes_idle_active_and_unknown(self):
+        result = {'window': {'complete': True, 'blocks': 22, 'transactions': 0}}
+        def row(service, status=None):
+            return {'components': {'bench': {'service': service}},
+                    'bench': {'progress': {'status': status}}}
+        for status, expected in (('starting', '准备中'), ('running', '压测中'), ('draining', '收尾中')):
+            self.assertEqual(monitor.workload_label(result, {'a': row('active', status)})[0], expected)
+        self.assertEqual(monitor.workload_label(result, {'a': row('inactive')})[0], '空载')
+        result['window']['transactions'] = 1
+        self.assertEqual(monitor.workload_label(result, {'a': row('inactive')})[0], '链上有流量')
+        self.assertEqual(monitor.workload_label(result, {'a': {}})[0], '负载未知')
+        self.assertEqual(monitor.workload_label(result, {})[0], '负载未知')
+
+    def test_report_transactions_per_block(self):
+        for blocks, transactions, expected in ((22, 1057, '48.0'), (22, 0, '0.0'),
+                                               (0, 0, '?'), (22, None, '?'), (None, None, '?')):
+            output = io.StringIO()
+            with patch('monitor.sys.stdout', output):
+                monitor.print_report({'status': 'HEALTHY', 'window': {
+                    'blocks': blocks, 'transactions': transactions}}, {})
+            self.assertIn(f'tx/block={expected} ', output.getvalue())
+
     def test_invalid_snapshot_is_unknown(self):
         with tempfile.TemporaryDirectory() as temp:
             reader = monitor.SharedSamples(temp, [{'id': 'a'}], 's', 15)

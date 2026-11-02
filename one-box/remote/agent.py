@@ -407,7 +407,7 @@ def perform(action, p):
                 spec = read(job) if job.exists() else {}
                 progress = b / "runtime/load" / spec.get("dataset", "none") / "runs" / spec.get("run", "none") / "progress.json"
                 data = read(progress) if progress.exists() else {}
-                allowed = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt", "inclusions", "inclusionTruncated")
+                allowed = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "durationSeconds", "cancelled", "endReason", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt", "inclusions", "inclusionTruncated")
                 result = {"service": active, "run": spec.get("run"), "dataset": spec.get("dataset"),
                           "progress": {k: data[k] for k in allowed if k in data}}
             else:

@@ -20,19 +20,26 @@ if (spec.algorithm !== 'ecdsa') {
 }
 const cache = new AccountCache(spec.cacheAccounts);
 let permit, nonceReply;
+class SendCancelled extends Error {}
 parentPort.on('message', async msg => {
   if (msg.type === 'nonce') { nonceReply(msg.nonce); return; }
-  if (msg.type === 'permit') { permit?.(); return; }
+  if (msg.type === 'permit') { permit?.(msg.allowed !== false); return; }
   if (msg.type !== 'task') return;
   try {
     const result = await task(msg);
     parentPort.postMessage({type: 'done', result, cacheHits: cache.hits, cacheMisses: cache.misses});
   }
-  catch (e) { parentPort.postMessage({type: 'error', error: String(e.shortMessage || e.message).slice(0, 1000)}); }
+  catch (e) {
+    if (e instanceof SendCancelled) parentPort.postMessage({type: 'done', result: {state: 'cancelled'}, cacheHits: cache.hits, cacheMisses: cache.misses});
+    else parentPort.postMessage({type: 'error', error: String(e.shortMessage || e.message).slice(0, 1000)});
+  }
 });
 parentPort.postMessage({type: 'ready'});
 const faucetNonce = () => new Promise(resolve => { nonceReply = resolve; parentPort.postMessage({type: 'nonce'}); });
-const allowSend = () => new Promise(resolve => { permit = resolve; parentPort.postMessage({type: 'permit'}); });
+const allowSend = async () => {
+  const allowed = await new Promise(resolve => { permit = resolve; parentPort.postMessage({type: 'permit'}); });
+  if (!allowed) throw new SendCancelled();
+};
 
 async function task({index, sequence}) {
   const file = path.join(directory, 'accounts', `${index}.json`);
@@ -65,7 +72,8 @@ async function task({index, sequence}) {
       entry.funded = true; save(file, entry);
       return {state: 'confirmed', address: entry.address};
     }
-    const result = await raw(ctx.wallet, {to: entry.address, value: BigInt(spec.fundWei), nonce: await faucetNonce()}, funding, entry, file, 'fund');
+    await allowSend(); // Reserve a faucet nonce only after admission; cancellation must not leave nonce gaps.
+    const result = await raw(ctx.wallet, {to: entry.address, value: BigInt(spec.fundWei), nonce: await faucetNonce()}, funding, entry, file, 'fund', true);
     entry.funded = true; save(file, entry);
     return result;
   }
@@ -78,7 +86,8 @@ async function task({index, sequence}) {
     if (spec.action === 'create') {
       assert(!(await ctx.client.getCode({address: entry.address})), 'EOA has contract code');
       assert.equal(await ctx.client.getBalance({address: entry.address}), 0n, 'EOA was already funded');
-      return raw(ctx.wallet, {to: entry.address, value: BigInt(spec.fundWei), nonce: await faucetNonce()}, journal, entry, file, 'create');
+      await allowSend();
+      return raw(ctx.wallet, {to: entry.address, value: BigInt(spec.fundWei), nonce: await faucetNonce()}, journal, entry, file, 'create', true);
     }
     const wallet = cached?.wallet || createWalletClient({account: privateKeyToAccount(entry.secretKey), chain: ctx.chain,
       transport: custom({request: args => ctx.client.request(args)})});
@@ -102,20 +111,19 @@ async function task({index, sequence}) {
     entryPointVersion: ctx.profile.entryPointVersion, userOperation: operation});
   assert.equal(hash, await ctx.profile.onchainOperationHash(ctx, operation));
   const record = {kind: 'userop', action: spec.action, index, hash, state: 'pending', signed: operation};
-  save(journal, record); // An RPC timeout must never result in a fresh nonce/send on restart.
   await allowSend();
+  // Persist before broadcasting; cancelled, unsent work leaves no pending journal.
   record.sentAt = Date.now(); save(journal, record);
   assert.equal(await ctx.bundler.sendUserOperation(operation), hash);
   parentPort.postMessage({type: 'accepted'});
   return confirm(record, journal, entry, file);
 }
 
-async function raw(wallet, tx, journal, entry, file, action) {
+async function raw(wallet, tx, journal, entry, file, action, admitted = false) {
   const request = await wallet.prepareTransactionRequest({...tx, gas: 21000n, ...ctx.fee});
   const signed = await wallet.signTransaction(request);
   const record = {kind: 'transaction', action, index: entry.index, hash: keccak256(signed), signed, state: 'pending'};
-  save(journal, record);
-  await allowSend();
+  if (!admitted) await allowSend();
   record.sentAt = Date.now(); save(journal, record);
   assert.equal(await ctx.client.sendRawTransaction({serializedTransaction: signed}), record.hash);
   parentPort.postMessage({type: 'accepted'});

@@ -40,6 +40,7 @@ class Fake(Collector):
                 tag=params[0]
                 n=self.height if tag=='latest' else self.height-2 if tag=='safe' else self.height-3 if tag=='finalized' else int(tag,16)
                 rows.append(copy.deepcopy(self.changed.get(n, block(n))))
+            elif method == 'txpool_status': rows.append({'pending': '0x10', 'queued': '0x2'})
             elif method == 'net_peerCount': rows.append('0x2')
             elif method == 'eth_getLogs':
                 bh=params[0]['blockHash']
@@ -58,6 +59,7 @@ class CollectorTests(unittest.TestCase):
         self.c=Fake(self.root)
     def test_bounded_initial_and_overlap(self):
         first=self.c.collect()
+        self.assertEqual(first['txpool'], {'pending': 16, 'queued': 2})
         self.assertFalse(first['coverage']['complete'])
         self.assertEqual(len(first['blocks']),64)
         self.assertEqual(first['head']['timestampMs'],45000)

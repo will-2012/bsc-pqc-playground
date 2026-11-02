@@ -35,6 +35,45 @@ class MonitorModelTests(unittest.TestCase):
     def model(self, **options):
         return MonitorModel({"warmup": 0, **options})
 
+    def test_txpool_growth_requires_duration_and_volume(self):
+        model = self.model(txpool_growth_seconds=20, txpool_growth_min=100, consecutive=2)
+        for i, total in enumerate((0, 60, 120, 180)):
+            result = model.observe({'a': snapshot(i * 20, max(0, (i-1)*20+1),
+                txpool={'pending': total, 'queued': 0})}, i * 10)
+            self.assertEqual('a:txpool_growing' in result['reasons'], i >= 2)
+            self.assertEqual(result['stop'], i == 3)
+        pool = result['hosts']['a']['txpool']
+        self.assertEqual(pool['delta'], 60)
+        self.assertEqual(pool['growth'], 180)
+
+    def test_repeated_pool_sample_does_not_confirm_growth(self):
+        model = self.model(txpool_growth_seconds=10, txpool_growth_min=10)
+        model.observe({'a': snapshot(0, txpool={'pending': 0, 'queued': 0}, sampledAt=1)}, 0)
+        sample = snapshot(20, 1, txpool={'pending': 20, 'queued': 0}, sampledAt=2)
+        self.assertIn('a:txpool_growing', model.observe({'a': sample}, 10)['reasons'])
+        repeated = model.observe({'a': sample}, 20)
+        self.assertNotIn('a:txpool_growing', repeated['reasons'])
+        self.assertEqual(repeated['hosts']['a']['txpool'], {'available': False})
+
+    def test_txpool_decline_plateau_missing_and_gap_reset_trend(self):
+        for interruption, stamp in (({'pending': 50, 'queued': 0}, 20),
+                                    ({'pending': 60, 'queued': 0}, 20),
+                                    (None, 20), ({'pending': 120, 'queued': 0}, 40)):
+            model = self.model()
+            state = {}
+            model._pool({'txpool': {'pending': 0, 'queued': 0}}, state, 0)
+            model._pool({'txpool': {'pending': 60, 'queued': 0}}, state, 10)
+            result = model._pool({'txpool': interruption}, state, stamp)
+            self.assertFalse(result.get('sustained', False))
+            self.assertEqual(result.get('growthSeconds', 0), 0)
+
+    def test_txpool_unavailable_does_not_mean_empty_or_break_chain(self):
+        model = self.model()
+        model.observe({'a': snapshot(0)}, 0)
+        result = model.observe({'a': snapshot(20, 1, txpool=None)}, 10)
+        self.assertEqual(result['status'], 'HEALTHY')
+        self.assertEqual(result['hosts']['a']['txpool'], {'available': False})
+
     def test_window_uses_highest_complete_node_like_receipt_comparison(self):
         model = self.model()
         model.observe({'a': snapshot(0), 'b': snapshot(0)}, 0)

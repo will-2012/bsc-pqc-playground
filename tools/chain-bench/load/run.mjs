@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {Worker} from 'node:worker_threads';
 import {fileURLToPath} from 'node:url';
+import {performance} from 'node:perf_hooks';
 import {context, deployment} from '../../../erc4337-wallet/common/wallet.mjs';
 import {profiles, validate, read, save, acquire, Pacer, Accounts} from './core.mjs';
 import {InclusionWindow, receiptEvidence} from './inclusions.mjs';
@@ -18,7 +19,8 @@ const directory = path.join(runtime, 'load', spec.dataset);
 const runDir = path.join(directory, 'runs', spec.run);
 const lock = path.join(runtime, 'load', 'active.lock');
 const unresolved = path.join(runtime, 'load', 'unresolved.json');
-let release, timer, interrupted = false;
+let release, timer, durationTimer, interrupted = false;
+let deadline = Infinity;
 const workers = [];
 let summary;
 const inclusions = new InclusionWindow();
@@ -104,8 +106,9 @@ try {
     save(path.join(runDir, 'spec.json'), spec);
     summary = {run: spec.run, dataset: spec.dataset, algorithm: spec.algorithm, action: spec.action,
       targetQps: spec.qps, total: spec.count, startedAt: Date.now(), status: 'starting',
+      durationSeconds: spec.durationSeconds, cancelled: 0, endReason: null,
       dispatched: 0, attempted: 0, accepted: 0, confirmed: 0, failed: 0, skipped: 0, pending: 0, inflight: 0, cacheHits: 0, cacheMisses: 0, cacheAccounts: spec.cacheAccounts};
-    const stop = () => { interrupted = true; summary.status = 'draining'; progress(); };
+    const stop = () => { interrupted = true; summary.endReason ??= 'signal'; summary.status = 'draining'; progress(); };
     process.on('SIGTERM', stop); process.on('SIGINT', stop);
     progress();
     save(unresolved, {dataset: spec.dataset, run: spec.run, algorithm: spec.algorithm, accounts: spec.accounts});
@@ -125,10 +128,21 @@ try {
       await new Promise(r => setTimeout(r, Math.min(1000, spec.startAt - Date.now())));
     }
     summary.startedAt = Date.now(); summary.startLagMs = spec.startAt ? Math.max(0, summary.startedAt - spec.startAt) : 0; summary.status = interrupted ? 'draining' : 'running'; progress();
+    const expire = () => {
+      if (spec.durationSeconds && performance.now() >= deadline) {
+        interrupted = true; summary.endReason ??= 'duration'; summary.status = 'draining';
+      }
+      return interrupted;
+    };
+    if (spec.durationSeconds && !interrupted) {
+      deadline = performance.now() + spec.durationSeconds * 1000;
+      durationTimer = setTimeout(() => { expire(); progress(); }, spec.durationSeconds * 1000);
+    }
     await Promise.all(slots.map(worker => new Promise((resolve, reject) => {
       let activeIndex, cacheHits = 0, cacheMisses = 0;
       const dispatch = () => {
-        if (interrupted || nextSequence >= spec.count) { resolve(); return; }
+        if (expire()) { resolve(); return; }
+        if (nextSequence >= spec.count) { summary.endReason ??= 'count'; resolve(); return; }
         activeIndex = accounts.take();
         assert.notEqual(activeIndex, null);
         const sequence = nextSequence++;
@@ -141,8 +155,9 @@ try {
         if (msg.type === 'nonce') { worker.postMessage({type: 'nonce', nonce: nonce++}); return; }
         if (msg.type === 'permit') {
           try {
-            await pacer.take(); summary.attempted++;
-            worker.postMessage({type: 'permit'});
+            const allowed = await pacer.take(deadline, expire);
+            if (allowed) summary.attempted++;
+            worker.postMessage({type: 'permit', allowed});
           } catch (error) { reject(error); }
           return;
         }
@@ -153,7 +168,8 @@ try {
             summary.cacheHits += msg.cacheHits - cacheHits;
             summary.cacheMisses += msg.cacheMisses - cacheMisses;
             cacheHits = msg.cacheHits; cacheMisses = msg.cacheMisses;
-            if (msg.result?.state === 'skipped') summary.skipped++;
+            if (msg.result?.state === 'cancelled') summary.cancelled++;
+            else if (msg.result?.state === 'skipped') summary.skipped++;
             else { summary.confirmed++; inclusions.add(msg.result); }
           }
           else {
@@ -169,16 +185,19 @@ try {
     const journals = spec.action === 'prepare' ? path.join(directory, 'funding') : path.join(runDir, 'operations');
     summary.pending = summary.failed && fs.existsSync(journals) ? fs.readdirSync(journals).filter(f => f.endsWith('.json') && read(path.join(journals, f)).state === 'pending').length : 0;
     if (summary.pending === 0) fs.unlinkSync(unresolved);
-    summary.status = summary.failed ? 'failed' : interrupted ? 'stopped' : 'complete';
+    clearTimeout(durationTimer);
+    summary.endReason = summary.failed ? 'error' : summary.endReason || 'count';
+    summary.status = summary.failed ? 'failed' : summary.endReason === 'signal' ? 'stopped' : 'complete';
     progress(); console.log(JSON.stringify(summary));
     if (summary.failed) process.exitCode = 1;
   }
 } catch (e) {
-  if (summary) { summary.status = 'failed'; summary.failed++; progress(); }
+  if (summary) { summary.status = 'failed'; summary.endReason = 'error'; summary.failed++; progress(); }
   console.error(e.shortMessage || e.message);
   process.exitCode = 1;
 } finally {
   clearInterval(timer);
+  clearTimeout(durationTimer);
   await Promise.all(workers.map(w => w.terminate()));
   release?.();
 }

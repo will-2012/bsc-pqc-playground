@@ -14,6 +14,9 @@ export function validate(s) {
   assert(s.workers <= 64, 'At most 64 workers per client');
   assert(Number.isFinite(s.qps) && s.qps > 0, 'Invalid QPS');
   assert(Number.isFinite(s.startAt) && s.startAt >= 0, 'Invalid start time');
+  s.durationSeconds ??= 0;
+  assert(Number.isFinite(s.durationSeconds) && s.durationSeconds >= 0 && s.durationSeconds <= 86400, 'Invalid duration');
+  assert(!s.durationSeconds || ['create', 'transfer'].includes(s.action), 'Duration applies only to create/transfer');
   assert(/^\d+$/.test(s.fundWei) && BigInt(s.fundWei) > 0n, 'Invalid funding amount');
   assert(/^\d+$/.test(s.valueWei) && BigInt(s.valueWei) > 0n, 'Invalid transfer amount');
   if (s.action === 'prepare' || s.action === 'create') assert(s.count === s.accounts, 'Create/prepare covers entire dataset');
@@ -49,11 +52,14 @@ export class Pacer {
     this.interval = 1000 / qps; this.now = now; this.sleep = sleep; this.last = -Infinity;
     this.queue = Promise.resolve();
   }
-  take() {
+  take(deadline = Infinity, cancelled = () => false) {
     const next = this.queue.then(async () => {
+      if (cancelled() || this.now() >= deadline) return false;
       const wait = this.last + this.interval - this.now();
-      if (wait > 0) await this.sleep(wait);
+      if (wait > 0) await this.sleep(Math.min(wait, Math.max(0, deadline - this.now())));
+      if (cancelled() || this.now() >= deadline) return false;
       this.last = this.now();
+      return true;
     });
     this.queue = next.catch(() => {});
     return next;

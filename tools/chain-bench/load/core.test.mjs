@@ -16,6 +16,25 @@ test('100 QPS is paced at 10ms and never catches up after stalls', async () => {
   await p.take(); assert.equal(now, 1010);
 });
 
+test('duration denies queued permits at the monotonic deadline', async () => {
+  let now = 0;
+  const p = new Pacer(1, () => now, async ms => { now += ms; });
+  assert.equal(await p.take(100), true);
+  assert.equal(await p.take(100), false);
+  assert.equal(now, 100); // Do not wait the full one-second pacing interval.
+  assert.equal(await p.take(100), false);
+  assert.equal(await p.take(Infinity, () => true), false);
+});
+
+test('duration is optional and only valid for create or transfer', () => {
+  const s = {action: 'transfer', algorithm: 'ecdsa', dataset: 'a', run: 'r', accounts: 2,
+    count: 20, workers: 2, qps: 10, startAt: 0, fundWei: '100', valueWei: '1'};
+  assert.equal(validate({...s}).durationSeconds, 0);
+  assert.equal(validate({...s, durationSeconds: 5}).durationSeconds, 5);
+  for (const value of [-1, NaN, Infinity, 86401]) assert.throws(() => validate({...s, durationSeconds: value}));
+  assert.throws(() => validate({...s, action: 'prepare', count: 2, durationSeconds: 1}));
+});
+
 test('one pending operation per account, round robin does not reuse a busy account', () => {
   const a = new Accounts(3);
   assert.deepEqual([a.take(), a.take(), a.take()], [0, 1, 2]);
