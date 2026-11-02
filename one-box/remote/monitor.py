@@ -4,6 +4,7 @@ import fcntl
 import json
 import math
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -263,10 +264,10 @@ def print_report(result, rows, settings=None):
     load = f"\033[{shade}m{label}\033[0m" if color else label
     print()
     print(time.strftime('%H:%M:%S'), 'load=' + load,
-          'receiptTPS=' + fmt(bench.get('confirmedQps')),
           'health=' + mark(result['status'], status_ok),
-          'stop=' + mark(result.get('stop', False), not result.get('stop', False)),
-          'reasons=' + ','.join(mark(r, None if r == 'BENCH_BACKLOG' else False) for r in reasons), flush=True)
+          'stop=' + mark(result.get('stop', False), not result.get('stop', False)), flush=True)
+    if reasons:
+        print('  reasons=' + ','.join(mark(r, None if r == 'BENCH_BACKLOG' else False) for r in reasons), flush=True)
     ratio = window.get('gasRatio')
     complete = window.get('complete') is True
     blocks, transactions = window.get('blocks'), window.get('transactions')
@@ -283,40 +284,64 @@ def print_report(result, rows, settings=None):
           f"interval p50/p95/max={interval('intervalP50Ms')}/{interval('intervalP95Ms')}/{interval('intervalMaxMs')} ms "
           f"outOfTurn={mark(window.get('outOfTurn'), window.get('outOfTurn') == 0)} "
           f"slash={mark(window.get('slashEvents'), window.get('slashEvents') == 0)}", flush=True)
-    print(f"  bench: target={fmt(bench.get('targetQps'))} accepted={fmt(bench.get('acceptedQps'))} "
-          f"receipt={fmt(bench.get('confirmedQps'))} /s hints={','.join(bench.get('hints', []))}", flush=True)
-    alignment = result.get('reconciliation', {})
-    print('  alignment:', alignment.get('status'), ','.join(alignment.get('reasons', [])), flush=True)
+    if label not in ('空载', '未压测', '链上有流量'):
+        print(f"  bench: target={fmt(bench.get('targetQps'))} accepted={fmt(bench.get('acceptedQps'))} "
+              f"receiptTPS={fmt(bench.get('confirmedQps'))}", flush=True)
+
+    def table(headers, records):
+        # Headers/cells are ASCII; ANSI colors must not contribute to column width.
+        def width(text):
+            return len(re.sub(r'\x1b\[[0-9;]*m', '', text))
+        widths = [max(width(row[i]) for row in [headers, *records]) for i in range(len(headers))]
+        def line(record):
+            return '  ' + ' | '.join(cell + ' ' * (size - width(cell)) for cell, size in zip(record, widths))
+        print(line(headers))
+        print('  ' + '-+-'.join('-' * size for size in widths))
+        for record in records:
+            print(line(record))
+
+    chain_rows, resource_rows, notes = [], [], []
     for host, row in rows.items():
         head, safe, final = row.get('head') or {}, row.get('safe') or {}, row.get('finalized') or {}
         resource = row.get('resources') or {}
         host_bad = bool(row.get('error')) or any(r.startswith(host + ':') for r in reasons)
         host_ok = False if host_bad else True if healthy else None
-        print(f"  {host}: head/safe/final={mark(head.get('number'), host_ok)}/{mark(safe.get('number'), host_ok)}/{mark(final.get('number'), host_ok)} "
-              f"peers={mark(row.get('peers'), row.get('peers', 0) > 0 if row.get('peers') is not None else None)} "
-              f"hostCPU={fmt(resource.get('cpuBusyPct'))}% iowait={fmt(resource.get('iowaitPct'))}% "
-              f"stop={mark(row.get('stopState'))} error={mark(row.get('error'), False)} "
-              f"age={fmt(row.get('ageSeconds'))}s", flush=True)
         pool = result.get('hosts', {}).get(host, {}).get('txpool') or {}
         pool_ok = False if pool.get('sustained') else True if pool.get('available') else None
         delta = pool.get('delta')
-        print(f"    txpool: pending={mark(pool.get('pending'), pool_ok)} "
-              f"queued={mark(pool.get('queued'), pool_ok)} total={mark(pool.get('total'), pool_ok)} "
-              f"delta={mark(None if delta is None else f'{delta:+d}', pool_ok)} "
-              f"growth={mark(pool.get('growth'), pool_ok)} "
-              f"growingFor={fmt(pool.get('growthSeconds'), pool_ok)}s", flush=True)
+        chain_rows.append([host,
+            '/'.join(mark(value.get('number'), host_ok) for value in (head, safe, final)),
+            mark(row.get('peers'), row.get('peers', 0) > 0 if row.get('peers') is not None else None),
+            '/'.join(mark(pool.get(key), pool_ok) for key in ('pending', 'queued')),
+            mark(pool.get('total'), pool_ok), mark(None if delta is None else f'{delta:+d}', pool_ok),
+            mark(pool.get('growth'), pool_ok), fmt(pool.get('growthSeconds'), pool_ok), fmt(row.get('ageSeconds'))])
         components = row.get('components') or {}
-        def service(role, value):
+        def service(role):
+            value = components.get(role) or {}
             state = value.get('service')
-            ok = True if state == 'active' else None if role == 'bench' and state == 'inactive' else False
-            return f"{role}: {mark(state, ok)} CPU={fmt(value.get('cpuPct'))}%"
-        print('    ' + ' | '.join(service(role, value) for role, value in components.items()), flush=True)
+            if state == 'inactive' and role == 'bench':
+                return 'idle'
+            ok = True if state == 'active' else False if state is not None else None
+            return mark(state, ok) + '/' + fmt(value.get('cpuPct'))
         def mib(key):
             value = resource.get(key)
             return fmt(None if value is None else value / 1024**2)
-        print(f"    memory available={mib('memoryAvailableBytes')} MiB "
-              f"disk R/W={mib('diskReadBytesPerSecond')}/{mib('diskWriteBytesPerSecond')} MiB/s "
-              f"net RX/TX={mib('networkRxBytesPerSecond')}/{mib('networkTxBytesPerSecond')} MiB/s", flush=True)
+        resource_rows.append([host, fmt(resource.get('cpuBusyPct')), fmt(resource.get('iowaitPct')),
+            service('validator'), service('bundler'), service('bench'), mib('memoryAvailableBytes'),
+            mib('diskReadBytesPerSecond') + '/' + mib('diskWriteBytesPerSecond'),
+            mib('networkRxBytesPerSecond') + '/' + mib('networkTxBytesPerSecond')])
+        if row.get('error'):
+            notes.append(host + ': error=' + mark(row['error'], False))
+        if row.get('stopState'):
+            notes.append(host + ': stop=' + mark(row['stopState'], False if row['stopState'] == 'STOP_UNCONFIRMED' else None))
+    if rows:
+        table(['Node', 'Head/Safe/Final', 'Peers', 'Pool P/Q', 'Total', 'Delta', 'Growth', 'Grow(s)', 'Age(s)'], chain_rows)
+        print()
+        table(['Node', 'CPU%', 'IOwait%', 'Validator/%', 'Bundler/%', 'Bench/%', 'Free MiB', 'Disk R/W', 'Net RX/TX'], resource_rows)
+        print('  Pool P/Q=pending/queued; service CPU: 100%=1 core; disk/net: MiB/s')
+    for note in notes:
+        print('  ' + note)
+    sys.stdout.flush()
 
 
 def execute(cluster, args):

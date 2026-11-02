@@ -51,6 +51,25 @@ class MonitorTests(unittest.TestCase):
                     'blocks': blocks, 'transactions': transactions}}, {})
             self.assertIn(f'tx/block={expected} ', output.getvalue())
 
+    def test_idle_table_keeps_unknown_resources_and_hides_empty_bench_summary(self):
+        result = {'status': 'HEALTHY', 'window': {'complete': True, 'blocks': 22,
+                  'transactions': 0}, 'reconciliation': {'status': 'partial'}}
+        rows = {'ap-0': {'head': {'number': 100}, 'safe': {'number': 99},
+                'finalized': {'number': 99}, 'components': {'bench': {'service': 'inactive'}}}}
+        output = io.StringIO()
+        with patch('monitor.sys.stdout', output):
+            monitor.print_report(result, rows)
+        text = output.getvalue()
+        self.assertIn('load=空载', text)
+        self.assertIn('Head/Safe/Final', text)
+        self.assertIn('Pool P/Q', text)
+        self.assertIn('100/99/99', text)
+        self.assertIn('idle', text)
+        self.assertNotIn('bench: target=', text)
+        self.assertNotIn('alignment:', text)
+        self.assertNotIn('reasons=', text)
+        self.assertIn('?', text)
+
     def test_invalid_snapshot_is_unknown(self):
         with tempfile.TemporaryDirectory() as temp:
             reader = monitor.SharedSamples(temp, [{'id': 'a'}], 's', 15)
