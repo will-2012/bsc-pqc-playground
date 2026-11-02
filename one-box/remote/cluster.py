@@ -91,7 +91,7 @@ class Cluster:
         devnet.write(path / "request.json", payload)
         remote = Path(h["shared"]) / packet
         # No raw host values or keys embedded in command text; only a private request path.
-        cmd = shlex.join(["python3", str(remote / "agent.py"), action, str(remote / "request.json")])
+        cmd = shlex.join([h.get("python", "python3"), str(remote / "agent.py"), action, str(remote / "request.json")])
         output = self.ssm.run(h, [cmd])
         receipt = json.loads(output)
         response = path / "response.json"

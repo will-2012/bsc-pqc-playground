@@ -72,6 +72,24 @@ class InventoryTests(unittest.TestCase):
             model.validate(c)
 
 
+class RuntimeTests(unittest.TestCase):
+    def test_explicit_runtimes(self):
+        c = inventory()
+        c["hosts"][0]["python"] = "/server/will/toolchain/python311/bin/python3.11"
+        c["hosts"][0]["node"] = "/server/will/toolchain/node/bin/node"
+        model.validate(c)
+        c["hosts"][0]["python"] = "python3; id"
+        with self.assertRaises(ValueError):
+            model.validate(c)
+
+    def test_digest_without_python311_api(self):
+        with tempfile.TemporaryDirectory() as folder:
+            f = Path(folder) / "test"
+            f.write_bytes(b"abc")
+            with patch.object(agent.hashlib, "file_digest", None):
+                self.assertEqual(agent.digest(f), agent.hashlib.sha256(b"abc").hexdigest())
+
+
 class SSMTests(unittest.TestCase):
     def test_wait_and_private_results(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -80,16 +98,13 @@ class SSMTests(unittest.TestCase):
                 {"Command": {"CommandId": "ticket"}},
                 {"CommandInvocations": []},
                 {"CommandInvocations": [{"Status": "InProgress"}]},
-                {"CommandInvocations": [{"Status": "Success"}]},
-                {
-                    "Status": "Success",
-                    "ResponseCode": 0,
-                    "StandardOutputContent": '{"ok":true}',
-                },
+                {"CommandInvocations": [{"Status": "Success", "CommandPlugins": [{
+                    "Status": "Success", "ResponseCode": 0, "Output": '{"ok":true}'
+                }]}]},
             ]
             with patch.object(s, "aws", side_effect=responses) as aws, patch("transport.time.sleep"):
                 self.assertEqual(s.run(inventory()["hosts"][0], ["command"]), '{"ok":true}')
-                self.assertEqual(aws.call_count, 5)
+                self.assertEqual(aws.call_count, 4)
             self.assertFalse(list(Path(temp).glob("*request.json")))
 
     def test_failure_not_success(self):

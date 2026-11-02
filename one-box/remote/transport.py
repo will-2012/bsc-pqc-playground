@@ -23,7 +23,11 @@ class SSM:
             env={**os.environ, "AWS_PAGER": ""},
         )
         if p.returncode:
-            (self.logs / "aws-error.txt").write_text(p.stderr)
+            operation = args[1] if len(args) > 1 else "unknown"
+            (self.logs / f"aws-{operation}-error.txt").write_text(p.stderr)
+            # Cancellation is cleanup; it must not overwrite the original failure.
+            if operation != "cancel-command":
+                (self.logs / "aws-error.txt").write_text(p.stderr)
             raise RuntimeError("AWS request failed; inspect private logs")
         return json.loads(p.stdout)
 
@@ -74,23 +78,15 @@ class SSM:
                 ):
                     time.sleep(2)
                     continue
-                detail = self.aws(
-                    [
-                        "ssm",
-                        "get-command-invocation",
-                        "--region",
-                        h["region"],
-                        "--command-id",
-                        cid,
-                        "--instance-id",
-                        h["instance_id"],
-                    ]
-                )
+                detail = inv[0]
                 (self.logs / (ticket + "-result.json")).write_text(json.dumps(detail, indent=2))
                 terminal = True
-                if detail["Status"] != "Success" or detail.get("ResponseCode") != 0:
+                plugins = detail.get("CommandPlugins", [])
+                if (detail["Status"] != "Success" or len(plugins) != 1
+                        or plugins[0].get("Status") != "Success"
+                        or plugins[0].get("ResponseCode") != 0):
                     raise RuntimeError(f"{h['id']}: remote command failed; inspect private logs")
-                return detail.get("StandardOutputContent", "")
+                return plugins[0].get("Output", "")
             raise RuntimeError(f"{h['id']}: command timed out")
         except BaseException:
             if cid and not terminal:

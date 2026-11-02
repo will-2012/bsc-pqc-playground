@@ -84,6 +84,12 @@ def validate(c):
             and h["shared"] != "/",
             "Invalid remote shared path",
         )
+        for runtime in ("python", "node"):
+            value = h.get(runtime, "python3" if runtime == "python" else "node")
+            require(isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_./-]+", value)
+                    and ".." not in Path(value).parts
+                    and ("/" not in value or value.startswith("/")),
+                    "Invalid runtime executable")
         require(set(h.get("ports", {})) == set(PORTS), "Specify all five service ports")
         values = list(h["ports"].values())
         require(

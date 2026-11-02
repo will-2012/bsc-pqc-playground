@@ -37,8 +37,11 @@ def run(args):
 
 
 def digest(path):
+    result = hashlib.sha256()
     with Path(path).open("rb") as f:
-        return hashlib.file_digest(f, "sha256").hexdigest()
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            result.update(chunk)
+    return result.hexdigest()
 
 
 def property_value(service, name):
@@ -137,7 +140,7 @@ def precheck(c, h, token):
         checks["port_" + key] = ok
     if any(r in h["roles"] for r in ("bench", "bundler")):
         try:
-            version = tuple(int(n) for n in run(["node", "--version"]).strip().lstrip("v").split("."))
+            version = tuple(int(n) for n in run([h.get("node", "node"), "--version"]).strip().lstrip("v").split("."))
             checks["node"] = version >= (20, 19, 0)
         except Exception:
             checks["node"] = False
@@ -245,7 +248,7 @@ def install(c, h, p):
         staging.replace(runtime)
     write(
         b / "host.json",
-        {"config": c, "host": h, "token": token, "node": shutil.which("node")},
+        {"config": c, "host": h, "token": token, "node": shutil.which(h.get("node", "node"))},
     )
     envlink = target / "one-box/.runtime" / c["name"]
     if not envlink.exists():
@@ -367,12 +370,12 @@ def perform(action, p):
             result = rpc(p["url"], p["method"], p.get("params"))
         elif action == "bootstrap":
             root = b / "current"
-            run(["node", root / "one-box/scripts/erc4337.mjs", "deploy", c["name"]])
+            run([h.get("node", "node"), root / "one-box/scripts/erc4337.mjs", "deploy", c["name"]])
             result = read(b / "runtime/bundler/deployment.json")
         elif action == "configure":
             write(
                 b / "host.json",
-                {"config": c, "host": h, "token": token, "node": shutil.which("node")},
+                {"config": c, "host": h, "token": token, "node": shutil.which(h.get("node", "node"))},
             )
             if "validator" in h["roles"]:
                 (b / "runtime/node/config.toml").write_text(p["node_config"])
@@ -413,7 +416,7 @@ def perform(action, p):
             for version in ["v4", "v7"]:
                 run(
                     [
-                        "node",
+                        h.get("node", "node"),
                         b / "current/tools/chain-bench/common/run.mjs",
                         c["name"],
                         "1",
