@@ -137,12 +137,13 @@ class MonitorModel:
         self.streaks = {}
         self.stop_reasons = set()
         self.previous_benches = {}
+        self.bench_growth_streak = 0
 
     def _bench(self, benches, now):
         rows, identities, unavailable = {}, set(), []
         totals = {"accepted": 0, "confirmed": 0, "failed": 0}
         rates = {"acceptedQps": 0.0, "confirmedQps": 0.0}
-        complete, target, backlog_growth = bool(benches), 0.0, False
+        complete, target = bool(benches), 0.0
         for host, row in benches.items():
             progress = row.get("progress") or {}
             identity = (row.get("dataset"), row.get("run"), progress.get("action"))
@@ -198,7 +199,6 @@ class MonitorModel:
                               "acceptedQps": delta["accepted"] / seconds,
                               "confirmedQps": delta["confirmed"] / seconds,
                               "backlogProxy": max(0, counters["accepted"] - counters["confirmed"])}
-                backlog_growth |= identity[2] != "prepare" and delta["accepted"] > delta["confirmed"]
                 for key in totals:
                     totals[key] += delta[key]
                 for key in rates:
@@ -217,8 +217,12 @@ class MonitorModel:
         same_run = len(identities) == 1 and all(None not in identity for identity in identities)
         complete = complete and same_run
         action = next(iter(identities))[2] if same_run else None
+        growing = (complete and action != "prepare" and totals["failed"] == 0
+                   and totals["accepted"] > totals["confirmed"]
+                   and all(row["seconds"] <= self.config["interval"] * 2 for row in rows.values()))
+        self.bench_growth_streak = self.bench_growth_streak + 1 if growing else 0
         return {"complete": complete, "hosts": rows, "action": action, "unavailableHosts": unavailable,
-                "hints": ["BENCH_BACKLOG"] if complete and backlog_growth else [],
+                "hints": ["BENCH_BACKLOG"] if self.bench_growth_streak >= self.config["consecutive"] else [],
                 "delta": totals if complete else None,
                 "acceptedQps": rates["acceptedQps"] if complete and action != "prepare" else None,
                 "confirmedQps": rates["confirmedQps"] if complete and action != "prepare" else None,

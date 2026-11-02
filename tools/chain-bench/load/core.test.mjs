@@ -16,6 +16,18 @@ test('100 QPS is paced at 10ms and never catches up after stalls', async () => {
   await p.take(); assert.equal(now, 1010);
 });
 
+test('early timer wakeups cannot exceed the target rate', async () => {
+  let now = 0;
+  const p = new Pacer(100 / 3, () => now, async ms => { now += Math.max(0.25, ms - 1); });
+  const times = [];
+  for (let i = 0; i < 101; i++) {
+    assert.equal(await p.take(), true);
+    times.push(now);
+  }
+  for (let i = 1; i < times.length; i++) assert(times[i] - times[i - 1] >= 30 - 1e-9);
+  assert(times.at(-1) - times[0] >= 3000 - 1e-9);
+});
+
 test('duration denies queued permits at the monotonic deadline', async () => {
   let now = 0;
   const p = new Pacer(1, () => now, async ms => { now += ms; });

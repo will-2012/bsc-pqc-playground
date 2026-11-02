@@ -319,10 +319,21 @@ class MonitorModelTests(unittest.TestCase):
     def test_backlog_is_hint_not_bottleneck_verdict_or_stop(self):
         model = self.model()
         model.observe({"a": snapshot(0)}, 0, {"a": bench(accepted=10, confirmed=10)})
-        result = model.observe({"a": snapshot(20, 1)}, 10, {"a": bench(accepted=50, confirmed=20)})
-        self.assertIn("BENCH_BACKLOG", result["reasons"])
-        self.assertFalse(result["stop"])
-        self.assertEqual(result["status"], "HEALTHY")
+        for i in range(1, 4):
+            result = model.observe({"a": snapshot(i*20, (i-1)*20+1)}, i*10,
+                                   {"a": bench(accepted=10+i*40, confirmed=10+i*10)})
+            self.assertEqual("BENCH_BACKLOG" in result["reasons"], i == 3)
+            self.assertFalse(result["stop"])
+            self.assertEqual(result["status"], "HEALTHY")
+        result = model.observe({"a": snapshot(80, 61)}, 40,
+                               {"a": bench(accepted=140, confirmed=140)})
+        self.assertNotIn("BENCH_BACKLOG", result["reasons"])
+
+    def test_backlog_uses_cluster_net_growth(self):
+        model = self.model(consecutive=1)
+        model._bench({'a': bench(accepted=100, confirmed=50), 'b': bench(accepted=100, confirmed=50)}, 0)
+        result = model._bench({'a': bench(accepted=120, confirmed=50), 'b': bench(accepted=100, confirmed=80)}, 10)
+        self.assertEqual(result['hints'], [])
 
     def test_idle_bench_without_workload_is_not_missing_observation(self):
         result = self.model(consecutive=1).observe({"a": snapshot(0)}, 0,

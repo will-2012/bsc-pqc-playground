@@ -54,10 +54,14 @@ export class Pacer {
   }
   take(deadline = Infinity, cancelled = () => false) {
     const next = this.queue.then(async () => {
-      if (cancelled() || this.now() >= deadline) return false;
-      const wait = this.last + this.interval - this.now();
-      if (wait > 0) await this.sleep(Math.min(wait, Math.max(0, deadline - this.now())));
-      if (cancelled() || this.now() >= deadline) return false;
+      while (true) {
+        const now = this.now();
+        if (cancelled() || now >= deadline) return false;
+        const wait = this.last + this.interval - now;
+        if (wait <= 0) break;
+        // Timers can wake early; recheck the monotonic clock before granting a permit.
+        await this.sleep(Math.max(1, Math.ceil(Math.min(wait, deadline - now))));
+      }
       this.last = this.now();
       return true;
     });
