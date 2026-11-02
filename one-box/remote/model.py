@@ -22,6 +22,10 @@ def load(path):
 
 def validate(c):
     require(c.get("schema") == 1, "Unsupported inventory schema")
+    root = c.get("deploy_root")
+    require(isinstance(root, str) and re.fullmatch(r"/[A-Za-z0-9_./-]+", root)
+            and ".." not in Path(root).parts and root != "/",
+            "Set deploy_root to the existing deployment parent in private inventory")
     require(
         re.fullmatch(r"[a-z][a-z0-9-]{0,23}", c.get("name", "")),
         "Invalid environment name",
@@ -162,7 +166,7 @@ def validate(c):
 
 
 def base(c):
-    return Path("/server/will") / c["name"]
+    return Path(c["deploy_root"]) / c["name"]
 
 
 def unit(c, role):

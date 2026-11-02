@@ -96,7 +96,7 @@ def precheck(c, h, token):
     checks["privilege"] = os.geteuid() == 0
     checks["systemd"] = shutil.which("systemctl") is not None
     checks["clock"] = abs(time.time() - c["_checked_at"]) < 120
-    disk = Path("/server/will")
+    disk = Path(c["deploy_root"])
     while not disk.exists():
         disk = disk.parent
     checks["disk"] = shutil.disk_usage(disk).free >= c["min_free_gib"] * 2**30
@@ -105,7 +105,7 @@ def precheck(c, h, token):
         if ":" in line:
             mem[line.split(":")[0]] = int(line.split()[1])
     checks["memory"] = mem.get("MemAvailable", 0) >= c.get("min_available_mib", 2048) * 1024
-    checks["directory"] = os.access(disk, os.W_OK) and not Path("/server/will").is_symlink()
+    checks["directory"] = os.access(disk, os.W_OK) and not Path(c["deploy_root"]).is_symlink()
     owner = base(c) / "owner.json"
     owned = owner.exists() and read(owner).get("token") == token
     checks["ownership"] = not base(c).exists() or owned
@@ -531,7 +531,7 @@ def main():
     if action == "precheck":
         result = perform(action, payload)
     else:
-        folder = Path("/server/will/.bsc-pqc-locks")
+        folder = Path(payload["config"]["deploy_root"]) / ".bsc-pqc-locks"
         folder.mkdir(parents=True, exist_ok=True, mode=0o700)
         with (folder / (payload["config"]["name"] + ".lock")).open("a") as handle:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)

@@ -80,5 +80,6 @@
         "bundler": 24337
       }
     }
-  ]
+  ],
+  "deploy_root": "/srv/bsc-pqc"
 }

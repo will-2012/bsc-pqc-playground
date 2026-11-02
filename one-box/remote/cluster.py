@@ -69,6 +69,11 @@ class Cluster:
         self.state = (
             devnet.read(self.statefile) if self.statefile.exists() else {"token": secrets.token_hex(24)}
         )
+        # Older inventories omitted the deployment parent. Require it explicitly
+        # in the new private config; remote ownership checks still guard access.
+        previous = self.state.get("inventory")
+        if previous is not None and "deploy_root" not in previous:
+            previous["deploy_root"] = c["deploy_root"]
         self.ssm = SSM(self.home / "ssm")
         self.shared = Path(c["shared_controller"])
         self.save()

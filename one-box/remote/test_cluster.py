@@ -28,7 +28,7 @@ def inventory():
 class InventoryTests(unittest.TestCase):
     def test_valid_and_isolated_names(self):
         c = model.validate(inventory())
-        self.assertEqual(str(model.base(c)), "/server/will/ap-pq")
+        self.assertEqual(str(model.base(c)), "/srv/bsc-pqc/ap-pq")
         self.assertEqual(model.unit(c, "validator"), "bsc-pqc-ap-pq-validator.service")
 
     def test_bad_inventory_rejected(self):
@@ -60,7 +60,7 @@ class InventoryTests(unittest.TestCase):
         model.validate(c)
 
     def test_service_compatibility(self):
-        text = agent.service_text(inventory(), "validator", "/usr/bin/python3 /server/will/ap-pq/agent.py")
+        text = agent.service_text(inventory(), "validator", "/usr/bin/python3 /srv/bsc-pqc/ap-pq/agent.py")
         self.assertNotIn("append:", text)  # Amazon Linux 2 systemd 219
         self.assertIn("KillMode=control-group", text)
         self.assertNotIn("bsc.service", text)
@@ -73,10 +73,35 @@ class InventoryTests(unittest.TestCase):
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_deployment_root_is_explicit_and_safe(self):
+        c = inventory()
+        c["deploy_root"] = "/opt/pqc-test"
+        model.validate(c)
+        self.assertEqual(str(model.base(c)), "/opt/pqc-test/ap-pq")
+        for root in (None, "/", "relative", "/opt/../etc", "/tmp/x;id"):
+            c["deploy_root"] = root
+            with self.assertRaises(ValueError):
+                model.validate(c)
+
+    def test_legacy_inventory_keeps_explicit_private_root(self):
+        with tempfile.TemporaryDirectory() as folder:
+            c = inventory()
+            c["deploy_root"] = "/opt/pqc-existing"
+            c["shared_controller"] = folder
+            with patch.object(cluster.devnet, "RUNTIME", Path(folder)):
+                first = cluster.Cluster(c)
+                old = copy.deepcopy(c)
+                del old["deploy_root"]
+                first.state["inventory"] = old
+                first.save()
+                upgraded = cluster.Cluster(c)
+                upgraded.assert_config()
+                self.assertEqual(upgraded.state["inventory"]["deploy_root"], c["deploy_root"])
+
     def test_explicit_runtimes(self):
         c = inventory()
-        c["hosts"][0]["python"] = "/server/will/toolchain/python311/bin/python3.11"
-        c["hosts"][0]["node"] = "/server/will/toolchain/node/bin/node"
+        c["hosts"][0]["python"] = "/srv/bsc-pqc/toolchain/python311/bin/python3.11"
+        c["hosts"][0]["node"] = "/srv/bsc-pqc/toolchain/node/bin/node"
         model.validate(c)
         c["hosts"][0]["python"] = "python3; id"
         with self.assertRaises(ValueError):

@@ -23,9 +23,19 @@ chmod 600 one-box/.runtime/cluster-config/ap-pq.json
 
 构建依赖、客户端和合约产物均在中控机生成，首次构建需要联网下载锁定版本的依赖，无需复制 Mac 的缓存、二进制或 `.runtime`。这些命令应在包含本次远程部署代码的已提交版本上运行。
 
-填写真实实例 ID、region、私网地址和共享路径。仓库内的私有配置必须位于 Git 忽略路径；模板只含占位符。每台机器只列一次，`roles` 可以拆分，`rpc_node` 指定 Bundler 使用哪个 validator，`bundler_node` 指定 Bench 使用哪个 Bundler。首版使用同架构机器，不做交叉编译。
+填写真实实例 ID、region、私网地址、共享路径和 `deploy_root`（部署根目录）。仓库内的私有配置必须位于 Git 忽略路径；模板只含占位符。每台机器只列一次，`roles` 可以拆分，`rpc_node` 指定 Bundler 使用哪个 validator，`bundler_node` 指定 Bench 使用哪个 Bundler。首版使用同架构机器，不做交叉编译。
 
-入口会查找可用的 Python 3.11+，也可通过 `BSC_PQC_PYTHON=/path/to/python3.11` 指定中控解释器。此变量仅用于中控。每个 host 可设置 `python`、`node` 为目标机解释器绝对路径（例如 `/server/will/toolchain/python311/bin/python3.11`）；未设置时使用 SSM PATH 中的 `python3`、`node`。预检、部署和服务使用同一组解释器。
+入口会查找可用的 Python 3.11+，也可通过 `BSC_PQC_PYTHON=/path/to/python3.11` 指定中控解释器。此变量仅用于中控。每个 host 可设置 `python`、`node` 为目标机解释器绝对路径（例如 `/path/to/python3.11`）；未设置时使用 SSM PATH 中的 `python3`、`node`。预检、部署和服务使用同一组解释器。
+
+中控与目标机可使用不同的解释器路径。例如，中控独立安装 Python 时：
+
+```bash
+export BSC_PQC_PYTHON=/path/to/python3.11
+```
+
+AL2023 目标机可使用 `python3.11`、`nodejs22` 软件包，并在私有配置的每个 host 中设置 `"python": "/usr/bin/python3.11"`、`"node": "/usr/bin/node-22"`。不要修改系统 `/usr/bin/python3`。中控仍需单独满足 Node.js 和 pnpm 的构建要求。
+
+已有环境升级到此版本前，须在私有配置中补充 `deploy_root`，填写原环境所在的父目录，不要照抄模板路径。这个字段只声明现有位置，不会移动数据；已记录的根目录不允许通过 `configure` 修改。
 
 ## 构建和部署
 
@@ -63,7 +73,7 @@ chmod 600 one-box/.runtime/cluster-config/ap-pq.json
 
 ## 隔离与记录
 
-- 远程目录：`/server/will/<name>`；服务统一命名为 `bsc-pqc-<name>-<role>.service`，其中 role 为 `validator`、`bundler` 或 `bench`。
+- 远程目录：`<deploy_root>/<name>`；服务统一命名为 `bsc-pqc-<name>-<role>.service`，其中 role 为 `validator`、`bundler` 或 `bench`。
 - `runtime` 保存链数据和密钥，`releases` 保存版本，`current` 指向当前版本，`logs` 保存各角色日志；日志与历史版本不会自动删除，长时间运行需关注磁盘空间。
 - 中控运行记录在 `one-box/.runtime/clusters/<name>`；错误记录在 `one-box/.runtime/clusters/last-error.log`。SSM 原始输出和机器信息仅写私有运行目录。共享目录中的请求、响应和身份包也属于私有运行数据，不应提交或发布。AWS 凭据由中控机 IAM Role 或 AWS CLI 配置提供，不写入项目配置。
 - 不使用 `pkill`、`killall` 或旧环境服务名。操作前核对目录和服务归属；中控与目标机均加环境锁。停止命令会尝试处理所有节点，并报告失败项。
@@ -79,3 +89,20 @@ chmod 600 one-box/.runtime/cluster-config/ap-pq.json
 python3 -m unittest discover -s one-box/remote -p 'test_*.py'
 python3 -m unittest discover -s one-box/tests -p 'test_*.py'
 ```
+
+## 查看进度与故障
+
+构建输出主要写入以下私有日志，终端没有输出不代表构建停止：
+
+| 路径（相对仓库根目录） | 内容 |
+| --- | --- |
+| `one-box/.runtime/build/cluster/build.log` | 密码库、Go 测试与客户端构建 |
+| `one-box/.runtime/build/alto-build.log` | Bundler、依赖与合约构建 |
+| `one-box/.runtime/clusters/<name>/build.log` | 构建入口其他输出 |
+| `one-box/.runtime/clusters/last-error.log` | 中控异常，按时间追加；排查时看最后一段 |
+
+`installed` 表示安装完成；`validator: active` 表示服务已启动，链健康检查仍在后面。链检查通过后才启动 Bundler，再执行账户创建和转账测试；测试失败时先保留现场，不要直接 reset。
+
+SSM 执行结果保存在环境目录的 `ssm/*-result.json`；远端异常保存在共享目录的 `bsc-pqc-<name>/<请求编号>/error.log`。`response.json` 保存已生成的操作结果。排查时核对记录时间和节点，不要把历史错误当成本次故障；不要公开旁边包含配置和管理令牌的 `request.json`。
+
+预检确认端口可绑定，不代表节点间网络已放通。若区块停滞且 Peer 数为 0，先检查监听地址及节点间 P2P TCP 连通性。复用旧环境端口前，必须确认旧服务已停止、端口已释放。
