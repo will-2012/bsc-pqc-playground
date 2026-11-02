@@ -30,6 +30,9 @@ PROFILES = {
     'linux-x86_64': {'os':'linux','arch':'x86_64','cc':'gcc','goos':'linux','goarch':'amd64',
                      'flags':['-O3','-march=native','-mtune=native','-DNDEBUG','-fno-fast-math','-ffp-contract=off'], 'validated':False},
 }
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from report_privacy import public_data, public_text
+
 SOURCE_FILES = ['run.py','main.go','native.c','native.h','mldsa.c','falcon.c','go.mod','sources.json','testdata/falcon.tsv','testdata/standard.tsv']
 FALCON_FILES = 'codec util common fft fft_tree fpr keygen rng poly_float sampler shake sign vrfy ntt ntt_consts poly_int falcon'.split()
 
@@ -333,7 +336,12 @@ def main():
           'repository_head':output(['git','rev-parse','HEAD'])}
     data['summary']=aggregate(data);save(run_folder/'results.json',data);verify(run_folder/'results.json')
     if not args.smoke:
-        dest=DOCS/profile;dest.mkdir(parents=True,exist_ok=True);shutil.copy2(run_folder/'results.json',dest/'results.json');shutil.copy2(CACHE/profile/'checks.txt',dest/'checks.txt');render(data)
+        dest=DOCS/profile;dest.mkdir(parents=True,exist_ok=True)
+        (dest/'checks.txt').write_text(public_text((CACHE/profile/'checks.txt').read_text()))
+        published=public_data(data)
+        published['build']['checks_sha256']=sha(dest/'checks.txt')
+        published['publication_note']='Local paths and host identifiers redacted; checks_sha256 identifies the published log. Measurements and source snapshots unchanged.'
+        save(dest/'results.json',published);verify(dest/'results.json');render(published)
         print(DOCS/'comparison.html')
     for row in data['summary']:print(row['algorithm'],f'sign={row["sign"]["cpu_us"]:.2f} us, verify={row["verify"]["cpu_us"]:.2f} us')
 

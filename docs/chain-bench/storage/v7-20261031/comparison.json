@@ -1,0 +1,1307 @@
+{
+  "referenceRun": "local-20261030",
+  "candidateRun": "v7-20261031",
+  "candidateStatus": "complete",
+  "definition": "Baseline-subtracted; snapshot state excludes code and trie; logical sizes rounded by inspect; disk includes history.",
+  "settingsMatch": true,
+  "records": [
+    {
+      "algorithm": "ecdsa",
+      "accounts": 10000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 380006.4,
+        "storage": 24125.439999999995,
+        "state": 404131.83999999997,
+        "code": 0.0,
+        "state_code": 404131.84,
+        "account_trie": 1639157.76,
+        "storage_trie": 41666.56,
+        "trie": 1680824.3199999998,
+        "disk": 2031616
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 10000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 380006.4,
+        "storage": 24125.439999999995,
+        "state": 404131.83999999997,
+        "code": 0.0,
+        "state_code": 404131.84,
+        "account_trie": 1639157.76,
+        "storage_trie": 41666.56,
+        "trie": 1680824.3199999998,
+        "disk": 2027520
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 10000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 380006.4,
+        "storage": 24125.439999999995,
+        "state": 404131.83999999997,
+        "code": 0.0,
+        "state_code": 404131.84,
+        "account_trie": 1639157.76,
+        "storage_trie": 41666.56,
+        "trie": 1680824.3199999998,
+        "disk": 2031616
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 100000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 3802798.08,
+        "storage": 62904.32,
+        "state": 3865702.4,
+        "code": 0.0,
+        "state_code": 3865702.4,
+        "account_trie": 16455536.639999999,
+        "storage_trie": 107479.04000000001,
+        "trie": 16563015.68,
+        "disk": 19324928
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 100000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 3802798.08,
+        "storage": 62904.32,
+        "state": 3865702.4,
+        "code": 0.0,
+        "state_code": 3865702.4,
+        "account_trie": 16455536.639999999,
+        "storage_trie": 107479.04000000001,
+        "trie": 16563015.68,
+        "disk": 19324928
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 100000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 3802798.08,
+        "storage": 62904.32,
+        "state": 3865702.4,
+        "code": 0.0,
+        "state_code": 3865702.4,
+        "account_trie": 16455536.639999999,
+        "storage_trie": 107479.04000000001,
+        "trie": 16563015.68,
+        "disk": 19324928
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 1000000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 37996861.440000005,
+        "storage": 257310.72,
+        "state": 38254172.16,
+        "code": 0.0,
+        "state_code": 38254172.160000004,
+        "account_trie": 163885322.24,
+        "storage_trie": 436162.56,
+        "trie": 164321484.8,
+        "disk": 178995200
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 1000000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 37996861.440000005,
+        "storage": 257310.72,
+        "state": 38254172.16,
+        "code": 0.0,
+        "state_code": 38254172.160000004,
+        "account_trie": 163885322.24,
+        "storage_trie": 436162.56,
+        "trie": 164321484.8,
+        "disk": 178978816
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 1000000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 37996861.440000005,
+        "storage": 257310.72,
+        "state": 38254172.16,
+        "code": 0.0,
+        "state_code": 38254172.160000004,
+        "account_trie": 163885322.24,
+        "storage_trie": 436162.56,
+        "trie": 164321484.8,
+        "disk": 178577408
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 10000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 1030010.88,
+        "storage": 40926545.92,
+        "state": 41956556.8,
+        "code": 0.0,
+        "state_code": 41956556.8,
+        "account_trie": 1638461.4400000002,
+        "storage_trie": 70950359.04,
+        "trie": 72588820.47999999,
+        "disk": 76693504
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 10000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 1030010.88,
+        "storage": 40926545.92,
+        "state": 41956556.8,
+        "code": 0.0,
+        "state_code": 41956556.8,
+        "account_trie": 1638461.4400000002,
+        "storage_trie": 70950359.04,
+        "trie": 72588820.47999999,
+        "disk": 76693504
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 10000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 1030010.88,
+        "storage": 40926545.92,
+        "state": 41956556.8,
+        "code": 0.0,
+        "state_code": 41956556.8,
+        "account_trie": 1638461.4400000002,
+        "storage_trie": 70950359.04,
+        "trie": 72588820.47999999,
+        "disk": 76701696
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 100000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 10303600.64,
+        "storage": 409081579.52,
+        "state": 419385180.15999997,
+        "code": 0.0,
+        "state_code": 419385180.15999997,
+        "account_trie": 16454840.319999998,
+        "storage_trie": 709239541.76,
+        "trie": 725694382.08,
+        "disk": 765612032
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 100000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 10303600.64,
+        "storage": 409081579.52,
+        "state": 419385180.15999997,
+        "code": 0.0,
+        "state_code": 419385180.15999997,
+        "account_trie": 16454840.319999998,
+        "storage_trie": 709239541.76,
+        "trie": 725694382.08,
+        "disk": 765603840
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 100000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 10303600.64,
+        "storage": 409081579.52,
+        "state": 419385180.15999997,
+        "code": 0.0,
+        "state_code": 419385180.15999997,
+        "account_trie": 16454840.319999998,
+        "storage_trie": 709239541.76,
+        "trie": 725694382.08,
+        "disk": 765624320
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 1000000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 102997719.04,
+        "storage": 4090904545.28,
+        "state": 4193902264.32,
+        "code": 0.0,
+        "state_code": 4193902264.32,
+        "account_trie": 163884625.92000002,
+        "storage_trie": 7086605373.44,
+        "trie": 7250489999.36,
+        "disk": 7713517568
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 1000000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 102997719.04,
+        "storage": 4090904545.28,
+        "state": 4193902264.32,
+        "code": 0.0,
+        "state_code": 4193902264.32,
+        "account_trie": 163884625.92000002,
+        "storage_trie": 7086605373.44,
+        "trie": 7250489999.36,
+        "disk": 7696244736
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 1000000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 102997719.04,
+        "storage": 4090904545.28,
+        "state": 4193902264.32,
+        "code": 0.0,
+        "state_code": 4193902264.32,
+        "account_trie": 163884625.92000002,
+        "storage_trie": 7086605373.44,
+        "trie": 7250489999.36,
+        "disk": 7707885568
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 10000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 700006.4,
+        "storage": 55162.87999999999,
+        "state": 755169.28,
+        "code": 18703605.759999998,
+        "state_code": 19458775.04,
+        "account_trie": 1638277.12,
+        "storage_trie": 94423.04000000001,
+        "trie": 1732700.1600000001,
+        "disk": 5967872
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 10000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 700006.4,
+        "storage": 55162.87999999999,
+        "state": 755169.28,
+        "code": 18703605.759999998,
+        "state_code": 19458775.04,
+        "account_trie": 1638277.12,
+        "storage_trie": 94423.04000000001,
+        "trie": 1732700.1600000001,
+        "disk": 5967872
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 10000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 700006.4,
+        "storage": 55162.87999999999,
+        "state": 755169.28,
+        "code": 18703605.759999998,
+        "state_code": 19458775.04,
+        "account_trie": 1638277.12,
+        "storage_trie": 94423.04000000001,
+        "trie": 1732700.1600000001,
+        "disk": 5967872
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 100000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 7000647.68,
+        "storage": 380846.08,
+        "state": 7381493.76,
+        "code": 187000053.76,
+        "state_code": 194381547.51999998,
+        "account_trie": 16454656.0,
+        "storage_trie": 652451.84,
+        "trie": 17107107.84,
+        "disk": 58572800
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 100000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 7000647.68,
+        "storage": 380846.08,
+        "state": 7381493.76,
+        "code": 187000053.76,
+        "state_code": 194381547.51999998,
+        "account_trie": 16454656.0,
+        "storage_trie": 652451.84,
+        "trie": 17107107.84,
+        "disk": 58572800
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 100000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 7000647.68,
+        "storage": 380846.08,
+        "state": 7381493.76,
+        "code": 187000053.76,
+        "state_code": 194381547.51999998,
+        "account_trie": 16454656.0,
+        "storage_trie": 652451.84,
+        "trie": 17107107.84,
+        "disk": 58572800
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 1000000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 69999093.76,
+        "storage": 787671.0399999999,
+        "state": 70786764.80000001,
+        "code": 1867930296.32,
+        "state_code": 1938717061.12,
+        "account_trie": 163915898.88000003,
+        "storage_trie": 1376399.3599999999,
+        "trie": 165292298.24,
+        "disk": 565014528
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 1000000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 69999093.76,
+        "storage": 787671.0399999999,
+        "state": 70786764.80000001,
+        "code": 1867930296.32,
+        "state_code": 1938717061.12,
+        "account_trie": 163915898.88000003,
+        "storage_trie": 1376399.3599999999,
+        "trie": 165292298.24,
+        "disk": 565014528
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 1000000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 69999093.76,
+        "storage": 787671.0399999999,
+        "state": 70786764.80000001,
+        "code": 1867930296.32,
+        "state_code": 1938717061.12,
+        "account_trie": 163915898.88000003,
+        "storage_trie": 1376399.3599999999,
+        "trie": 165292298.24,
+        "disk": 564985856
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 10000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 1030010.88,
+        "storage": 1033963.52,
+        "state": 2063974.4000000001,
+        "code": 0.0,
+        "state_code": 2063974.4,
+        "account_trie": 1638369.28,
+        "storage_trie": 1125324.7999999998,
+        "trie": 2763694.0799999996,
+        "disk": 5206016
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 10000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 1030010.88,
+        "storage": 1033963.52,
+        "state": 2063974.4000000001,
+        "code": 0.0,
+        "state_code": 2063974.4,
+        "account_trie": 1638369.28,
+        "storage_trie": 1125324.7999999998,
+        "trie": 2763694.0799999996,
+        "disk": 5201920
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 10000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 1030010.88,
+        "storage": 1033963.52,
+        "state": 2063974.4000000001,
+        "code": 0.0,
+        "state_code": 2063974.4,
+        "account_trie": 1638369.28,
+        "storage_trie": 1125324.7999999998,
+        "trie": 2763694.0799999996,
+        "disk": 5206016
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 100000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 10303600.64,
+        "storage": 10177546.24,
+        "state": 20481146.88,
+        "code": 0.0,
+        "state_code": 20481146.88,
+        "account_trie": 16454748.16,
+        "storage_trie": 10950481.92,
+        "trie": 27405230.08,
+        "disk": 51265536
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 100000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 10303600.64,
+        "storage": 10177546.24,
+        "state": 20481146.88,
+        "code": 0.0,
+        "state_code": 20481146.88,
+        "account_trie": 16454748.16,
+        "storage_trie": 10950481.92,
+        "trie": 27405230.08,
+        "disk": 51257344
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 100000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 10303600.64,
+        "storage": 10177546.24,
+        "state": 20481146.88,
+        "code": 0.0,
+        "state_code": 20481146.88,
+        "account_trie": 16454748.16,
+        "storage_trie": 10950481.92,
+        "trie": 27405230.08,
+        "disk": 51265536
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 1000000,
+      "node": 0,
+      "deltaBytes": {
+        "accounts": 102997719.04,
+        "storage": 98782218.24,
+        "state": 201779937.28000003,
+        "code": 0.0,
+        "state_code": 201779937.28,
+        "account_trie": 163915991.04000002,
+        "storage_trie": 104378603.52000001,
+        "trie": 268294594.56000003,
+        "disk": 488595456
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 1000000,
+      "node": 1,
+      "deltaBytes": {
+        "accounts": 102997719.04,
+        "storage": 98782218.24,
+        "state": 201779937.28000003,
+        "code": 0.0,
+        "state_code": 201779937.28,
+        "account_trie": 163915991.04000002,
+        "storage_trie": 104378603.52000001,
+        "trie": 268294594.56000003,
+        "disk": 488574976
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 1000000,
+      "node": 2,
+      "deltaBytes": {
+        "accounts": 102997719.04,
+        "storage": 98782218.24,
+        "state": 201779937.28000003,
+        "code": 0.0,
+        "state_code": 201779937.28,
+        "account_trie": 163915991.04000002,
+        "storage_trie": 104378603.52000001,
+        "trie": 268294594.56000003,
+        "disk": 488583168
+      }
+    }
+  ],
+  "summary": [
+    {
+      "algorithm": "ecdsa",
+      "accounts": 10000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 1140019.2000000002,
+          "meanNodeBytes": 380006.4000000001,
+          "meanBytesPerAccount": 38.00064000000001,
+          "ecdsaRatio": 1.0
+        },
+        "storage": {
+          "threeNodesBytes": 72376.31999999998,
+          "meanNodeBytes": 24125.43999999999,
+          "meanBytesPerAccount": 2.412543999999999,
+          "ecdsaRatio": 1.0
+        },
+        "state": {
+          "threeNodesBytes": 1212395.52,
+          "meanNodeBytes": 404131.84,
+          "meanBytesPerAccount": 40.413184,
+          "ecdsaRatio": 1.0
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 1212395.52,
+          "meanNodeBytes": 404131.84,
+          "meanBytesPerAccount": 40.413184,
+          "ecdsaRatio": 1.0
+        },
+        "account_trie": {
+          "threeNodesBytes": 4917473.28,
+          "meanNodeBytes": 1639157.76,
+          "meanBytesPerAccount": 163.915776,
+          "ecdsaRatio": 1.0
+        },
+        "storage_trie": {
+          "threeNodesBytes": 124999.68,
+          "meanNodeBytes": 41666.56,
+          "meanBytesPerAccount": 4.166656,
+          "ecdsaRatio": 1.0
+        },
+        "trie": {
+          "threeNodesBytes": 5042472.959999999,
+          "meanNodeBytes": 1680824.3199999996,
+          "meanBytesPerAccount": 168.08243199999995,
+          "ecdsaRatio": 1.0
+        },
+        "disk": {
+          "threeNodesBytes": 6090752,
+          "meanNodeBytes": 2030250.6666666667,
+          "meanBytesPerAccount": 203.02506666666667,
+          "ecdsaRatio": 1.0
+        }
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 100000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 11408394.24,
+          "meanNodeBytes": 3802798.08,
+          "meanBytesPerAccount": 38.0279808,
+          "ecdsaRatio": 1.0
+        },
+        "storage": {
+          "threeNodesBytes": 188712.96,
+          "meanNodeBytes": 62904.32,
+          "meanBytesPerAccount": 0.6290432,
+          "ecdsaRatio": 1.0
+        },
+        "state": {
+          "threeNodesBytes": 11597107.2,
+          "meanNodeBytes": 3865702.4,
+          "meanBytesPerAccount": 38.657024,
+          "ecdsaRatio": 1.0
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 11597107.2,
+          "meanNodeBytes": 3865702.4,
+          "meanBytesPerAccount": 38.657024,
+          "ecdsaRatio": 1.0
+        },
+        "account_trie": {
+          "threeNodesBytes": 49366609.919999994,
+          "meanNodeBytes": 16455536.639999999,
+          "meanBytesPerAccount": 164.5553664,
+          "ecdsaRatio": 1.0
+        },
+        "storage_trie": {
+          "threeNodesBytes": 322437.12,
+          "meanNodeBytes": 107479.04,
+          "meanBytesPerAccount": 1.0747904,
+          "ecdsaRatio": 1.0
+        },
+        "trie": {
+          "threeNodesBytes": 49689047.04,
+          "meanNodeBytes": 16563015.68,
+          "meanBytesPerAccount": 165.6301568,
+          "ecdsaRatio": 1.0
+        },
+        "disk": {
+          "threeNodesBytes": 57974784,
+          "meanNodeBytes": 19324928.0,
+          "meanBytesPerAccount": 193.24928,
+          "ecdsaRatio": 1.0
+        }
+      }
+    },
+    {
+      "algorithm": "ecdsa",
+      "accounts": 1000000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 113990584.32000002,
+          "meanNodeBytes": 37996861.440000005,
+          "meanBytesPerAccount": 37.99686144,
+          "ecdsaRatio": 1.0
+        },
+        "storage": {
+          "threeNodesBytes": 771932.16,
+          "meanNodeBytes": 257310.72,
+          "meanBytesPerAccount": 0.25731072,
+          "ecdsaRatio": 1.0
+        },
+        "state": {
+          "threeNodesBytes": 114762516.47999999,
+          "meanNodeBytes": 38254172.16,
+          "meanBytesPerAccount": 38.254172159999996,
+          "ecdsaRatio": 1.0
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 114762516.48000002,
+          "meanNodeBytes": 38254172.160000004,
+          "meanBytesPerAccount": 38.25417216,
+          "ecdsaRatio": 1.0
+        },
+        "account_trie": {
+          "threeNodesBytes": 491655966.72,
+          "meanNodeBytes": 163885322.24,
+          "meanBytesPerAccount": 163.88532224000002,
+          "ecdsaRatio": 1.0
+        },
+        "storage_trie": {
+          "threeNodesBytes": 1308487.68,
+          "meanNodeBytes": 436162.56,
+          "meanBytesPerAccount": 0.43616256,
+          "ecdsaRatio": 1.0
+        },
+        "trie": {
+          "threeNodesBytes": 492964454.40000004,
+          "meanNodeBytes": 164321484.8,
+          "meanBytesPerAccount": 164.3214848,
+          "ecdsaRatio": 1.0
+        },
+        "disk": {
+          "threeNodesBytes": 536551424,
+          "meanNodeBytes": 178850474.66666666,
+          "meanBytesPerAccount": 178.85047466666666,
+          "ecdsaRatio": 1.0
+        }
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 10000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 3090032.64,
+          "meanNodeBytes": 1030010.88,
+          "meanBytesPerAccount": 103.001088,
+          "ecdsaRatio": 2.710509296685529
+        },
+        "storage": {
+          "threeNodesBytes": 122779637.76,
+          "meanNodeBytes": 40926545.92,
+          "meanBytesPerAccount": 4092.6545920000003,
+          "ecdsaRatio": 1696.4061969439733
+        },
+        "state": {
+          "threeNodesBytes": 125869670.39999999,
+          "meanNodeBytes": 41956556.8,
+          "meanBytesPerAccount": 4195.65568,
+          "ecdsaRatio": 103.81898342877413
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 125869670.39999999,
+          "meanNodeBytes": 41956556.8,
+          "meanBytesPerAccount": 4195.65568,
+          "ecdsaRatio": 103.81898342877413
+        },
+        "account_trie": {
+          "threeNodesBytes": 4915384.32,
+          "meanNodeBytes": 1638461.4400000002,
+          "meanBytesPerAccount": 163.846144,
+          "ecdsaRatio": 0.9995751964716318
+        },
+        "storage_trie": {
+          "threeNodesBytes": 212851077.12,
+          "meanNodeBytes": 70950359.04,
+          "meanBytesPerAccount": 7095.035904,
+          "ecdsaRatio": 1702.812976161219
+        },
+        "trie": {
+          "threeNodesBytes": 217766461.43999997,
+          "meanNodeBytes": 72588820.47999999,
+          "meanBytesPerAccount": 7258.882047999999,
+          "ecdsaRatio": 43.18644109099992
+        },
+        "disk": {
+          "threeNodesBytes": 230088704,
+          "meanNodeBytes": 76696234.66666667,
+          "meanBytesPerAccount": 7669.623466666667,
+          "ecdsaRatio": 37.77673167451244
+        }
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 100000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 30910801.92,
+          "meanNodeBytes": 10303600.64,
+          "meanBytesPerAccount": 103.0360064,
+          "ecdsaRatio": 2.709478763595042
+        },
+        "storage": {
+          "threeNodesBytes": 1227244738.56,
+          "meanNodeBytes": 409081579.52,
+          "meanBytesPerAccount": 4090.8157951999997,
+          "ecdsaRatio": 6503.23506430083
+        },
+        "state": {
+          "threeNodesBytes": 1258155540.48,
+          "meanNodeBytes": 419385180.16,
+          "meanBytesPerAccount": 4193.8518016,
+          "ecdsaRatio": 108.4887393711425
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 1258155540.48,
+          "meanNodeBytes": 419385180.16,
+          "meanBytesPerAccount": 4193.8518016,
+          "ecdsaRatio": 108.4887393711425
+        },
+        "account_trie": {
+          "threeNodesBytes": 49364520.95999999,
+          "meanNodeBytes": 16454840.319999998,
+          "meanBytesPerAccount": 164.5484032,
+          "ecdsaRatio": 0.9999576847589213
+        },
+        "storage_trie": {
+          "threeNodesBytes": 2127718625.28,
+          "meanNodeBytes": 709239541.76,
+          "meanBytesPerAccount": 7092.3954176,
+          "ecdsaRatio": 6598.863757621952
+        },
+        "trie": {
+          "threeNodesBytes": 2177083146.2400002,
+          "meanNodeBytes": 725694382.08,
+          "meanBytesPerAccount": 7256.9438208,
+          "ecdsaRatio": 43.81414569064757
+        },
+        "disk": {
+          "threeNodesBytes": 2296840192,
+          "meanNodeBytes": 765613397.3333334,
+          "meanBytesPerAccount": 7656.133973333333,
+          "ecdsaRatio": 39.61791719655221
+        }
+      }
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 1000000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 308993157.12,
+          "meanNodeBytes": 102997719.04,
+          "meanBytesPerAccount": 102.99771904,
+          "ecdsaRatio": 2.710690176414739
+        },
+        "storage": {
+          "threeNodesBytes": 12272713635.84,
+          "meanNodeBytes": 4090904545.28,
+          "meanBytesPerAccount": 4090.90454528,
+          "ecdsaRatio": 15898.694563833174
+        },
+        "state": {
+          "threeNodesBytes": 12581706792.960001,
+          "meanNodeBytes": 4193902264.32,
+          "meanBytesPerAccount": 4193.9022643200005,
+          "ecdsaRatio": 109.63254535423727
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 12581706792.960001,
+          "meanNodeBytes": 4193902264.32,
+          "meanBytesPerAccount": 4193.9022643200005,
+          "ecdsaRatio": 109.63254535423724
+        },
+        "account_trie": {
+          "threeNodesBytes": 491653877.76000005,
+          "meanNodeBytes": 163884625.92000002,
+          "meanBytesPerAccount": 163.88462592000002,
+          "ecdsaRatio": 0.9999957511753311
+        },
+        "storage_trie": {
+          "threeNodesBytes": 21259816120.32,
+          "meanNodeBytes": 7086605373.44,
+          "meanBytesPerAccount": 7086.605373439999,
+          "ecdsaRatio": 16247.624219373622
+        },
+        "trie": {
+          "threeNodesBytes": 21751469998.079998,
+          "meanNodeBytes": 7250489999.36,
+          "meanBytesPerAccount": 7250.489999359999,
+          "ecdsaRatio": 44.12381015291312
+        },
+        "disk": {
+          "threeNodesBytes": 23117647872,
+          "meanNodeBytes": 7705882624.0,
+          "meanBytesPerAccount": 7705.882624,
+          "ecdsaRatio": 43.08561460830267
+        }
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 10000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 2100019.2,
+          "meanNodeBytes": 700006.4,
+          "meanBytesPerAccount": 70.00064,
+          "ecdsaRatio": 1.8420910805712745
+        },
+        "storage": {
+          "threeNodesBytes": 165488.63999999996,
+          "meanNodeBytes": 55162.87999999998,
+          "meanBytesPerAccount": 5.5162879999999985,
+          "ecdsaRatio": 2.286502546689304
+        },
+        "state": {
+          "threeNodesBytes": 2265507.84,
+          "meanNodeBytes": 755169.2799999999,
+          "meanBytesPerAccount": 75.516928,
+          "ecdsaRatio": 1.8686210915724926
+        },
+        "code": {
+          "threeNodesBytes": 56110817.279999994,
+          "meanNodeBytes": 18703605.759999998,
+          "meanBytesPerAccount": 1870.3605759999998,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 58376325.12,
+          "meanNodeBytes": 19458775.04,
+          "meanBytesPerAccount": 1945.8775039999998,
+          "ecdsaRatio": 48.149571783307145
+        },
+        "account_trie": {
+          "threeNodesBytes": 4914831.36,
+          "meanNodeBytes": 1638277.12,
+          "meanBytesPerAccount": 163.82771200000002,
+          "ecdsaRatio": 0.9994627484788285
+        },
+        "storage_trie": {
+          "threeNodesBytes": 283269.12,
+          "meanNodeBytes": 94423.04,
+          "meanBytesPerAccount": 9.442304,
+          "ecdsaRatio": 2.2661587613664294
+        },
+        "trie": {
+          "threeNodesBytes": 5198100.48,
+          "meanNodeBytes": 1732700.1600000001,
+          "meanBytesPerAccount": 173.27001600000003,
+          "ecdsaRatio": 1.0308633325819563
+        },
+        "disk": {
+          "threeNodesBytes": 17903616,
+          "meanNodeBytes": 5967872.0,
+          "meanBytesPerAccount": 596.7872,
+          "ecdsaRatio": 2.9394754539340955
+        }
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 100000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 21001943.04,
+          "meanNodeBytes": 7000647.68,
+          "meanBytesPerAccount": 70.0064768,
+          "ecdsaRatio": 1.8409201679201437
+        },
+        "storage": {
+          "threeNodesBytes": 1142538.24,
+          "meanNodeBytes": 380846.08,
+          "meanBytesPerAccount": 3.8084608,
+          "ecdsaRatio": 6.054370828585382
+        },
+        "state": {
+          "threeNodesBytes": 22144481.28,
+          "meanNodeBytes": 7381493.760000001,
+          "meanBytesPerAccount": 73.81493760000001,
+          "ecdsaRatio": 1.9094831924982123
+        },
+        "code": {
+          "threeNodesBytes": 561000161.28,
+          "meanNodeBytes": 187000053.76,
+          "meanBytesPerAccount": 1870.0005376,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 583144642.56,
+          "meanNodeBytes": 194381547.51999998,
+          "meanBytesPerAccount": 1943.8154751999998,
+          "ecdsaRatio": 50.28362957272655
+        },
+        "account_trie": {
+          "threeNodesBytes": 49363968.0,
+          "meanNodeBytes": 16454656.0,
+          "meanBytesPerAccount": 164.54656,
+          "ecdsaRatio": 0.9999464836656948
+        },
+        "storage_trie": {
+          "threeNodesBytes": 1957355.52,
+          "meanNodeBytes": 652451.84,
+          "meanBytesPerAccount": 6.5245184,
+          "ecdsaRatio": 6.070503048780488
+        },
+        "trie": {
+          "threeNodesBytes": 51321323.519999996,
+          "meanNodeBytes": 17107107.84,
+          "meanBytesPerAccount": 171.0710784,
+          "ecdsaRatio": 1.0328498246039213
+        },
+        "disk": {
+          "threeNodesBytes": 175718400,
+          "meanNodeBytes": 58572800.0,
+          "meanBytesPerAccount": 585.728,
+          "ecdsaRatio": 3.0309453158117847
+        }
+      }
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 1000000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 209997281.28000003,
+          "meanNodeBytes": 69999093.76,
+          "meanBytesPerAccount": 69.99909376000001,
+          "ecdsaRatio": 1.8422335715946963
+        },
+        "storage": {
+          "threeNodesBytes": 2363013.1199999996,
+          "meanNodeBytes": 787671.0399999999,
+          "meanBytesPerAccount": 0.7876710399999999,
+          "ecdsaRatio": 3.061166825851639
+        },
+        "state": {
+          "threeNodesBytes": 212360294.40000004,
+          "meanNodeBytes": 70786764.80000001,
+          "meanBytesPerAccount": 70.78676480000001,
+          "ecdsaRatio": 1.8504325359317884
+        },
+        "code": {
+          "threeNodesBytes": 5603790888.96,
+          "meanNodeBytes": 1867930296.32,
+          "meanBytesPerAccount": 1867.93029632,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 5816151183.36,
+          "meanNodeBytes": 1938717061.12,
+          "meanBytesPerAccount": 1938.71706112,
+          "ecdsaRatio": 50.67988539945964
+        },
+        "account_trie": {
+          "threeNodesBytes": 491747696.6400001,
+          "meanNodeBytes": 163915898.88000003,
+          "meanBytesPerAccount": 163.91589888000001,
+          "ecdsaRatio": 1.0001865733891364
+        },
+        "storage_trie": {
+          "threeNodesBytes": 4129198.0799999996,
+          "meanNodeBytes": 1376399.3599999999,
+          "meanBytesPerAccount": 1.37639936,
+          "ecdsaRatio": 3.155702681128797
+        },
+        "trie": {
+          "threeNodesBytes": 495876894.72,
+          "meanNodeBytes": 165292298.24,
+          "meanBytesPerAccount": 165.29229824,
+          "ecdsaRatio": 1.0059080128273037
+        },
+        "disk": {
+          "threeNodesBytes": 1695014912,
+          "meanNodeBytes": 565004970.6666666,
+          "meanBytesPerAccount": 565.0049706666666,
+          "ecdsaRatio": 3.159091256088065
+        }
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 10000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 3090032.64,
+          "meanNodeBytes": 1030010.88,
+          "meanBytesPerAccount": 103.001088,
+          "ecdsaRatio": 2.710509296685529
+        },
+        "storage": {
+          "threeNodesBytes": 3101890.56,
+          "meanNodeBytes": 1033963.52,
+          "meanBytesPerAccount": 103.39635200000001,
+          "ecdsaRatio": 42.85780984719865
+        },
+        "state": {
+          "threeNodesBytes": 6191923.2,
+          "meanNodeBytes": 2063974.4000000001,
+          "meanBytesPerAccount": 206.39744000000002,
+          "ecdsaRatio": 5.107180864541631
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 6191923.199999999,
+          "meanNodeBytes": 2063974.3999999997,
+          "meanBytesPerAccount": 206.39743999999996,
+          "ecdsaRatio": 5.10718086454163
+        },
+        "account_trie": {
+          "threeNodesBytes": 4915107.84,
+          "meanNodeBytes": 1638369.28,
+          "meanBytesPerAccount": 163.836928,
+          "ecdsaRatio": 0.9995189724752301
+        },
+        "storage_trie": {
+          "threeNodesBytes": 3375974.3999999994,
+          "meanNodeBytes": 1125324.7999999998,
+          "meanBytesPerAccount": 112.53247999999998,
+          "ecdsaRatio": 27.00786434013271
+        },
+        "trie": {
+          "threeNodesBytes": 8291082.239999998,
+          "meanNodeBytes": 2763694.0799999996,
+          "meanBytesPerAccount": 276.36940799999996,
+          "ecdsaRatio": 1.6442492217152118
+        },
+        "disk": {
+          "threeNodesBytes": 15613952,
+          "meanNodeBytes": 5204650.666666667,
+          "meanBytesPerAccount": 520.4650666666666,
+          "ecdsaRatio": 2.5635507733691996
+        }
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 100000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 30910801.92,
+          "meanNodeBytes": 10303600.64,
+          "meanBytesPerAccount": 103.0360064,
+          "ecdsaRatio": 2.709478763595042
+        },
+        "storage": {
+          "threeNodesBytes": 30532638.72,
+          "meanNodeBytes": 10177546.24,
+          "meanBytesPerAccount": 101.77546240000001,
+          "ecdsaRatio": 161.79407455640566
+        },
+        "state": {
+          "threeNodesBytes": 61443440.64,
+          "meanNodeBytes": 20481146.88,
+          "meanBytesPerAccount": 204.8114688,
+          "ecdsaRatio": 5.298169584911658
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 61443440.64,
+          "meanNodeBytes": 20481146.88,
+          "meanBytesPerAccount": 204.8114688,
+          "ecdsaRatio": 5.298169584911658
+        },
+        "account_trie": {
+          "threeNodesBytes": 49364244.480000004,
+          "meanNodeBytes": 16454748.160000002,
+          "meanBytesPerAccount": 164.54748160000003,
+          "ecdsaRatio": 0.9999520842123082
+        },
+        "storage_trie": {
+          "threeNodesBytes": 32851445.759999998,
+          "meanNodeBytes": 10950481.92,
+          "meanBytesPerAccount": 109.5048192,
+          "ecdsaRatio": 101.88481326219512
+        },
+        "trie": {
+          "threeNodesBytes": 82215690.24,
+          "meanNodeBytes": 27405230.08,
+          "meanBytesPerAccount": 274.05230079999995,
+          "ecdsaRatio": 1.654603884309068
+        },
+        "disk": {
+          "threeNodesBytes": 153788416,
+          "meanNodeBytes": 51262805.333333336,
+          "meanBytesPerAccount": 512.6280533333334,
+          "ecdsaRatio": 2.652677688285997
+        }
+      }
+    },
+    {
+      "algorithm": "slh-storage",
+      "accounts": 1000000,
+      "metrics": {
+        "accounts": {
+          "threeNodesBytes": 308993157.12,
+          "meanNodeBytes": 102997719.04,
+          "meanBytesPerAccount": 102.99771904,
+          "ecdsaRatio": 2.710690176414739
+        },
+        "storage": {
+          "threeNodesBytes": 296346654.71999997,
+          "meanNodeBytes": 98782218.24,
+          "meanBytesPerAccount": 98.78221823999999,
+          "ecdsaRatio": 383.9024594078318
+        },
+        "state": {
+          "threeNodesBytes": 605339811.8400002,
+          "meanNodeBytes": 201779937.28000006,
+          "meanBytesPerAccount": 201.77993728000007,
+          "ecdsaRatio": 5.274717132448856
+        },
+        "code": {
+          "threeNodesBytes": 0.0,
+          "meanNodeBytes": 0.0,
+          "meanBytesPerAccount": 0.0,
+          "ecdsaRatio": null
+        },
+        "state_code": {
+          "threeNodesBytes": 605339811.84,
+          "meanNodeBytes": 201779937.28,
+          "meanBytesPerAccount": 201.77993728,
+          "ecdsaRatio": 5.2747171324488535
+        },
+        "account_trie": {
+          "threeNodesBytes": 491747973.12000006,
+          "meanNodeBytes": 163915991.04000002,
+          "meanBytesPerAccount": 163.91599104000002,
+          "ecdsaRatio": 1.0001871357335779
+        },
+        "storage_trie": {
+          "threeNodesBytes": 313135810.56000006,
+          "meanNodeBytes": 104378603.52000003,
+          "meanBytesPerAccount": 104.37860352000003,
+          "ecdsaRatio": 239.31124101986202
+        },
+        "trie": {
+          "threeNodesBytes": 804883783.6800001,
+          "meanNodeBytes": 268294594.56000003,
+          "meanBytesPerAccount": 268.29459456,
+          "ecdsaRatio": 1.6327420293612147
+        },
+        "disk": {
+          "threeNodesBytes": 1465753600,
+          "meanNodeBytes": 488584533.3333333,
+          "meanBytesPerAccount": 488.5845333333333,
+          "ecdsaRatio": 2.731804510130235
+        }
+      }
+    }
+  ]
+}

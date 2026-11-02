@@ -10,6 +10,7 @@
 | `mldsa-v4` | ML-DSA-44 原生预编译 | 独立 `devnet-v4`，或 v5/v6 环境 |
 | `mldsa65-v5` | ML-DSA-65 原生预编译 | 独立 `devnet-v5`，或 v6 环境 |
 | `slh-dsa-v6` | SLH-DSA-SHA2-128f 原生预编译 | `devnet-v6` |
+| `slh-dsa-v7` | SLH-DSA-SHA2-128s 预编译，公钥存 storage | 复用 v2 或 v3–v6 PQ 环境 |
 
 ## 使用
 
@@ -41,7 +42,7 @@ SLH profile 的 `test` 额外需要支持 SLH-DSA 的 OpenSSL 3.5+，可用 `OPE
 
 ## 版本与扩展
 
-入口支持 `--version v1` 至 `v6`，默认 v1；也可用 `--profile` 选择已注册名称。两者同时指定时必须一致：
+入口支持 `--version v1` 至 `v7`，默认 v1；也可用 `--profile` 选择已注册名称。两者同时指定时必须一致：
 
 ```bash
 ./tools/erc4337-wallet create devnet --version v1
@@ -138,3 +139,5 @@ profile 为 `mldsa65-v5`，绑定 MLDSA65AccountFactory / MLDSA65Account / MLDSA
 ```
 
 profile 为 `slh-dsa-v6`，公钥 32 bytes、私钥 64 bytes、签名 17,088 bytes。与 v1/v2 共用 Noble SLH 钱包适配流程，仅选择不同参数集与验证器；Pure 模式、空 context。账户目录、密钥和部署记录按 profile 隔离。128f 与 128s 均为类别 1；f 用更大的签名换取更快的签名生成。操作超过 ERC-7562 的 8,192 bytes 编码大小上限，本地联通不表示符合公共内存池规范。
+
+v7 的使用和存储对照见 [v7 实验说明](../tools/chain-bench/v7/README.md)。v7 是合约/钱包版本，不新增客户端预编译或硬分叉。

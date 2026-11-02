@@ -1,0 +1,70 @@
+INFO [10-30|17:01:32.212] Maximum peer count                       ETH=50 total=50
+INFO [10-30|17:01:32.213] Using pebble as db engine
+INFO [10-30|17:01:32.215] Sanitizing Go's GC trigger               percent=25
+INFO [10-30|17:01:32.216] Use CLI state scheme                     CLI=path
+INFO [10-30|17:01:32.217] Set global gas cap                       cap=50,000,000
+INFO [10-30|17:01:32.217] Initializing the KZG library             backend=gokzg
+INFO [10-30|17:01:34.129] Using pebble as the backing database
+INFO [10-30|17:01:34.129] Allocated cache and file handles         database=${REPO}/one-box/.runtime/storage-c4179f-ecdsa/node1/geth/chaindata cache=1.60GiB handles=5120
+INFO [10-30|17:01:34.129] Allocated memory table size              database=${REPO}/one-box/.runtime/storage-c4179f-ecdsa/node1/geth/chaindata "memory table"=136.50MiB
+INFO [10-30|17:01:34.311] Opened ancient database                  database=${REPO}/one-box/.runtime/storage-c4179f-ecdsa/node1/geth/chaindata/ancient/chain readonly=false tail=0 frozen=0
+INFO [10-30|17:01:34.311] Opened Era store                         datadir=${REPO}/one-box/.runtime/storage-c4179f-ecdsa/node1/geth/chaindata/ancient/chain/era
+INFO [10-30|17:01:34.311] Stats before compaction
+      |                             |       |       |   ingested   |     moved    |    written   |       |    amp
+level | tables  size val-bl vtables | score |   in  | tables  size | tables  size | tables  size |  read |   r   w
+------+-----------------------------+-------+-------+--------------+--------------+--------------+-------+---------
+    0 |     1   77KB     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   1  0.0
+    1 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    2 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    3 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    4 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    5 |    23   63MB     0B       0 |  1.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   1  0.0
+    6 |    24  110MB     0B       0 |     - |    0B |     0     0B |     0     0B |     0     0B |    0B |   1  0.0
+total |    48  174MB     0B       0 |     - |    0B |     0     0B |     0     0B |     0     0B |    0B |   3  0.0
+-------------------------------------------------------------------------------------------------------------------
+WAL: 1 files (0B)  in: 0B  written: 0B (0% overhead)
+Flushes: 0
+Compactions: 0  estimated debt: 64MB  in progress: 1 (2.6MB)
+             default: 0  delete: 0  elision: 0  move: 0  read: 0  rewrite: 0  multi-level: 0
+MemTables: 1 (256KB)  zombie: 1 (4.0MB)
+Zombie tables: 0 (0B)
+Backing tables: 0 (0B)
+Virtual tables: 0 (0B)
+Block cache: 81 entries (313KB)  hit rate: 8.6%
+Table cache: 48 entries (38KB)  hit rate: 46.1%
+Secondary cache: 0 entries (0B)  hit rate: 0.0%
+Snapshots: 0  earliest seq num: 0
+Table iters: 3
+Filter utility: 80.0%
+Ingestions: 0  as flushable: 0 (0B in 0 tables)
+
+INFO [10-30|17:01:34.311] Triggering compaction
+INFO [10-30|17:01:35.666] Stats after compaction
+      |                             |       |       |   ingested   |     moved    |    written   |       |    amp
+level | tables  size val-bl vtables | score |   in  | tables  size | tables  size | tables  size |  read |   r   w
+------+-----------------------------+-------+-------+--------------+--------------+--------------+-------+---------
+    0 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    1 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    2 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    3 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    4 |     0     0B     0B       0 |  0.00 |    0B |     0     0B |     0     0B |     0     0B |    0B |   0  0.0
+    5 |     0     0B     0B       0 |  0.00 |  77KB |     0     0B |     0     0B |    14   63MB |  64MB |   0  840
+    6 |    25  147MB     0B       0 |     - |  63MB |     0     0B |     0     0B |    24  146MB | 172MB |   1  2.3
+total |    25  147MB     0B       0 |     - |    0B |     0     0B |     0     0B |    38  209MB | 235MB |   1  0.0
+-------------------------------------------------------------------------------------------------------------------
+WAL: 1 files (0B)  in: 0B  written: 0B (0% overhead)
+Flushes: 0
+Compactions: 12  estimated debt: 0B  in progress: 0 (0B)
+             default: 12  delete: 0  elision: 0  move: 0  read: 0  rewrite: 0  multi-level: 0
+MemTables: 1 (256KB)  zombie: 1 (4.0MB)
+Zombie tables: 0 (0B)
+Backing tables: 0 (0B)
+Virtual tables: 0 (0B)
+Block cache: 1 entries (633B)  hit rate: 0.8%
+Table cache: 1 entries (808B)  hit rate: 66.7%
+Secondary cache: 0 entries (0B)  hit rate: 0.0%
+Snapshots: 0  earliest seq num: 0
+Table iters: 0
+Filter utility: 72.7%
+Ingestions: 0  as flushable: 0 (0B in 0 tables)
+

@@ -26,7 +26,7 @@ RUNTIME = BOX / ".runtime"
 BUILD = RUNTIME / "build"
 FORKS = json.loads((ROOT / "one-box/forks.json").read_text())
 STAKE_HUB = "0x0000000000000000000000000000000000002002"
-MUTABLE = {"gas_limit", "gas_price_wei", "cache_mb", "rpc_port", "p2p_port"}
+MUTABLE = {"gas_limit", "gas_price_wei", "cache_mb", "trie_dirty_cache_percent", "rpc_port", "p2p_port"}
 
 
 def read(path):
@@ -58,8 +58,10 @@ def command(args, log=None, cwd=ROOT, timeout=300):
 
 def validate(cfg):
     expected = set(read(ROOT / "one-box/config.json"))
-    if set(cfg) not in (expected, expected | {"pq_precompile"}) or any(type(v) is not int for v in cfg.values()):
-        raise ValueError("Configuration must contain the integer fields in one-box/config.json, plus optional pq_precompile")
+    if not expected <= set(cfg) or set(cfg) - expected - {"pq_precompile", "trie_dirty_cache_percent"} or any(type(v) is not int for v in cfg.values()):
+        raise ValueError("Configuration must contain the integer fields in one-box/config.json, plus optional pq_precompile / trie_dirty_cache_percent")
+    if not 0 <= cfg.get("trie_dirty_cache_percent", 25) <= 100:
+        raise ValueError("trie_dirty_cache_percent must be 0..100")
     if cfg.get("pq_precompile", 0) not in (0, 1, 3, 4, 5, 6):
         raise ValueError("pq_precompile must be 0 (v1), 1 (v2), 3 (v3), 4 (v4), 5 (v5) or 6 (v6)")
     if cfg["chain_id"] != 714:
@@ -420,7 +422,8 @@ def up(env):
                 "--nodekey", directory / "geth/nodekey", "--vote", "--unlock", manifest["nodes"][i]["address"],
                 "--miner.etherbase", manifest["nodes"][i]["address"], "--password", directory / "password.txt",
                 "--blspassword", directory / "password.txt", "--allow-insecure-unlock", "--http",
-                "--cache", cfg["cache_mb"], "--syncmode", "full", "--state.scheme", "path", "--db.engine", "pebble",
+                "--cache", cfg["cache_mb"], "--cache.gc", cfg.get("trie_dirty_cache_percent", 25),
+                "--tries-verify-mode", "local", "--syncmode", "full", "--state.scheme", "path", "--db.engine", "pebble",
                 "--nat", "none", "--netrestrict", "127.0.0.0/8", "--mev.grpc.disable",
                 "--rialtohash", manifest["genesis_hash"], "--override.passedforktime", forks["passed"],
                 "--override.breatheblockinterval", cfg["breathe_seconds"]]

@@ -1,0 +1,7 @@
+{
+  "slh": {
+    "run": "v7-20261031",
+    "algorithm": "slh-storage",
+    "label": "SLH-DSA-SHA2-128s（storage）"
+  }
+}

@@ -36,6 +36,12 @@
     .algorithm-bench .algorithm small { display: block; margin-top: 4px; color: #526477; font-size: 12px; line-height: 1.5; }
     .algorithm-bench td:last-child { min-width: 175px; }
     .algorithm-bench .selected-algorithm td { background: #f1f7f4; }
+    .storage-bench { width: 100%; min-width: 700px; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+    .storage-bench th, .storage-bench td { padding: 12px; border-bottom: 1px solid #e3eaf0; text-align: right; }
+    .storage-bench th { background: #edf4fa; }
+    .storage-bench th:first-child, .storage-bench td:first-child { text-align: left; }
+    .storage-bench small { display: block; color: #687887; }
+    .storage-bench tr:last-child td { border-bottom: 0; }
     .crypto-diagram { margin: 16px 0; padding: 10px; border: 1px solid #dce3eb; border-radius: 10px; overflow-x: auto; }
     .crypto-diagram svg { display: block; width: 100%; max-width: 820px; min-width: 640px; height: auto; margin: auto; }
     .pqc-roadmap svg { max-width: 820px; min-width: 680px; }
@@ -327,13 +333,30 @@
     </section>
     <section id="chain-bench">
       <h2>4. 链路基准：预编译与 ERC-4337 交易成本</h2>
-      <h3>4.1 数据假设</h3>
-      <p><strong>评估规模：本次按 100 万个 PQC 账户测算创建与使用成本。</strong></p>
+      <h3>4.1 数据假设和磁盘空间</h3>
       <ul>
         <li><strong>每日新增地址：</strong>约 60 万个。</li>
         <li><strong>原生 BNB 余额 ≥100 BNB 的地址：</strong>暂按 10 万个作为规模估算假设，实际数量待核实。</li>
       </ul>
-      <p class="placeholder">以上仅用于规模与成本的粗略估算，不是精确统计。</p>
+
+      <p><strong>本次按 100 万个 PQC 账户测算存储成本：</strong>以普通 ECDSA EOA 为 baseline，ML 与 SLH 均为公钥存入 storage、运行时代码可复用的合约账户。</p>
+      <div class="cost-table-wrap">
+        <table class="storage-bench">
+          <thead><tr><th>方案</th><th>State 快照<br>MiB</th><th>Trie<br>MiB</th><th>实际磁盘增量<br>MiB</th><th>磁盘均摊<br>bytes/账户</th></tr></thead>
+          <tbody>
+          <tr><td>ECDSA EOA</td><td>36.48</td><td>156.71</td><td>170.57<small>baseline</small></td><td>178.9</td></tr>
+          <tr><td>ML-DSA-44</td><td>3,999.62</td><td>6,914.61</td><td>7,348.90<small>43.09 倍 baseline</small></td><td>7,705.9</td></tr>
+          <tr><td>SLH-DSA-SHA2-128s</td><td>192.43</td><td>255.87</td><td>465.95<small>2.73 倍 baseline</small></td><td>488.6</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <aside class="bsc-takeaway">
+        <p><strong>结构开销可推导，实际磁盘用实测核对。</strong>百万账户下，ML 的单节点磁盘增量约 7.18 GiB，SLH 约 0.46 GiB，分别是 ECDSA 的 43.09 倍和 2.73 倍。</p>
+      </aside>
+      <p>放大来自明确的数据结构：EOA 的账户快照约 <strong>38 bytes</strong>；两个 PQ 方案因非空 storageRoot 和 codeHash，账户快照约 <strong>103 bytes</strong>。ML 的 1,312 bytes 公钥占 42 个槽，storage 快照约 4,086 bytes；SLH 的 32 bytes 公钥占 1 个槽，约 98 bytes。</p>
+      <p>因此，<strong>单账户 state 快照理论上约为 38 / 4,189 / 201 bytes</strong>，ML、SLH 相对 ECDSA 约放大 110.24 倍、5.29 倍；实测为 109.63 倍、5.27 倍，与推导接近。同一规模、同一口径下，总量放大倍数等于单账户平均放大倍数。</p>
+      <p>详细推导、记录数量核对及原始数据见<a href="chain-bench/storage/local-20261030/report.html">账户存储实验报告</a>。</p>
+
     </section>
   </main>
 </body>

@@ -1,0 +1,11 @@
+{
+  "os": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "logicalCPUs": 10,
+  "nodeVersion": "v25.9.0",
+  "pythonVersion": "3.13.3",
+  "filesystem": "Filesystem      Size    Used   Avail Capacity iused ifree %iused  Mounted on\n/dev/disk3s5   460Gi   295Gi   132Gi    70%    4.5M  1.4G    0%   /System/Volumes/Data\n",
+  "machdep.cpu.brand_string": "Apple M1 Pro",
+  "hw.memsize": "34359738368",
+  "hw.physicalcpu": "10"
+}

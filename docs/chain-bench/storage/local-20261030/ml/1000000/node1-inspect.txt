@@ -1,0 +1,58 @@
+INFO [10-30|22:42:12.987] Maximum peer count                       ETH=50 total=50
+INFO [10-30|22:42:12.989] Using pebble as db engine
+INFO [10-30|22:42:12.991] Sanitizing Go's GC trigger               percent=25
+INFO [10-30|22:42:12.992] Use CLI state scheme                     CLI=path
+INFO [10-30|22:42:12.993] Set global gas cap                       cap=50,000,000
+INFO [10-30|22:42:12.993] Initializing the KZG library             backend=gokzg
+INFO [10-30|22:42:14.872] Using pebble as the backing database
+INFO [10-30|22:42:14.872] Allocated cache and file handles         database=${REPO}/one-box/.runtime/storage-c4179f-ml/node1/geth/chaindata cache=1.60GiB handles=5120
+INFO [10-30|22:42:14.872] Allocated memory table size              database=${REPO}/one-box/.runtime/storage-c4179f-ml/node1/geth/chaindata "memory table"=136.50MiB
+INFO [10-30|22:42:14.895] Opened ancient database                  database=${REPO}/one-box/.runtime/storage-c4179f-ml/node1/geth/chaindata/ancient/chain readonly=true tail=0 frozen=0
+INFO [10-30|22:42:14.895] Opened Era store                         datadir=${REPO}/one-box/.runtime/storage-c4179f-ml/node1/geth/chaindata/ancient/chain/era
+INFO [10-30|22:42:22.898] Inspecting database                      count=95,175,008 size=11.08GiB elapsed=8.002s
+INFO [10-30|22:42:23.978] Opened ancient database                  database=${REPO}/one-box/.runtime/storage-c4179f-ml/node1/geth/chaindata/ancient/state readonly=true tail=0 frozen=44641
++-----------------------+-----------------------------+------------+-----------+
+|       Database        |          Category           |    Size    |   Items   |
++-----------------------+-----------------------------+------------+-----------+
+|    Key-Value store    |           Headers           | 39.55 MiB  |   44792   |
+|    Key-Value store    |           Bodies            |  1.32 GiB  |   44792   |
+|    Key-Value store    |        Receipt lists        | 36.92 MiB  |   44792   |
+|    Key-Value store    |  Difficulties (deprecated)  |  1.93 MiB  |   44792   |
+|    Key-Value store    |     Block number->hash      |  1.79 MiB  |   44779   |
+|    Key-Value store    |     Block hash->number      |  1.75 MiB  |   44792   |
+|    Key-Value store    |      Block accessList       |   0.00 B   |     0     |
+|    Key-Value store    |      Transaction index      |  5.38 MiB  |  161314   |
+|    Key-Value store    |  Log index filter-map rows  |  2.89 MiB  |   56358   |
+|    Key-Value store    | Log index last-block-of-map |  576.00 B  |    12     |
+|    Key-Value store    |     Log index block-lv      | 874.59 KiB |   44779   |
+|    Key-Value store    | Log bloombits (deprecated)  |   0.00 B   |     0     |
+|    Key-Value store    |       Contract codes        | 371.68 KiB |    37     |
+|    Key-Value store    |       Hash trie nodes       |   0.00 B   |     0     |
+|    Key-Value store    |   Path trie state lookups   |  1.75 MiB  |   44642   |
+|    Key-Value store    |   Path trie account nodes   | 156.30 MiB |  1358840  |
+|    Key-Value store    |   Path trie storage nodes   |  6.60 GiB  | 59012122  |
+|    Key-Value store    |      Verkle trie nodes      |   0.00 B   |     0     |
+|    Key-Value store    |  Verkle trie state lookups  |   0.00 B   |     0     |
+|    Key-Value store    |       Trie preimages        |   0.00 B   |     0     |
+|    Key-Value store    |      Account snapshot       | 98.23 MiB  |  1000048  |
+|    Key-Value store    |      Storage snapshot       |  3.81 GiB  | 42008728  |
+|    Key-Value store    |   Historical state index    |   0.00 B   |     0     |
+|    Key-Value store    |    Historical trie index    |   0.00 B   |     0     |
+|    Key-Value store    |      Clique snapshots       |   0.00 B   |     0     |
+|    Key-Value store    |     Singleton metadata      | 369.80 KiB |    13     |
+|    Key-Value store    |        BlobSidecars         |  1.96 MiB  |   44780   |
+|    Key-Value store    |      Parlia snapshots       | 97.79 KiB  |    44     |
+| Ancient store (Chain) |           Headers           |   6.00 B   |     0     |
+| Ancient store (Chain) |           Hashes            |   6.00 B   |     0     |
+| Ancient store (Chain) |           Bodies            |   6.00 B   |     0     |
+| Ancient store (Chain) |          Receipts           |   6.00 B   |     0     |
+| Ancient store (Chain) |            Diffs            |   6.00 B   |     0     |
+| Ancient store (Chain) |            Blobs            |   6.00 B   |     0     |
+| Ancient store (State) |        History.Meta         |  3.36 MiB  |   44641   |
+| Ancient store (State) |        Account.Index        | 33.48 MiB  |   44641   |
+| Ancient store (State) |        Storage.Index        | 78.06 MiB  |   44641   |
+| Ancient store (State) |        Account.Data         | 12.02 MiB  |   44641   |
+| Ancient store (State) |        Storage.Data         |  2.13 MiB  |   44641   |
++-----------------------+-----------------------------+------------+-----------+
+|                       |            Total            | 12.19 GiB  | 104000456 |
++-----------------------+-----------------------------+------------+-----------+

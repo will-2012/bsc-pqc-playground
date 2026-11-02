@@ -24,6 +24,14 @@ class ConfigTests(unittest.TestCase):
     def setUp(self):
         self.cfg = json.loads((ROOT / "one-box/config.json").read_text())
 
+    def test_storage_bench_write_buffer_is_optional_and_bounded(self):
+        validate(self.cfg)
+        for value in (0, 25, 100):
+            validate(dict(self.cfg, trie_dirty_cache_percent=value))
+        for value in (-1, 101, True):
+            with self.assertRaises(ValueError):
+                validate(dict(self.cfg, trie_dirty_cache_percent=value))
+
     def test_distinct_local_port_ranges(self):
         validate(self.cfg)
         self.cfg["p2p_port"] = self.cfg["rpc_port"]

@@ -1,0 +1,314 @@
+{
+  "schema": 1,
+  "node": "node2",
+  "accounts": 16,
+  "measuredAt": "2026-10-30T23:48:48.072993+00:00",
+  "host": "${HOST}",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "binarySha256": "a20ef488022ba6ee871dfde6d237996ebcfcd5d1c1665086fa2d0c6ef77b9122",
+  "command": [
+    "${REPO}/one-box/.runtime/storage-dc52d7-slhs/bin/geth",
+    "--datadir",
+    "${REPO}/one-box/.runtime/storage-dc52d7-slhs/node2",
+    "--state.scheme",
+    "path",
+    "--db.engine",
+    "pebble",
+    "db",
+    "inspect"
+  ],
+  "compactCommand": [
+    "${REPO}/one-box/.runtime/storage-dc52d7-slhs/bin/geth",
+    "--datadir",
+    "${REPO}/one-box/.runtime/storage-dc52d7-slhs/node2",
+    "--state.scheme",
+    "path",
+    "--db.engine",
+    "pebble",
+    "db",
+    "compact"
+  ],
+  "physicalBytes": {
+    "datadir": 2387968,
+    "chaindataBeforeCompact": 5103616,
+    "chaindata": 1142784,
+    "ancient": 217088
+  },
+  "freeBytes": 144996757504,
+  "inspect": [
+    {
+      "store": "Key-Value store",
+      "category": "Headers",
+      "sizeDisplay": "549.08 KiB",
+      "approxBytes": 562257.92,
+      "items": 658
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Bodies",
+      "sizeDisplay": "133.97 KiB",
+      "approxBytes": 137185.28,
+      "items": 658
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Receipt lists",
+      "sizeDisplay": "46.01 KiB",
+      "approxBytes": 47114.24,
+      "items": 658
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Difficulties (deprecated)",
+      "sizeDisplay": "28.73 KiB",
+      "approxBytes": 29419.52,
+      "items": 658
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Block number->hash",
+      "sizeDisplay": "26.82 KiB",
+      "approxBytes": 27463.68,
+      "items": 654
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Block hash->number",
+      "sizeDisplay": "26.35 KiB",
+      "approxBytes": 26982.4,
+      "items": 658
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Block accessList",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Transaction index",
+      "sizeDisplay": "1.91 KiB",
+      "approxBytes": 1955.84,
+      "items": 57
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Log index filter-map rows",
+      "sizeDisplay": "2.45 KiB",
+      "approxBytes": 2508.8,
+      "items": 88
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Log index last-block-of-map",
+      "sizeDisplay": "48.00 B",
+      "approxBytes": 48.0,
+      "items": 1
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Log index block-lv",
+      "sizeDisplay": "12.77 KiB",
+      "approxBytes": 13076.48,
+      "items": 654
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Log bloombits (deprecated)",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Contract codes",
+      "sizeDisplay": "369.60 KiB",
+      "approxBytes": 378470.4,
+      "items": 37
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Hash trie nodes",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Path trie state lookups",
+      "sizeDisplay": "20.70 KiB",
+      "approxBytes": 21196.8,
+      "items": 517
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Path trie account nodes",
+      "sizeDisplay": "10.05 KiB",
+      "approxBytes": 10291.2,
+      "items": 84
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Path trie storage nodes",
+      "sizeDisplay": "115.37 KiB",
+      "approxBytes": 118138.88,
+      "items": 1011
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Verkle trie nodes",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Verkle trie state lookups",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Trie preimages",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Account snapshot",
+      "sizeDisplay": "5.42 KiB",
+      "approxBytes": 5550.08,
+      "items": 64
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Storage snapshot",
+      "sizeDisplay": "66.92 KiB",
+      "approxBytes": 68526.08,
+      "items": 742
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Historical state index",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Historical trie index",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Clique snapshots",
+      "sizeDisplay": "0.00 B",
+      "approxBytes": 0.0,
+      "items": 0
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Singleton metadata",
+      "sizeDisplay": "369.81 KiB",
+      "approxBytes": 378685.44,
+      "items": 13
+    },
+    {
+      "store": "Key-Value store",
+      "category": "BlobSidecars",
+      "sizeDisplay": "29.02 KiB",
+      "approxBytes": 29716.48,
+      "items": 646
+    },
+    {
+      "store": "Key-Value store",
+      "category": "Parlia snapshots",
+      "sizeDisplay": "805.00 B",
+      "approxBytes": 805.0,
+      "items": 1
+    },
+    {
+      "store": "Ancient store (Chain)",
+      "category": "Hashes",
+      "sizeDisplay": "6.00 B",
+      "approxBytes": 6.0,
+      "items": 0
+    },
+    {
+      "store": "Ancient store (Chain)",
+      "category": "Bodies",
+      "sizeDisplay": "6.00 B",
+      "approxBytes": 6.0,
+      "items": 0
+    },
+    {
+      "store": "Ancient store (Chain)",
+      "category": "Receipts",
+      "sizeDisplay": "6.00 B",
+      "approxBytes": 6.0,
+      "items": 0
+    },
+    {
+      "store": "Ancient store (Chain)",
+      "category": "Diffs",
+      "sizeDisplay": "6.00 B",
+      "approxBytes": 6.0,
+      "items": 0
+    },
+    {
+      "store": "Ancient store (Chain)",
+      "category": "Blobs",
+      "sizeDisplay": "6.00 B",
+      "approxBytes": 6.0,
+      "items": 0
+    },
+    {
+      "store": "Ancient store (Chain)",
+      "category": "Headers",
+      "sizeDisplay": "6.00 B",
+      "approxBytes": 6.0,
+      "items": 0
+    },
+    {
+      "store": "Ancient store (State)",
+      "category": "Account.Index",
+      "sizeDisplay": "24.66 KiB",
+      "approxBytes": 25251.84,
+      "items": 516
+    },
+    {
+      "store": "Ancient store (State)",
+      "category": "Storage.Index",
+      "sizeDisplay": "14.75 KiB",
+      "approxBytes": 15104.0,
+      "items": 516
+    },
+    {
+      "store": "Ancient store (State)",
+      "category": "Account.Data",
+      "sizeDisplay": "44.58 KiB",
+      "approxBytes": 45649.92,
+      "items": 516
+    },
+    {
+      "store": "Ancient store (State)",
+      "category": "Storage.Data",
+      "sizeDisplay": "3.87 KiB",
+      "approxBytes": 3962.88,
+      "items": 516
+    },
+    {
+      "store": "Ancient store (State)",
+      "category": "History.Meta",
+      "sizeDisplay": "39.81 KiB",
+      "approxBytes": 40765.44,
+      "items": 516
+    }
+  ],
+  "note": "KV sizes are logical key+value bytes rounded by geth, not compressed physical sizes. Ancient is included in chaindata; do not add twice."
+}

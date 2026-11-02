@@ -52,24 +52,24 @@ perl "-I." "-Mconfigdata" "util/dofile.pl" "-oMakefile" include/crypto/dso_conf.
 DEBUG: all keys: APPLINKDIR, BINDIR, CMAKECONFIGDIR, COMMENT, ENGINESDIR, INCLUDEDIR, LDLIBS, LIBDIR, MODULESDIR, PKGCONFIGDIR, PREFIX, VERSION, libdir
 Use of uninitialized value in concatenation (.) or string at util/mkinstallvars.pl line 55.
 DEBUG: LIBDIR = , libdir =  => Use of uninitialized value in concatenation (.) or string at util/mkinstallvars.pl line 57.
-LIBDIR = 
+LIBDIR =
 No value given for CMAKECONFIGDIR
 No value given for PKGCONFIGDIR
 No value given for libdir
-DEBUG: PREFIX = . => PREFIX = /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl
+DEBUG: PREFIX = . => PREFIX = ${REPO}/tools/crypto-bench/.runtime/src/openssl
 Use of uninitialized value in concatenation (.) or string at util/mkinstallvars.pl line 72.
 DEBUG: libdir =  => Use of uninitialized value in concatenation (.) or string at util/mkinstallvars.pl line 75.
-libdir = 
-DEBUG: BINDIR = apps => BINDIR = /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/apps, BINDIR_REL_PREFIX = apps
+libdir =
+DEBUG: BINDIR = apps => BINDIR = ${REPO}/tools/crypto-bench/.runtime/src/openssl/apps, BINDIR_REL_PREFIX = apps
 DEBUG: LIBDIR = Use of uninitialized value in print at util/mkinstallvars.pl line 91.
  => Use of uninitialized value in concatenation (.) or string at util/mkinstallvars.pl line 108.
-LIBDIR = /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl, LIBDIR_REL_PREFIX = 
-DEBUG: INCLUDEDIR = [ include, ./include ] => INCLUDEDIR = [ /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/include, /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/include ], INCLUDEDIR_REL_PREFIX = [ include, ./include ]
-DEBUG: APPLINKDIR = ms => APPLINKDIR = /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/ms, APPLINKDIR_REL_PREFIX = ms
-DEBUG: ENGINESDIR = engines => ENGINESDIR = /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/engines, ENGINESDIR_REL_LIBDIR = engines
-DEBUG: MODULESDIR = providers => MODULESDIR = /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/providers, MODULESDIR_REL_LIBDIR = providers
-DEBUG: PKGCONFIGDIR = . => PKGCONFIGDIR = /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl, PKGCONFIGDIR_REL_LIBDIR = .
-DEBUG: CMAKECONFIGDIR = . => CMAKECONFIGDIR = /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl, CMAKECONFIGDIR_REL_LIBDIR = .
+LIBDIR = ${REPO}/tools/crypto-bench/.runtime/src/openssl, LIBDIR_REL_PREFIX =
+DEBUG: INCLUDEDIR = [ include, ./include ] => INCLUDEDIR = [ ${REPO}/tools/crypto-bench/.runtime/src/openssl/include, ${REPO}/tools/crypto-bench/.runtime/src/openssl/include ], INCLUDEDIR_REL_PREFIX = [ include, ./include ]
+DEBUG: APPLINKDIR = ms => APPLINKDIR = ${REPO}/tools/crypto-bench/.runtime/src/openssl/ms, APPLINKDIR_REL_PREFIX = ms
+DEBUG: ENGINESDIR = engines => ENGINESDIR = ${REPO}/tools/crypto-bench/.runtime/src/openssl/engines, ENGINESDIR_REL_LIBDIR = engines
+DEBUG: MODULESDIR = providers => MODULESDIR = ${REPO}/tools/crypto-bench/.runtime/src/openssl/providers, MODULESDIR_REL_LIBDIR = providers
+DEBUG: PKGCONFIGDIR = . => PKGCONFIGDIR = ${REPO}/tools/crypto-bench/.runtime/src/openssl, PKGCONFIGDIR_REL_LIBDIR = .
+DEBUG: CMAKECONFIGDIR = . => CMAKECONFIGDIR = ${REPO}/tools/crypto-bench/.runtime/src/openssl, CMAKECONFIGDIR_REL_LIBDIR = .
 Use of uninitialized value in join or string at util/mkinstallvars.pl line 157.
 perl "-I." "-Mconfigdata" "util/dofile.pl" "-oMakefile" include/openssl/asn1.h.in > include/openssl/asn1.h
 DEBUG: all keys: APPLINKDIR, BINDIR, CMAKECONFIGDIR, COMMENT, ENGINESDIR, INCLUDEDIR, LDLIBS, LIBDIR, MODULESDIR, PKGCONFIGDIR, PREFIX, VERSION, libdir
@@ -1522,7 +1522,7 @@ ar qc libcrypto.a crypto/libcrypto-lib-o_dir.o crypto/libcrypto-lib-o_fopen.o cr
 ar qc libcrypto.a providers/implementations/ciphers/liblegacy-lib-cipher_des.o providers/implementations/ciphers/liblegacy-lib-cipher_des_hw.o providers/implementations/ciphers/liblegacy-lib-cipher_desx.o providers/implementations/ciphers/liblegacy-lib-cipher_desx_hw.o providers/implementations/ciphers/liblegacy-lib-cipher_idea.o providers/implementations/ciphers/liblegacy-lib-cipher_idea_hw.o providers/implementations/ciphers/liblegacy-lib-cipher_rc2.o providers/implementations/ciphers/liblegacy-lib-cipher_rc2_hw.o providers/implementations/ciphers/liblegacy-lib-cipher_rc4.o providers/implementations/ciphers/liblegacy-lib-cipher_rc4_hmac_md5.o providers/implementations/ciphers/liblegacy-lib-cipher_rc4_hmac_md5_hw.o providers/implementations/ciphers/liblegacy-lib-cipher_rc4_hw.o providers/implementations/ciphers/liblegacy-lib-cipher_seed.o providers/implementations/ciphers/liblegacy-lib-cipher_seed_hw.o providers/implementations/digests/liblegacy-lib-md4_prov.o providers/implementations/digests/liblegacy-lib-mdc2_prov.o providers/implementations/digests/liblegacy-lib-wp_prov.o providers/implementations/kdfs/liblegacy-lib-pbkdf1.o providers/implementations/kdfs/liblegacy-lib-pvkkdf.o providers/common/der/libcommon-lib-der_digests_gen.o providers/common/der/libcommon-lib-der_dsa_gen.o providers/common/der/libcommon-lib-der_dsa_key.o providers/common/der/libcommon-lib-der_dsa_sig.o providers/common/der/libcommon-lib-der_ec_gen.o providers/common/der/libcommon-lib-der_ec_key.o providers/common/der/libcommon-lib-der_ec_sig.o providers/common/der/libcommon-lib-der_ecx_gen.o providers/common/der/libcommon-lib-der_ecx_key.o providers/common/der/libcommon-lib-der_hkdf_gen.o providers/common/der/libcommon-lib-der_ml_dsa_gen.o providers/common/der/libcommon-lib-der_ml_dsa_key.o providers/common/der/libcommon-lib-der_rsa_gen.o providers/common/der/libcommon-lib-der_rsa_key.o providers/common/der/libcommon-lib-der_slh_dsa_gen.o providers/common/der/libcommon-lib-der_slh_dsa_key.o providers/common/der/libcommon-lib-der_wrap_gen.o providers/common/libcommon-lib-provider_ctx.o providers/common/libcommon-lib-provider_err.o providers/implementations/ciphers/libcommon-lib-ciphercommon.o providers/implementations/ciphers/libcommon-lib-ciphercommon_block.o providers/implementations/ciphers/libcommon-lib-ciphercommon_ccm.o providers/implementations/ciphers/libcommon-lib-ciphercommon_ccm_hw.o providers/implementations/ciphers/libcommon-lib-ciphercommon_gcm.o providers/implementations/ciphers/libcommon-lib-ciphercommon_gcm_hw.o providers/implementations/ciphers/libcommon-lib-ciphercommon_hw.o providers/implementations/digests/libcommon-lib-digestcommon.o ssl/record/methods/libcommon-lib-tls_pad.o
 ranlib -c libcrypto.a || echo Never mind.
 
-$ cmake -S /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/secp256k1 -B /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/secp -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_C_FLAGS_RELEASE=-O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DSECP256K1_BUILD_BENCHMARK=OFF -DSECP256K1_BUILD_EXHAUSTIVE_TESTS=OFF -DSECP256K1_BUILD_CTIME_TESTS=OFF
+$ cmake -S ${REPO}/tools/crypto-bench/.runtime/src/secp256k1 -B ${REPO}/tools/crypto-bench/.runtime/macos-arm64/secp -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_C_COMPILER=clang -DCMAKE_C_FLAGS_RELEASE=-O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DSECP256K1_BUILD_BENCHMARK=OFF -DSECP256K1_BUILD_EXHAUSTIVE_TESTS=OFF -DSECP256K1_BUILD_CTIME_TESTS=OFF
 -- The C compiler identification is AppleClang 21.0.0.21000101
 -- Detecting C compiler ABI info
 -- Detecting C compiler ABI info - done
@@ -1531,7 +1531,7 @@ $ cmake -S /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.run
 -- Detecting C compile features - done
 -- Performing Test HAVE_X86_64_ASM
 -- Performing Test HAVE_X86_64_ASM - Failed
--- Could NOT find Valgrind (missing: Valgrind_INCLUDE_DIR Valgrind_WORKS) 
+-- Could NOT find Valgrind (missing: Valgrind_INCLUDE_DIR Valgrind_WORKS)
 -- Performing Test C_SUPPORTS__WALL
 -- Performing Test C_SUPPORTS__WALL - Success
 -- Performing Test C_SUPPORTS__PEDANTIC
@@ -1592,19 +1592,19 @@ API visibility attributes ............. ON
 Valgrind .............................. OFF
 Preprocessor defined macros ........... ECMULT_WINDOW_SIZE=15 COMB_BLOCKS=43 COMB_TEETH=6
 C compiler ............................ AppleClang 21.0.0.21000101, /usr/bin/clang
-CFLAGS ................................ 
+CFLAGS ................................
 Compile options ....................... -Wall -pedantic -Wcast-align -Wconditional-uninitialized -Wextra -Wnested-externs -Wno-long-long -Wno-overlength-strings -Wno-unused-function -Wreserved-identifier -Wshadow -Wstrict-prototypes -Wundef
 Build type:
  - CMAKE_BUILD_TYPE ................... Release
  - CFLAGS ............................. -O2 -mcpu=apple-m1 -fno-fast-math -ffp-contract=off
- - LDFLAGS for executables ............ 
- - LDFLAGS for shared libraries ....... 
+ - LDFLAGS for executables ............
+ - LDFLAGS for shared libraries .......
 
 -- Configuring done (4.4s)
 -- Generating done (0.0s)
--- Build files have been written to: /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/secp
+-- Build files have been written to: ${REPO}/tools/crypto-bench/.runtime/macos-arm64/secp
 
-$ cmake --build /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/secp -j4
+$ cmake --build ${REPO}/tools/crypto-bench/.runtime/macos-arm64/secp -j4
 [ 12%] Building C object src/CMakeFiles/secp256k1_precomputed.dir/precomputed_ecmult.c.o
 [ 25%] Building C object src/CMakeFiles/secp256k1_precomputed.dir/precomputed_ecmult_gen.c.o
 [ 25%] Built target secp256k1_precomputed
@@ -1618,9 +1618,9 @@ $ cmake --build /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench
 [100%] Linking C executable ../bin/noverify_tests
 [100%] Built target noverify_tests
 
-$ ctest --test-dir /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/secp --output-on-failure
-Internal ctest changing into directory: /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/secp
-Test project /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/secp
+$ ctest --test-dir ${REPO}/tools/crypto-bench/.runtime/macos-arm64/secp --output-on-failure
+Internal ctest changing into directory: ${REPO}/tools/crypto-bench/.runtime/macos-arm64/secp
+Test project ${REPO}/tools/crypto-bench/.runtime/macos-arm64/secp
     Start 1: secp256k1_noverify_tests
 1/2 Test #1: secp256k1_noverify_tests .........   Passed   13.63 sec
     Start 2: secp256k1_tests
@@ -1809,45 +1809,45 @@ MLDSA_SIG_BYTES: 3309
 test/build/mldsa65/bin/gen_KAT65 | python3 META.py --scheme 65
 META.yml ML-DSA-65 kat-sha256: OK
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/codec.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_codec.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/codec.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_codec.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/util.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_util.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/util.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_util.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/common.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_common.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/common.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_common.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/fft.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_fft.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/fft.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_fft.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/fft_tree.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_fft_tree.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/fft_tree.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_fft_tree.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/fpr.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_fpr.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/fpr.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_fpr.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/keygen.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_keygen.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/keygen.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_keygen.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/rng.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_rng.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/rng.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_rng.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/poly_float.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_poly_float.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/poly_float.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_poly_float.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/sampler.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_sampler.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/sampler.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_sampler.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/shake.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_shake.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/shake.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_shake.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/sign.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_sign.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/sign.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_sign.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/vrfy.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_vrfy.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/vrfy.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_vrfy.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/ntt.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_ntt.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/ntt.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_ntt.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/ntt_consts.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_ntt_consts.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/ntt_consts.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_ntt_consts.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/poly_int.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_poly_int.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/poly_int.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_poly_int.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/falcon.c -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_falcon.o
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -c ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/falcon.c -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_falcon.o
 
-$ ar rcs /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/libfalcon.a /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_codec.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_util.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_common.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_fft.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_fft_tree.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_fpr.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_keygen.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_rng.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_poly_float.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_sampler.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_shake.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_sign.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_vrfy.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_ntt.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_ntt_consts.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_poly_int.o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon_falcon.o
+$ ar rcs ${REPO}/tools/crypto-bench/.runtime/macos-arm64/libfalcon.a ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_codec.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_util.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_common.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_fft.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_fft_tree.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_fpr.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_keygen.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_rng.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_poly_float.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_sampler.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_shake.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_sign.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_vrfy.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_ntt.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_ntt_consts.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_poly_int.o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon_falcon.o
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/test_falcon.c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/libfalcon.a -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon-upstream-test
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -Dfalcon_verify=falcon_neon_verify -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon ${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon/test_falcon.c ${REPO}/tools/crypto-bench/.runtime/macos-arm64/libfalcon.a -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon-upstream-test
 
-$ /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon-upstream-test
+$ ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon-upstream-test
 Test SHAKE256: done.
 Test encode/decode:  done.
 Test verify:  done.
@@ -1862,20 +1862,20 @@ Test external API: [9]done.
 Test NIST KAT (512):  a57400cbaee7109358859a56c735a3cf048a9da2 done.
 ====
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/include -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/secp256k1/include -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/mldsa/mldsa -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -DML_WRAPPER_TEST_MAIN /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/mldsa.c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/mldsa/test/build/libmldsa44.a /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/mldsa/test/build/libmldsa65.a /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/libcrypto.a -framework Security -framework CoreFoundation -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/ml-interop-test
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -I${REPO}/tools/crypto-bench/.runtime/src/openssl/include -I${REPO}/tools/crypto-bench/.runtime/src/secp256k1/include -I${REPO}/tools/crypto-bench/.runtime/src/mldsa/mldsa -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -DML_WRAPPER_TEST_MAIN ${REPO}/tools/crypto-bench/mldsa.c ${REPO}/tools/crypto-bench/.runtime/src/mldsa/test/build/libmldsa44.a ${REPO}/tools/crypto-bench/.runtime/src/mldsa/test/build/libmldsa65.a ${REPO}/tools/crypto-bench/.runtime/src/openssl/libcrypto.a -framework Security -framework CoreFoundation -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/ml-interop-test
 
-$ /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/ml-interop-test
+$ ${REPO}/tools/crypto-bench/.runtime/macos-arm64/ml-interop-test
 PASS: ML-DSA-44 bidirectional OpenSSL interoperability, randomized output, wrong key and malformed lengths
 PASS: ML-DSA-65 bidirectional OpenSSL interoperability, randomized output, wrong key and malformed lengths
 
-$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/include -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/secp256k1/include -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/mldsa/mldsa -I/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -DFALCON_WRAPPER_TEST_MAIN /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/falcon.c /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/libfalcon.a -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon-test
+$ clang -O3 -mcpu=apple-m1 -DNDEBUG -fno-fast-math -ffp-contract=off -DFALCON_LOGN=9 -DAPPLE_M1=0 -I${REPO}/tools/crypto-bench/.runtime/src/openssl/include -I${REPO}/tools/crypto-bench/.runtime/src/secp256k1/include -I${REPO}/tools/crypto-bench/.runtime/src/mldsa/mldsa -I${REPO}/tools/crypto-bench/.runtime/src/falcon-neon/falcon-armv8/neon -DFALCON_WRAPPER_TEST_MAIN ${REPO}/tools/crypto-bench/falcon.c ${REPO}/tools/crypto-bench/.runtime/macos-arm64/libfalcon.a -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon-test
 
-$ /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/falcon-test /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/testdata/falcon.tsv
+$ ${REPO}/tools/crypto-bench/.runtime/macos-arm64/falcon-test ${REPO}/tools/crypto-bench/testdata/falcon.tsv
 PASS: 2 BC official Falcon KATs + altered-message/signature negatives; 32 fresh-random C sign/verify vectors + four negatives; TRON pk=896 sk=1280 sig=650..662; state_bytes=42128
 
-$ go build -trimpath -o /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/bench .
+$ go build -trimpath -o ${REPO}/tools/crypto-bench/.runtime/macos-arm64/bench .
 # bsc-pqc-playground/crypto-bench
-ld: warning: ignoring duplicate libraries: '/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/libfalcon.a', '/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/secp/lib/libsecp256k1.a', '/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/mldsa/test/build/libmldsa44.a', '/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/mldsa/test/build/libmldsa65.a', '/Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/src/openssl/libcrypto.a'
+ld: warning: ignoring duplicate libraries: '${REPO}/tools/crypto-bench/.runtime/macos-arm64/libfalcon.a', '${REPO}/tools/crypto-bench/.runtime/macos-arm64/secp/lib/libsecp256k1.a', '${REPO}/tools/crypto-bench/.runtime/src/mldsa/test/build/libmldsa44.a', '${REPO}/tools/crypto-bench/.runtime/src/mldsa/test/build/libmldsa65.a', '${REPO}/tools/crypto-bench/.runtime/src/openssl/libcrypto.a'
 
-$ /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/.runtime/macos-arm64/bench --kat /Users/jiaqiwang/workspace/bsc-pqc-playground/tools/crypto-bench/testdata/standard.tsv
+$ ${REPO}/tools/crypto-bench/.runtime/macos-arm64/bench --kat ${REPO}/tools/crypto-bench/testdata/standard.tsv
 {"cases":24,"standard_vectors":"PASS"}

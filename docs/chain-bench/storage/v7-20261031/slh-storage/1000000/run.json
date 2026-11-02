@@ -1,0 +1,18 @@
+{
+  "count": 1000000,
+  "progress": {
+    "schema": 1,
+    "algorithm": "slh-storage",
+    "genesisHash": "0x99a666d14de906aa1bfedab7f9d935418638472c0e81d7bcdf1b4ef319c266b0",
+    "count": 1000000,
+    "totalGas": "434600104476",
+    "totalCalldata": 48500000,
+    "transactions": 125000,
+    "loadMs": 16614550.089256063,
+    "lastBlock": 37904,
+    "lastHash": "0x8c526e9e933a0bd439dc62c692905f1f70137f18d5c1918ddff2d183a70d2671"
+  },
+  "nodeLogsBytes": 85065728,
+  "walletAndLoadBytes": 27287552,
+  "freeBytes": 143173087232
+}

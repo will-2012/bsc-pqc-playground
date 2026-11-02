@@ -1,0 +1,261 @@
+{
+  "schema": 1,
+  "status": "complete",
+  "steps": [
+    10000,
+    100000,
+    1000000
+  ],
+  "algorithms": [
+    "ecdsa",
+    "ml",
+    "slh"
+  ],
+  "groups": {
+    "ecdsa": {
+      "completed": [
+        10000,
+        100000,
+        1000000
+      ],
+      "environment": "storage-c4179f-ecdsa",
+      "loadConfig": {
+        "schema": 1,
+        "algorithm": "ecdsa",
+        "chainId": 714,
+        "genesisHash": "0xe4af59c5506034d54c30403d907036f5f4deb8b1ccfbbdcc855aa8560daae671",
+        "rpc": "http://127.0.0.1:21545",
+        "batch": "0x4252b9fb9f241d3ea2a76314893de7e9e3373fef",
+        "batchArtifact": "${REPO}/one-box/.runtime/storage-bench/contracts/StorageBatch.sol/StorageBatch.json",
+        "entryPoint": "0x4f794fb5656eab7c7ea94f9bbbf2213d4e912d58",
+        "keygenBinary": "${REPO}/one-box/.runtime/storage-bench/keygen",
+        "keyWorkers": 4,
+        "gasPrice": 1000000000,
+        "gasPerAccount": 40000,
+        "batchSize": 256,
+        "inflight": 4,
+        "minFreeBytes": 32212254720,
+        "nodes": [
+          {
+            "id": "node0",
+            "rpc": "http://127.0.0.1:21545"
+          },
+          {
+            "id": "node1",
+            "rpc": "http://127.0.0.1:21547"
+          },
+          {
+            "id": "node2",
+            "rpc": "http://127.0.0.1:21549"
+          }
+        ],
+        "policy": "Independent keys; real existing Factory contracts; exactly 1 wei per address; no UserOperation for population creation; no history pruning."
+      },
+      "artifactHashes": {
+        "batchArtifact": "d70435b546f9c5d65e44da14f0a4a5faf318b138ed028984995aaa3b8dedf932"
+      },
+      "nextStageBudget": {
+        "count": 1000000,
+        "freeBytes": 141799354368,
+        "projectedAdditionalBytes": 782659584.0,
+        "reserveBytes": 32212254720
+      },
+      "finished": true,
+      "freeBeforeCleanup": 141338910720,
+      "chainRemoved": true,
+      "freeAfterCleanup": 142090575872
+    },
+    "ml": {
+      "completed": [
+        10000,
+        100000,
+        1000000
+      ],
+      "environment": "storage-c4179f-ml",
+      "loadConfig": {
+        "schema": 1,
+        "algorithm": "ml",
+        "chainId": 714,
+        "genesisHash": "0xf0a52be684ae922f29b2dbcb5a8df655066a65e1f876f1161901abeb29b93e20",
+        "rpc": "http://127.0.0.1:21545",
+        "batch": "0x836268d3fc35b8fddcfb26177baebc6dbb1b739b",
+        "batchArtifact": "${REPO}/one-box/.runtime/storage-bench/contracts/StorageBatch.sol/StorageBatch.json",
+        "entryPoint": "0x822eee2cee7a0cdadf958a918319452ff0f5436c",
+        "factory": "0xc4b2bc482831ff6fee12ca4f7b9e65454e6b4bff",
+        "verifier": "0x491ab7bd7b65389ebcebbec24afa062f27abcde7",
+        "accountArtifact": "${REPO}/contract/out/MLDSAAccount.sol/MLDSAAccount.json",
+        "keygenBinary": "${REPO}/one-box/.runtime/storage-bench/keygen",
+        "keyWorkers": 4,
+        "gasPrice": 1000000000,
+        "gasPerAccount": 1700000,
+        "batchSize": 8,
+        "inflight": 4,
+        "minFreeBytes": 32212254720,
+        "nodes": [
+          {
+            "id": "node0",
+            "rpc": "http://127.0.0.1:21545"
+          },
+          {
+            "id": "node1",
+            "rpc": "http://127.0.0.1:21547"
+          },
+          {
+            "id": "node2",
+            "rpc": "http://127.0.0.1:21549"
+          }
+        ],
+        "policy": "Independent keys; real existing Factory contracts; exactly 1 wei per address; no UserOperation for population creation; no history pruning."
+      },
+      "artifactHashes": {
+        "batchArtifact": "d70435b546f9c5d65e44da14f0a4a5faf318b138ed028984995aaa3b8dedf932",
+        "accountArtifact": "683a54bdbf673d20967326dbcf4861def8d6abc1c2eb87ee26a329d138792a88"
+      },
+      "nextStageBudget": {
+        "count": 1000000,
+        "freeBytes": 139798814720,
+        "projectedAdditionalBytes": 31007342592.0,
+        "reserveBytes": 32212254720
+      },
+      "finished": true,
+      "freeBeforeCleanup": 121864675328,
+      "chainRemoved": true,
+      "freeAfterCleanup": 145342263296
+    },
+    "slh": {
+      "completed": [
+        10000,
+        100000,
+        1000000
+      ],
+      "environment": "storage-c4179f-slh",
+      "loadConfig": {
+        "schema": 1,
+        "algorithm": "slh",
+        "chainId": 714,
+        "genesisHash": "0xaf03c6407d71f9c7b2d28bc6dea9fb38d5e255728afa28d7233435920c8a33a3",
+        "rpc": "http://127.0.0.1:21545",
+        "batch": "0x79fd033911d7b6a6afbac856ef68250a2808ef1a",
+        "batchArtifact": "${REPO}/one-box/.runtime/storage-bench/contracts/StorageBatch.sol/StorageBatch.json",
+        "entryPoint": "0x962ca0aa2077390b4935ea7eafc6bbfcabe396c6",
+        "factory": "0xe091148c361f598effc3c57661f40f90701f5749",
+        "verifier": "0xbbaac2fd46ac8cbb47794a96c0fc5e33eb460b1d",
+        "accountArtifact": "${REPO}/contract/out/PQAccount.sol/PQAccount.json",
+        "keygenBinary": "${REPO}/one-box/.runtime/storage-bench/keygen",
+        "keyWorkers": 4,
+        "gasPrice": 1000000000,
+        "gasPerAccount": 700000,
+        "batchSize": 8,
+        "inflight": 4,
+        "minFreeBytes": 32212254720,
+        "nodes": [
+          {
+            "id": "node0",
+            "rpc": "http://127.0.0.1:21545"
+          },
+          {
+            "id": "node1",
+            "rpc": "http://127.0.0.1:21547"
+          },
+          {
+            "id": "node2",
+            "rpc": "http://127.0.0.1:21549"
+          }
+        ],
+        "policy": "Independent keys; real existing Factory contracts; exactly 1 wei per address; no UserOperation for population creation; no history pruning."
+      },
+      "artifactHashes": {
+        "batchArtifact": "d70435b546f9c5d65e44da14f0a4a5faf318b138ed028984995aaa3b8dedf932",
+        "accountArtifact": "a389fbdf295d989f58c7f676fa73b698b86e13e7cb18538565372c27b56646cc"
+      },
+      "nextStageBudget": {
+        "count": 1000000,
+        "freeBytes": 144936484864,
+        "projectedAdditionalBytes": 2372198400.0,
+        "reserveBytes": 32212254720
+      },
+      "finished": true,
+      "freeBeforeCleanup": 143178252288,
+      "chainRemoved": true,
+      "freeAfterCleanup": 145174573056
+    }
+  },
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "startedAt": "2026-10-30T08:36:03.816200+00:00",
+  "config": {
+    "chain_id": 714,
+    "validators": 3,
+    "test_accounts": 5,
+    "validator_balance_bnb": 1000000,
+    "test_balance_bnb": 1000000,
+    "rpc_port": 21545,
+    "p2p_port": 34311,
+    "gas_limit": 70000000,
+    "gas_price_wei": 1000000000,
+    "cache_mb": 1024,
+    "breathe_seconds": 600,
+    "passed_fork_delay_seconds": 60,
+    "latest_fork_delay_seconds": 90,
+    "pq_precompile": 6,
+    "trie_dirty_cache_percent": 0
+  },
+  "historyPolicy": "full; no pruning",
+  "gitCommit": "b8d4776bf0325c281b6a15abb1c9e39c73fa3b61",
+  "sourceHashes": {
+    "tools/chain-bench/storage/build.py": "772febc1842c2aeb0c0c1a94b1134c5cc95264bd5dda46531263c4d863141e5d",
+    "tools/chain-bench/storage/measure.py": "56a3926322515e726c613edc92353e83c074637a7efb03826fb4550ad6327499",
+    "tools/chain-bench/storage/run.py": "cd76e85a0cb0eddb50e8c65918d6d68308cff61e481b3d4655b3e2966b3c286c",
+    "tools/chain-bench/storage/keygen.c": "1a58e9aee917cb3e6d1337c28e0ef97553ad8bd6324868aeebdb68be04356512",
+    "tools/chain-bench/storage/foundry.toml": "fcf37311b0ea8b33a1784abc865bbb2825d2a02fb5ad694ea7549918bd6a0362",
+    "tools/chain-bench/storage/StorageBatch.sol": "b46ca11ac4d45adef9fdbb4520311bec823f66fadfdc85971448549c4729fff2",
+    "tools/chain-bench/storage/setup.mjs": "dc236206eb78581da00e43c808ec328ab7bfde834187a41d6a00c93730b03c92",
+    "tools/chain-bench/storage/test_measure.py": "acae5f00b117bf07173a73fa5542affbf351ff5e0f1e543e3ceee3fa1ae6c5e4",
+    "tools/chain-bench/storage/test_keys.mjs": "7c73cb989cca2d5eca68a840eb89635c8e60c9fd112b7e18e8af773b4d324130",
+    "tools/chain-bench/storage/load.mjs": "b864342f6052b7dcb104ab0f35ddac4663f28ffc721d3cb79a60c13699f4f6f0",
+    "tools/chain-bench/storage/keys.mjs": "938e687b6a5847e4d31e30ae879301ae1278850e32551a1490d233fc6af6de3a"
+  },
+  "binarySha256": "a20ef488022ba6ee871dfde6d237996ebcfcd5d1c1665086fa2d0c6ef77b9122",
+  "build": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "commands": [
+      [
+        "cc",
+        "-O3",
+        "-mcpu=apple-m1",
+        "-I${REPO}/tools/crypto-bench/.runtime/src/openssl/include",
+        "${REPO}/tools/chain-bench/storage/keygen.c",
+        "${REPO}/tools/crypto-bench/.runtime/src/openssl/libcrypto.a",
+        "-framework",
+        "Security",
+        "-framework",
+        "CoreFoundation",
+        "-o",
+        "${REPO}/one-box/.runtime/storage-bench/keygen"
+      ],
+      [
+        "forge",
+        "build",
+        "--root",
+        "${REPO}/tools/chain-bench/storage",
+        "--out",
+        "${REPO}/one-box/.runtime/storage-bench/contracts",
+        "--cache-path",
+        "${REPO}/one-box/.runtime/storage-bench/forge-cache"
+      ]
+    ],
+    "keygenSha256": "9322a17e4e42009c81e42a3995bfd26dfa738a6774d54832c573ca2dfa909e64",
+    "libcryptoSha256": "98dbe3bdf9c32ca536e0bd9f6894f2c4c9a7d2e9b7f30ff0bd93654fbc1ba0e6",
+    "opensslSource": {
+      "repository": "https://github.com/openssl/openssl",
+      "version": "OpenSSL 3.6.3",
+      "commit": "aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f",
+      "url": "https://codeload.github.com/openssl/openssl/tar.gz/aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f",
+      "sha256": "5107bc26b739daed3b2e5cc1586ab85ab01ba5c15388509f635a9fe82c1edb34",
+      "public_vectors": {
+        "fixture": "testdata/standard.tsv",
+        "sha256": "52c9b0c0eaa3d748661899767491d75401dec29ff45c15e2dff65328ebf658df",
+        "source": "OpenSSL test/recipes/30-test_evp_data/{evppkey_ml_dsa_sigver.txt,evppkey_slh_dsa_sigver.txt}; ACVP-derived Pure vectors: 2 valid + 6 invalid each for ML44/SLH SHA2 128s/128f"
+      }
+    }
+  }
+}

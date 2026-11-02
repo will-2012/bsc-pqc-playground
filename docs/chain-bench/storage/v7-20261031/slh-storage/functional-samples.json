@@ -1,0 +1,88 @@
+{
+  "algorithm": "slh-storage",
+  "samples": [
+    {
+      "created": {
+        "id": "1d03d2b072201a3c47fbb494",
+        "address": "0x4EFB220EB7C3A9A55984529a41bB8Bb77c5c010F",
+        "publicKey": "0x27cb645dd9a18728f4028e7f703205885fc7b61e1dfaf9033db3a77fc8b3a77c",
+        "userOperationHash": "0x7fa8098e8f5d2a0ea5467ff976202a4de1a3d979929c4aa86e8e3ae2bb69091a",
+        "transactionHash": "0x25e0f63c2f9121b6e88c4fff5036d30726d5f8ab14686f6286f5ca012e7c7e7b",
+        "success": true,
+        "transactionStatus": "success",
+        "blockHash": "0x3973c2d2cba58b5f5d92863e1f6a30c290dd7651294824a25c37913c80a6f3e1",
+        "blockNumber": "248",
+        "actualGasUsed": "914095",
+        "actualGasCost": "914095000000000",
+        "outerTransactionGas": "755262",
+        "outerGasPrice": "1200000000",
+        "outerTransactionCost": "906314400000000",
+        "verificationGasLimit": "773416",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8576
+      },
+      "transferred": {
+        "id": "1d03d2b072201a3c47fbb494",
+        "from": "0x4EFB220EB7C3A9A55984529a41bB8Bb77c5c010F",
+        "to": "0x07a6199ac501fb1A20DBD5B04F71AaD3624cA90b",
+        "amountWei": "1000000000000000",
+        "userOperationHash": "0xcad93d5affe5e0c2810e71d3deb019f833eaf57faa575890884849504cd3e3a6",
+        "transactionHash": "0xb88aee054c5b8d94dc5832d6961e051ce8269b2164ed381f33464f2b6807a839",
+        "success": true,
+        "transactionStatus": "success",
+        "blockHash": "0xb090f051b086d31b2725499d18767332b4dec86f2c0634e4667f9051be518ca9",
+        "blockNumber": "256",
+        "actualGasUsed": "459494",
+        "actualGasCost": "459494000000000",
+        "outerTransactionGas": "344520",
+        "outerGasPrice": "1200000000",
+        "outerTransactionCost": "413424000000000",
+        "verificationGasLimit": "154519",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8480
+      }
+    },
+    {
+      "created": {
+        "id": "a14df0169cf792418e490b9c",
+        "address": "0x413e70557480D6d9a1AE19f322C7bd4f61492f8d",
+        "publicKey": "0xbfb6c47dc113de0f177d8afad16cfaba175dba02f76b5d5d69a1b215552c655b",
+        "userOperationHash": "0xebbdb05c1d22c9e5cb525c744e08eadc5e5836769d3e4bce6024417787f900a4",
+        "transactionHash": "0xf144fb34e65d12d4e5b3fe1cb7237bc4f7accd4edb42ccb265d2b9216a28f598",
+        "success": true,
+        "transactionStatus": "success",
+        "blockHash": "0xb07bee37f5ec225f3618d48f5779d3d6bc7d96baf8eec8f763513d2f0b2d4ea7",
+        "blockNumber": "266",
+        "actualGasUsed": "914082",
+        "actualGasCost": "914082000000000",
+        "outerTransactionGas": "755274",
+        "outerGasPrice": "1200000000",
+        "outerTransactionCost": "906328800000000",
+        "verificationGasLimit": "773416",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8576
+      },
+      "transferred": {
+        "id": "a14df0169cf792418e490b9c",
+        "from": "0x413e70557480D6d9a1AE19f322C7bd4f61492f8d",
+        "to": "0x07a6199ac501fb1A20DBD5B04F71AaD3624cA90b",
+        "amountWei": "1000000000000000",
+        "userOperationHash": "0xb2f60caa9eb5426b7e7898d744347d6d9a936da9c4156f1340b765e236954e2d",
+        "transactionHash": "0xf72b9a07a94b01b2b97bbb0b58a85cb2c79494d0f41030d10d1759f060150515",
+        "success": true,
+        "transactionStatus": "success",
+        "blockHash": "0x27ff27487cf28f80abfecf6f558f9c900fe461cf80973530a22f32e16489c332",
+        "blockNumber": "275",
+        "actualGasUsed": "459494",
+        "actualGasCost": "459494000000000",
+        "outerTransactionGas": "344670",
+        "outerGasPrice": "1200000000",
+        "outerTransactionCost": "413604000000000",
+        "verificationGasLimit": "154519",
+        "signatureBytes": 7856,
+        "packedUserOperationBytes": 8480
+      }
+    }
+  ],
+  "note": "Outside the measured population; completed before the zero-account baseline."
+}

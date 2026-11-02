@@ -12,6 +12,7 @@
 | v4 | ML-DSA-44，预编译 | mldsa-v4 |
 | v5 | ML-DSA-65，预编译 | mldsa65-v5 |
 | v6 | SLH-DSA-SHA2-128f，预编译 | slh-dsa-v6 |
+| v7 | SLH-DSA-SHA2-128s，预编译；公钥存 storage | slh-dsa-v7 |
 
 `run` 和 `common/run.mjs` 是共用链上测量入口。CPU、负载、trace 和分叉检查也在 `common/`；`v*/` 只保留版本参数、入口和必要的向量生成脚本。v1 没有独立实现，因此不建立空目录。
 
@@ -81,3 +82,7 @@ python3 tools/chain-bench/audit.py
 ```
 
 正文来自 `docs/chain-bench/README.md`，摘要卡片由归档 JSON 计算；更新正文后重新生成 HTML。交叉复核会离线检查两份报告、原始统计、gas、定价、交易去重与公开数据，不启动链，也不改写测量时的源码记录。
+
+## v7 公钥存储对照
+
+新增独立 Account / Factory，复用 v2 预编译。钱包、创建/转账和存储阶梯入口见 [v7](v7/README.md)。

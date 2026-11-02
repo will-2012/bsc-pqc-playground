@@ -68,3 +68,7 @@ Falcon 公钥为 896-byte 主体，不能直接使用 common/PQAccount 的 bytes
 ## v6：SLH-DSA-SHA2-128f
 
 `src/v6/SLHDSA128fPrecompile.sol` 以 `0x0105` 验证固定 17,088-byte 签名；账户与工厂复用 common 中的 bytes32 公钥版本，公钥通过 immutable 嵌入代码。新部署绑定新的验证器，不改变 v1/v2 账户。历史接口名 `ISLHDSA128s` 仅定义通用的 verify ABI，复用它不表示 v6 使用 128s 算法。无算法回退、管理员或换钥接口。
+
+## v7：SLH 公钥放入 storage
+
+`src/v7/PQStorageAccount.sol` 和 `PQStorageAccountFactory.sol` 是新增的独立实现。32 bytes 公钥只在构造函数写入 slot 0，没有修改入口；EntryPoint 和验证器仍为 immutable。相同 EntryPoint/验证器下，不同公钥的账户运行时代码相同，可以按 codeHash 共享。CREATE2 地址仍绑定公钥和 salt。原 v1–v6 源码与部署保持不变；v7 复用 v2 的验签预编译。

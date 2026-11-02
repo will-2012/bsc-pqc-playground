@@ -1,0 +1,18 @@
+{
+  "count": 10000,
+  "progress": {
+    "schema": 1,
+    "algorithm": "ecdsa",
+    "genesisHash": "0xe4af59c5506034d54c30403d907036f5f4deb8b1ccfbbdcc855aa8560daae671",
+    "count": 10000,
+    "totalGas": "359362248",
+    "totalCalldata": 324000,
+    "transactions": 40,
+    "loadMs": 9733.377290999999,
+    "lastBlock": 477,
+    "lastHash": "0x98b5fa9d5a56cedceffe6edcbdc4610b82424f5ecdb3c63302602d8399e246ae"
+  },
+  "nodeLogsBytes": 954368,
+  "walletAndLoadBytes": 32768,
+  "freeBytes": 141859921920
+}

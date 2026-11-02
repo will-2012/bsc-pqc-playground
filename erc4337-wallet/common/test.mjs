@@ -10,7 +10,7 @@ import {artifact, createAccount, deployment, loadIdentity, prepare, smartAccount
 import {getProfile} from '../profiles.mjs';
 
 export async function test(ctx) {
-  assert(['slh-dsa-v1','slh-dsa-v2','slh-dsa-v6'].includes(ctx.profile.id),'This suite covers SLH profiles');
+  assert(['slh-dsa-v1','slh-dsa-v2','slh-dsa-v6','slh-dsa-v7'].includes(ctx.profile.id),'This suite covers SLH profiles');
   const slh=ctx.profile.algorithm==='SLH-DSA-SHA2-128f'?slh_dsa_sha2_128f:slh_dsa_sha2_128s;
   const signatureSize=ctx.profile.algorithm==='SLH-DSA-SHA2-128f'?17088:7856;
   const d = await deployment(ctx);

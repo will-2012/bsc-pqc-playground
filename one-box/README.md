@@ -283,3 +283,5 @@ v5 在 `.runtime/build/v5/` 中构建，复用 v4 的 ML 后端准备流程，�
 ```
 
 配置标记 `pq_precompile=6`，默认 RPC/P2P 各加 50。在原有 `pqTime` 同时启用五个预编译，新增 `0x0105`，不改变旧地址或旧价格。原生层与 v2 使用同一固定版本的 Go SLH 后端，构建仍限定 macOS arm64。输入为 `publicKey[32] || userOpHash[32] || signature[17088]`，采用 FIPS 205 Pure、空 context，返回 32-byte 0/1。Alto 仅在该环境额外允许此实验地址，safe-mode 保持开启；同时按 handleOps 编码大小拆包，calldata 上限 130,048 bytes，为 BSC 的 128 KiB 交易上限预留 1 KiB 封装空间。当前钱包不含 7702 授权。
+
+存储专项实验可在配置中增加 `trie_dirty_cache_percent`（0–100，默认 25），对应 `--cache.gc`，控制 path 状态写缓冲。设为 0 用于配合等待 diff 层推进后测量数据库分类；不会关闭状态根校验，也不代表生产性能推荐。

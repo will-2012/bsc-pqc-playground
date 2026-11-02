@@ -1,0 +1,19 @@
+{
+  "sameRuntimeCode": true,
+  "samples": [
+    {
+      "address": "0xc81d0F6b12380C6Bea22c224D43A57C2f6e5Fb89",
+      "slot0MatchesPublicKey": true,
+      "runtimeBytes": 1778,
+      "createOuterGas": "755214",
+      "transferOuterGas": "344580"
+    },
+    {
+      "address": "0xB705d4bb8E7AB51A69c9463efbb9373513e90068",
+      "slot0MatchesPublicKey": true,
+      "runtimeBytes": 1778,
+      "createOuterGas": "755082",
+      "transferOuterGas": "344310"
+    }
+  ]
+}
