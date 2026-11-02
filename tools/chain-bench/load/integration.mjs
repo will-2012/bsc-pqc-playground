@@ -13,7 +13,7 @@ assert.match(env || '', /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,39}$/);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const runtime = path.join(root, 'one-box/.runtime', env, 'load');
 const stamp = Date.now().toString(36);
-const sources = ['tools/chain-bench/load/core.mjs', 'tools/chain-bench/load/run.mjs',
+const sources = ['tools/chain-bench/load/core.mjs', 'tools/chain-bench/load/run.mjs', 'tools/chain-bench/load/inclusions.mjs',
   'tools/chain-bench/load/worker.mjs', 'erc4337-wallet/common/wallet.mjs'];
 const output = {checkedAt: new Date().toISOString(), platform: process.platform, arch: process.arch, node: process.version,
   sourceSha256: Object.fromEntries(sources.map(file => [file, createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')])),
@@ -80,6 +80,15 @@ for (const algorithm of Object.keys(profiles)) {
     const s = read(path.join(dir, `runs/${action}/progress.json`));
     assert.equal(s.confirmed, action === 'create' ? 3 : 6);
     assert.equal(s.failed, 0); assert.equal(s.pending, 0);
+    assert.equal(s.inclusionTruncated, false);
+    assert.equal(s.inclusions.reduce((sum, row) => sum + row.count, 0), s.confirmed);
+    for (const row of s.inclusions) {
+      const block = await ctx.client.getBlock({blockHash: row.blockHash});
+      assert.equal(Number(block.number), row.blockNumber);
+      assert.equal(new Set(row.transactions).size, row.transactions.length);
+      for (const hash of row.transactions) assert.ok(block.transactions.includes(hash), 'Receipt transaction missing from block');
+      assert.equal(row.userOps, algorithm === 'ecdsa' ? 0 : row.count);
+    }
     output.rows.push({algorithm, action, count: s.confirmed, elapsedSeconds: s.elapsedSeconds,
       cacheHits: s.cacheHits, cacheMisses: s.cacheMisses, targetQps: s.targetQps, acceptedPerSecond: s.acceptedPerSecond, confirmedPerSecond: s.confirmedPerSecond});
   }

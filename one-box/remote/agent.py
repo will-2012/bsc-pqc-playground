@@ -388,6 +388,17 @@ def perform(action, p):
                     require(check_service(c, role), "Service is not installed")
                     run(["systemctl", action, unit(c, role)])
             result = {r: property_value(unit(c, r), "ActiveState") for r in roles}
+        elif action == "monitor-start":
+            import re
+            require(re.fullmatch(r"[0-9a-f]{32}", p.get("monitor_session", "")), "Invalid monitor session")
+            require(type(p.get("monitor_auto_stop")) is bool and 30 <= p.get("monitor_lease", 0) <= 300,
+                    "Invalid monitor lease")
+            if p["monitor_auto_stop"]:
+                target = p.get("monitor_target") or {}
+                require(all(isinstance(target.get(k), str) and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}", target[k])
+                            for k in ("dataset", "run")), "Missing guarded job identity")
+            from monitor import start_collector
+            result = start_collector(p, Path(sys.argv[2]))
         elif action in ("load-config", "load-status", "load-clear"):
             require("bench" in h["roles"], "Not a bench host")
             job = b / "runtime/load-job.json"
@@ -396,7 +407,7 @@ def perform(action, p):
                 spec = read(job) if job.exists() else {}
                 progress = b / "runtime/load" / spec.get("dataset", "none") / "runs" / spec.get("run", "none") / "progress.json"
                 data = read(progress) if progress.exists() else {}
-                allowed = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt")
+                allowed = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt", "inclusions", "inclusionTruncated")
                 result = {"service": active, "run": spec.get("run"), "dataset": spec.get("dataset"),
                           "progress": {k: data[k] for k in allowed if k in data}}
             else:

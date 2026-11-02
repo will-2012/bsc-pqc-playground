@@ -9,6 +9,7 @@ const {createWalletClient, custom, keccak256} = require('viem');
 const {getUserOperationHash} = require('viem/account-abstraction');
 import {context, newIdentity, loadIdentity, prepare, smartAccount} from '../../../erc4337-wallet/common/wallet.mjs';
 import {profiles, read, save, AccountCache} from './core.mjs';
+import {receiptEvidence} from './inclusions.mjs';
 
 const {spec, env, directory} = workerData;
 const ctx = await context(env, profiles[spec.algorithm]);
@@ -64,9 +65,9 @@ async function task({index, sequence}) {
       entry.funded = true; save(file, entry);
       return {state: 'confirmed', address: entry.address};
     }
-    await raw(ctx.wallet, {to: entry.address, value: BigInt(spec.fundWei), nonce: await faucetNonce()}, funding, entry, file, 'fund');
+    const result = await raw(ctx.wallet, {to: entry.address, value: BigInt(spec.fundWei), nonce: await faucetNonce()}, funding, entry, file, 'fund');
     entry.funded = true; save(file, entry);
-    return {state: 'confirmed', address: entry.address};
+    return result;
   }
   assert(entry, 'Run prepare first');
   const journal = path.join(directory, 'runs', spec.run, 'operations', `${sequence}.json`);
@@ -125,11 +126,13 @@ async function confirm(record, journal, entry, file) {
   if (record.kind === 'userop') {
     const receipt = await ctx.bundler.waitForUserOperationReceipt({hash: record.hash, timeout: 180000});
     record.transactionHash = receipt.receipt.transactionHash;
+    record.blockNumber = receipt.receipt.blockNumber; record.blockHash = receipt.receipt.blockHash;
     record.gasUsed = receipt.actualGasUsed;
     record.state = receipt.success && receipt.receipt.status === 'success' ? 'confirmed' : 'reverted';
   } else {
     const receipt = await ctx.client.waitForTransactionReceipt({hash: record.hash, timeout: 180000});
     record.transactionHash = receipt.transactionHash; record.gasUsed = receipt.gasUsed;
+    record.blockNumber = receipt.blockNumber; record.blockHash = receipt.blockHash;
     record.state = receipt.status === 'success' ? 'confirmed' : 'reverted';
   }
   record.confirmedAt = Date.now();
@@ -142,5 +145,5 @@ async function confirm(record, journal, entry, file) {
     }
     entry.created = true; save(file, entry);
   }
-  return {state: record.state, hash: record.hash, address: entry.address};
+  return receiptEvidence(record);
 }

@@ -66,6 +66,7 @@ AL2023 目标机可使用 `python3.11`、`nodejs22` 软件包，并在私有配�
 | `bench` | 在配置的 Bench 机器执行有限轮次创建和转账 |
 | `load` | 分布式账户准备、创建、转账与进度；见[压测说明](../../tools/chain-bench/load/README.md) |
 | `collect` | 收集白名单中的测试结果至中控私有运行目录 |
+| `monitor` | 节点本地采集、中控每 10 秒汇总；可绑定一轮压测自动停压，见[监控说明](../../docs/chain-bench/monitor/README.md) |
 | `reset --confirm ap-pq` | 停止并删除远程本环境；中控保留私有备份，下一次 deploy 生成新身份 |
 
 二进制或合约变更前先执行 `build`；仅脚本更新且中控构建缓存仍有效时，可直接 `upgrade`。发布包会校验构建与必要脚本，再停止服务。升级后会在每台 Bench 验收 ECDSA、ML、SLH 的准备、创建和转账，全部通过才标记 ready。升级失败会尝试恢复旧程序，但不回滚数据库；需要查看各节点状态后再恢复运行。配置失败保留现场；修正后重试 `configure`。`stop`、`status`、`reset` 使用已保存的部署清单，编辑配置后仍可管理原环境。

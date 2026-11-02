@@ -69,3 +69,54 @@ test('account cache is bounded, refreshes LRU entries and can be disabled', asyn
   const disabled = new AccountCache(0);
   disabled.set(1, 'one'); assert.equal(disabled.get(1), undefined);
 });
+
+test('receipt evidence excludes private data and distinguishes UserOperations', async () => {
+  const {receiptEvidence} = await import('./inclusions.mjs');
+  const record = {state: 'confirmed', kind: 'userop', action: 'transfer', hash: 'operation',
+    transactionHash: 'transaction', blockNumber: 12n, blockHash: 'block', signed: {secret: 'private'},
+    publicKey: 'public', secretKey: 'secret'};
+  const result = receiptEvidence(record);
+  assert.deepEqual(Object.keys(result).sort(),
+    ['action', 'blockHash', 'blockNumber', 'kind', 'state', 'transactionHash', 'userOpHash'].sort());
+  assert.equal(result.userOpHash, 'operation');
+  assert(!Object.hasOwn(receiptEvidence({...record, kind: 'transaction'}), 'userOpHash'));
+});
+
+test('inclusions deduplicate outer transactions without merging UserOperation counts', async () => {
+  const {InclusionWindow} = await import('./inclusions.mjs');
+  const w = new InclusionWindow();
+  const result = {state: 'confirmed', kind: 'userop', blockNumber: 9n,
+    blockHash: '0x' + '11'.repeat(32), transactionHash: '0x' + '22'.repeat(32)};
+  w.add(result); w.add(result);
+  w.add({...result, kind: 'transaction', transactionHash: '0x' + '33'.repeat(32)});
+  w.add({state: 'confirmed'}); // ECDSA preparation is off-chain.
+  w.add({...result, state: 'skipped'});
+  assert.deepEqual(w.snapshot(), {inclusions: [{blockNumber: 9, blockHash: result.blockHash,
+    transactions: [result.transactionHash, '0x' + '33'.repeat(32)], userOps: 2, count: 3}], inclusionTruncated: false});
+});
+
+test('inclusion window is bounded and reports missing or truncated evidence', async () => {
+  const {InclusionWindow} = await import('./inclusions.mjs');
+  const w = new InclusionWindow();
+  const result = {state: 'confirmed', kind: 'transaction', blockNumber: 1,
+    blockHash: '0x' + '11'.repeat(32), transactionHash: '0x' + '22'.repeat(32)};
+  for (let i = 0; i < 257; i++) w.add({...result, transactionHash: '0x' + i.toString(16).padStart(64, '0')});
+  assert.equal(w.blocks[0].transactions.length, 256);
+  assert.equal(w.blocks[0].count, 257);
+  assert.equal(w.truncated, true);
+  for (let i = 2; i <= 130; i++) w.add({...result, blockNumber: i});
+  assert.equal(w.blocks.length, 128); assert.equal(w.blocks[0].blockNumber, 3);
+  w.add({...result, blockNumber: 1});
+  assert.equal(w.blocks[0].blockNumber, 3);
+  const missing = new InclusionWindow(); missing.add({...result, blockHash: undefined});
+  assert.equal(missing.truncated, true); assert.deepEqual(missing.blocks, []);
+});
+
+test('same-height different hashes remain distinct for reorg checks', async () => {
+  const {InclusionWindow} = await import('./inclusions.mjs');
+  const w = new InclusionWindow();
+  const result = {state: 'confirmed', kind: 'transaction', blockNumber: 5,
+    blockHash: '0x' + '11'.repeat(32), transactionHash: '0x' + '22'.repeat(32)};
+  w.add(result); w.add({...result, blockHash: '0x' + '33'.repeat(32)});
+  assert.equal(w.blocks.length, 2);
+});

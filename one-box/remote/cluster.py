@@ -57,7 +57,7 @@ def copy_project_sources(root, destination):
         shutil.copy2(source, target, follow_symlinks=False)
     for required in ("one-box/remote/agent.py", "one-box/remote/load_bench.py",
                      "tools/chain-bench/load/core.mjs", "tools/chain-bench/load/run.mjs",
-                     "tools/chain-bench/load/worker.mjs"):
+                     "tools/chain-bench/load/worker.mjs", "tools/chain-bench/load/inclusions.mjs"):
         require((destination / required).is_file(),
                 "Release source missing; commit all load runner files before packaging")
 
@@ -88,7 +88,8 @@ class Cluster:
         packet = "bsc-pqc-" + self.c["name"] + "/" + uuid.uuid4().hex
         path = self.shared / packet
         path.mkdir(parents=True, mode=0o700)
-        for file in ("agent.py", "model.py"):
+        for file in (("agent.py", "model.py", "monitor.py", "monitor_collect.py")
+                     if action == "monitor-start" else ("agent.py", "model.py")):
             shutil.copy2(HERE / file, path / file)
         payload = {
             "config": {**self.c, "_checked_at": int(time.time())},
@@ -749,6 +750,7 @@ def main():
             "load",
             "configure",
             "upgrade",
+            "monitor",
         ],
     )
     p.add_argument("--config", required=True, type=Path)
@@ -764,6 +766,12 @@ def main():
     p.add_argument("--cache-accounts", type=int, default=64, help="Cached accounts per worker; 0 disables caching")
     p.add_argument("--fund-wei", default="100000000000000000")
     p.add_argument("--value-wei", default="1")
+    p.add_argument("--interval", type=float, default=10, help="Monitor report interval in seconds")
+    p.add_argument("--duration", type=float, default=0, help="Monitor duration; 0 until interrupted")
+    p.add_argument("--auto-stop", action="store_true", help="Stop only the explicitly bound load run on instability")
+    p.add_argument("--monitor-dataset", help="Dataset protected by auto-stop")
+    p.add_argument("--monitor-run", help="Run protected by auto-stop")
+    p.add_argument("--monitor-policy", type=Path, help="Optional JSON threshold overrides")
     args = p.parse_args()
     c = load(args.config)
     # Require inventory to live outside tracked project files or in an ignored path.
@@ -773,6 +781,15 @@ def main():
             == 0,
             "Inventory inside repository must be Git-ignored",
         )
+    if args.command == "monitor":
+        # Monitoring must not hold the lifecycle lock and block load/stop commands.
+        with locked(c["name"]):
+            cluster = Cluster(c)
+            cluster.assert_config()
+        with locked("monitor-" + c["name"]):
+            from monitor import execute
+            execute(cluster, args)
+        return
     with locked(c["name"]):
         cluster = Cluster(c)
         if args.command in ("stop", "status", "reset") and cluster.state.get("inventory"):

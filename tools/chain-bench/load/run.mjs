@@ -5,6 +5,7 @@ import {Worker} from 'node:worker_threads';
 import {fileURLToPath} from 'node:url';
 import {context, deployment} from '../../../erc4337-wallet/common/wallet.mjs';
 import {profiles, validate, read, save, acquire, Pacer, Accounts} from './core.mjs';
+import {InclusionWindow, receiptEvidence} from './inclusions.mjs';
 
 process.title = 'bsc-pqc-load';
 process.umask(0o077);
@@ -20,9 +21,11 @@ const unresolved = path.join(runtime, 'load', 'unresolved.json');
 let release, timer, interrupted = false;
 const workers = [];
 let summary;
+const inclusions = new InclusionWindow();
 const progress = () => {
   if (!summary) return;
   const elapsed = Math.max(0.001, (Date.now() - summary.startedAt) / 1000);
+  Object.assign(summary, inclusions.snapshot());
   summary.updatedAt = Date.now();
   summary.elapsedSeconds = elapsed;
   summary.acceptedPerSecond = summary.accepted / elapsed;
@@ -58,16 +61,21 @@ try {
             const receipt = await ctx.client.getTransactionReceipt({hash: record.hash});
             record.state = receipt.status === 'success' ? 'confirmed' : 'reverted';
             record.gasUsed = receipt.gasUsed;
+            record.transactionHash = receipt.transactionHash;
+            record.blockNumber = receipt.blockNumber; record.blockHash = receipt.blockHash;
           } else {
             const receipt = await ctx.bundler.getUserOperationReceipt({hash: record.hash});
             if (!receipt) { pending++; continue; }
             record.state = receipt.success && receipt.receipt.status === 'success' ? 'confirmed' : 'reverted';
             record.gasUsed = receipt.actualGasUsed;
+            record.transactionHash = receipt.receipt.transactionHash;
+            record.blockNumber = receipt.receipt.blockNumber; record.blockHash = receipt.receipt.blockHash;
           }
           record.reconciledAt = Date.now(); save(file, record);
         } catch { pending++; continue; }
       }
       if (record.state === 'confirmed') {
+        inclusions.add(receiptEvidence(record));
         confirmed++;
         if (record.action === 'create' || record.action === 'fund') {
           const f = path.join(directory, 'accounts', `${record.index}.json`), entry = read(f);
@@ -87,7 +95,7 @@ try {
     }
     console.log(JSON.stringify(result));
     const old = read(path.join(runDir, 'progress.json'));
-    save(path.join(runDir, 'progress.json'), {...old, reconciliation: result, pending});
+    save(path.join(runDir, 'progress.json'), {...old, reconciliation: result, pending, ...inclusions.snapshot()});
   } else {
     assert(!fs.existsSync(runDir), 'Run ID exists; use reconcile, never blindly resend');
     // A durable run marker avoids scanning every private key on large datasets.
@@ -146,7 +154,7 @@ try {
             summary.cacheMisses += msg.cacheMisses - cacheMisses;
             cacheHits = msg.cacheHits; cacheMisses = msg.cacheMisses;
             if (msg.result?.state === 'skipped') summary.skipped++;
-            else summary.confirmed++;
+            else { summary.confirmed++; inclusions.add(msg.result); }
           }
           else {
             summary.failed++; interrupted = true;
