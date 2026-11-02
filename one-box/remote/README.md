@@ -107,3 +107,10 @@ python3 -m unittest discover -s one-box/tests -p 'test_*.py'
 SSM 执行结果保存在环境目录的 `ssm/*-result.json`；远端异常保存在共享目录的 `bsc-pqc-<name>/<请求编号>/error.log`。`response.json` 保存已生成的操作结果。排查时核对记录时间和节点，不要把历史错误当成本次故障；不要公开旁边包含配置和管理令牌的 `request.json`。
 
 预检确认端口可绑定，不代表节点间网络已放通。若区块停滞且 Peer 数为 0，先检查监听地址及节点间 P2P TCP 连通性。复用旧环境端口前，必须确认旧服务已停止、端口已释放。
+
+## 升级排障
+
+- 远程钱包仅探测配置给该客户端的 RPC；中控通过 SSM 分别检查所有 Validator。本地 one-box 仍保留多节点验收。同机部署不要求 Bench 能连接其他 Validator 的 RPC；分机部署则须放通配置的 RPC / Bundler 连接。
+- 升级输出逐节点安装、Bundler 初始化及三种算法验收阶段。服务 active 不等于升级通过，以最终 `Upgrade verified` 为准。
+- 子进程失败的完整输出保存在共享请求目录的私有 `error.log`（0600），不输出到控制台。日志可能包含交易参数，不应提交或全文公开。
+- 升级失败会尝试回退程序，不回滚数据库；服务可能保持停止。先用 `status` 查看状态并读取最新错误，确认后用 `start` 恢复 Validator / Bundler。Bench 不自动恢复，也不要用 reset 处理升级失败。

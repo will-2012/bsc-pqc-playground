@@ -1,3 +1,4 @@
+import {validatorRpcs} from './rpc-targets.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -54,7 +55,7 @@ export async function context(name = 'devnet', profileId = DEFAULT_PROFILE) {
   const dir = path.join(env, 'wallet', profile.id);
   fs.mkdirSync(dir, {recursive: true, mode: 0o700});
   return {name, env, dir, profile, chain, client, wallet, bundler, manifest, config, base,
-    validatorRpcs: remote.validators || Array.from({length: config.validators}, (_,i) => `http://127.0.0.1:${config.rpc_port + 2*i}`),
+    validatorRpcs: validatorRpcs(config, remote),
     fee: {type: 'legacy', gasPrice: BigInt(config.gas_price_wei)}};
 }
 

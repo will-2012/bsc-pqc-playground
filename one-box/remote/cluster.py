@@ -286,7 +286,7 @@ class Cluster:
             "bench": "bench" in h["roles"],
             "rpc": rpc_url(self.c, rpc_node),
             "bundler": f"http://{bh['address']}:{bh['ports']['bundler']}",
-            "validators": [rpc_url(self.c, n["id"]) for n in vals],
+            "validators": [rpc_url(self.c, rpc_node)],
         }
         # Only the packaged Alto release accepts the configured private bind address.
         bcfg = {
@@ -508,6 +508,7 @@ class Cluster:
         deployments = {}
         for h in self.c["hosts"]:
             if "bundler" in h["roles"]:
+                print(h["id"] + ": preparing Bundler contracts/config", flush=True)
                 deployments[h["id"]] = self.call(h, "bootstrap")
                 self.call(h, "start", roles=["bundler"])
         for h in self.c["hosts"]:
@@ -520,6 +521,7 @@ class Cluster:
     def check_load(self):
         for h in self.c["hosts"]:
             if "bench" in h["roles"]:
+                print(h["id"] + ": verifying ECDSA / ML / SLH prepare, create and transfer", flush=True)
                 self.call(h, "load-smoke")
                 print(h["id"] + ": ECDSA / ML / SLH load create and transfer passed")
 
@@ -693,6 +695,7 @@ class Cluster:
         operation = uuid.uuid4().hex
         try:
             for h in self.c["hosts"]:
+                print(h["id"] + ": installing release and restarting validator", flush=True)
                 self.call(h, "stop", roles=[r for r in ["validator"] if r in h["roles"]])
                 changed.append(h)
                 self.call(
@@ -718,7 +721,7 @@ class Cluster:
             self.state["ready"] = False
             self.save()
             raise RuntimeError(
-                "Upgrade failed; rollback attempted, data preserved. Inspect each host status before resuming"
+                "Upgrade failed; rollback attempted, data preserved. Services may be stopped; inspect status and private errors before start"
             )
         self.state["ready"] = True
         self.state.pop("rollback", None)

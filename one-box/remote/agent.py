@@ -36,6 +36,25 @@ def run(args):
     return subprocess.check_output(list(map(str, args)), stderr=subprocess.STDOUT, text=True)
 
 
+def record_error(path, error):
+    """Keep child output private; CalledProcessError's traceback omits it."""
+    import traceback
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    with os.fdopen(fd, "a") as stream:
+        os.fchmod(stream.fileno(), 0o600)
+        traceback.print_exception(type(error), error, error.__traceback__, file=stream)
+        seen = set()
+        current = error
+        while current is not None and id(current) not in seen:
+            seen.add(id(current))
+            if isinstance(current, subprocess.CalledProcessError) and current.output:
+                output = current.output
+                if isinstance(output, bytes):
+                    output = output.decode("utf-8", errors="replace")
+                stream.write("\nChild process output:\n" + output + "\n")
+            current = current.__cause__ or current.__context__
+
+
 def digest(path):
     result = hashlib.sha256()
     with Path(path).open("rb") as f:
@@ -596,15 +615,10 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except Exception:
+    except Exception as error:
         # Detailed failures stay beside the private request, never in console output.
-        import traceback
-
         try:
-            error = Path(sys.argv[2]).parent / "error.log"
-            with error.open("a") as f:
-                traceback.print_exc(file=f)
-            error.chmod(0o600)
+            record_error(Path(sys.argv[2]).parent / "error.log", error)
         except Exception:
             pass
         print("bsc-pqc operation failed; inspect private host logs", file=sys.stderr)

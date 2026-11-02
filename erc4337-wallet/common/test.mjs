@@ -103,7 +103,7 @@ export async function accountFlow(ctx, details = {}) {
   const counter = await submit(ctx, await prepare(ctx, identity, {to: ctx.base.counter,
     data: encodeFunctionData({abi: counterAbi, functionName: 'increment'})}));
   const nodes = [];
-  for (let i = 0; i < ctx.config.validators; i++) {
+  for (let i = 0; i < ctx.validatorRpcs.length; i++) {
     const node = createPublicClient({chain: ctx.chain, pollingInterval: 500,
       transport: http(ctx.validatorRpcs[i])});
     const cr = await node.waitForTransactionReceipt({hash: counter.transactionHash});

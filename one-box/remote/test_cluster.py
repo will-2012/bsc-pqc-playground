@@ -568,3 +568,16 @@ class ReleaseSourceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PrivateErrorTests(unittest.TestCase):
+    def test_child_output_is_saved_privately(self):
+        import subprocess
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "error.log"
+            error = subprocess.CalledProcessError(1, ["node", "runner"], output="diagnostic fixture")
+            with patch("sys.stdout", new_callable=io.StringIO) as stdout:
+                agent.record_error(target, error)
+            self.assertIn("diagnostic fixture", target.read_text())
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(stdout.getvalue(), "")

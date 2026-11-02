@@ -60,7 +60,7 @@ export const profile = {
     assert([4,5,6].includes(ctx.config.pq_precompile),'v4 requires a compatible PQ-fork client');
     const file=fileURLToPath(new URL(`../../one-box/.runtime/build/v${ctx.config.pq_precompile}/mldsa${ctx.config.pq_precompile>=5?'44':''}-public.json`,import.meta.url));
     const {input}=JSON.parse(fs.readFileSync(file,'utf8'));
-    for(let i=0;i<ctx.config.validators;i++){
+    for(let i=0;i<ctx.validatorRpcs.length;i++){
       const node=createPublicClient({chain:ctx.chain,transport:http(ctx.validatorRpcs[i])});
       const r=await node.call({to:'0x0000000000000000000000000000000000000103',data:'0x'+input,gas:1000000n});
       assert.equal(r.data,'0x'+'00'.repeat(31)+'01','Missing MLDSA precompile');
