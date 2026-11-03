@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>如何把压力推到链：Bench 性能排查</title>
+<style>
+body{max-width:1120px;margin:40px auto;padding:0 24px;font:16px/1.8 system-ui;color:#24364b}
+h1{font-size:28px}h2{font-size:21px;margin-top:30px}
+.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{padding:9px;border:1px solid #d8e2ee;text-align:left}th{background:#edf4fa}
+.note{background:#edf8f2;border-left:4px solid #399776;padding:14px 18px}
+a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
+</style>
+<h1>如何把压力推到链：Bench 性能排查</h1>
+<p class="note"><strong>先确认压力发得出去，再判断链是否饱和。</strong>本次实际吞吐从约 1,567 提升到 3,091 TPS，最终先碰到混部署 CPU 限制；尚未测出 Validator 独占资源时的链上限。</p>
+
+<h2>实验与口径</h2>
+<p>2026-11-03，三台 Linux x86_64 机器，每台 8 个逻辑 CPU，同机运行 Bench、Validator 与 Bundler。使用共计 10,000 个已有 ECDSA 账户，轮转向已有地址转账；普通转账不经过 Bundler。每轮派发 300 秒，随后等待回执收敛。基础代码版本为 <code>9561951</code>。</p>
+<p>下表“实际 TPS”＝接受数 ÷ 300 秒；所有完成轮次的最终确认数均与接受数相等。它与状态页包含收尾时间的平均速率不同。Gas 和 CPU 取各客户端运行 30–290 秒内的完整监控窗口；整机 CPU 为三台均值。原始日志、账户与连接配置保留在私有运行目录，此处仅记录脱敏摘要，不包含部署清单。</p>
+
+<h2>从升压到定位</h2>
+<div class="table"><table>
+<thead><tr><th>客户端方案</th><th>目标 QPS（总计）</th><th>Worker / 节点</th><th>在途上限 / 节点</th><th>实际 TPS</th><th>Gas 均值</th></tr></thead>
+<tbody>
+<tr><td>原实现</td><td>200</td><td>8</td><td>512</td><td>193.77</td><td>2.71%</td></tr>
+<tr><td>原实现</td><td>400</td><td>8</td><td>512</td><td>364.58</td><td>5.01%</td></tr>
+<tr><td>原实现</td><td>800</td><td>8</td><td>512</td><td>685.41</td><td>9.34%</td></tr>
+<tr><td>原实现</td><td>1,600</td><td>8</td><td>512</td><td>1,227.28</td><td>16.65%</td></tr>
+<tr><td>原实现</td><td>3,200</td><td>8</td><td>512</td><td>1,521.38</td><td>20.70%</td></tr>
+<tr><td>原实现</td><td>6,400</td><td>8</td><td>512</td><td>1,567.35</td><td>21.34%</td></tr>
+<tr><td>关闭交易替换扫描</td><td>6,400</td><td>8</td><td>512</td><td>1,523.40</td><td>20.66%</td></tr>
+<tr><td>增加在途数</td><td>6,400</td><td>8</td><td>2,048</td><td>2,247.77</td><td>30.59%</td></tr>
+<tr><td>再增加 worker</td><td>6,400</td><td>32</td><td>2,048</td><td>2,867.94</td><td>39.92%</td></tr>
+<tr><td>再显式传入 chainId</td><td>6,400</td><td>32</td><td>2,048</td><td>3,091.48</td><td>42.76%</td></tr>
+</tbody></table></div>
+<p>后四行逐项累加调整，缓存上限均为每 worker 512 个账户。各档只完成一轮，适合定位当前环境的限制，不能据此宣称稳定、普适的性能增益。窗口内最大区块间隔均为 450 ms，各轮最终失败数和未决数均为零。</p>
+<ul>
+<li><strong>吞吐平台不等于链满。</strong>目标从 3,200 提到 6,400 QPS，实际只从约 1,521 到 1,567 TPS；此时 Gas 约 21%，需要先排查发送端。</li>
+<li><strong>减少工作量与提高吞吐是两件事。</strong>单独关闭替换扫描后，Bench CPU 从每节点约 3.1 核降到约 2.0 核，但吞吐没有提高。随后增加在途数才突破该平台。</li>
+<li><strong>混部署会改变瓶颈。</strong>32 worker 时整机 CPU 约 97%；最后一轮约 95%，其中 Bench 约 4.8 核、Validator 约 2.7 核。链的 Gas 仍未满，但发送与验证已争抢 CPU。</li>
+</ul>
+
+<h2>保留到代码中的优化</h2>
+<p><strong>补齐已知交易字段。</strong>当前 viem 在请求缺少 chainId 时可能调用 <code>eth_fillTransaction</code>。Load 已在初始化核对链 ID 和创世块，准备普通交易时显式传入 chainId，可省去这类辅助 RPC；本地回归验证优化前后的签名交易逐字节相同。</p>
+<p><strong>只等待原交易的回执。</strong>Bench 独占实验账户，不会主动替换交易，因此关闭 viem 的替换扫描，避免额外查询交易和整块。仍核对回执哈希和成功状态，保留超时、广播前持久化及未决请求处理。若有人在外部替换交易，原哈希不能确认就必须核对，不能把替换交易视为成功。</p>
+<p>这两项覆盖 ECDSA 普通交易及 PQ 准备阶段的普通充值；ML / SLH 的 UserOperation 路径不变。并发参数已有独立入口，默认值保持不变，不将本次 32 worker / 2,048 在途数当作通用配置。</p>
+
+<h2>下一轮怎么排查</h2>
+<ol>
+<li><strong>建立空载基线。</strong>确认出块、safe / finalized、peer、交易池与监控覆盖正常。先等监控初始化完成，再启动 load，避免初始化阶段的环境锁冲突。</li>
+<li><strong>固定口径逐档升压。</strong>使用同一账户池、交易类型、金额、gas 配置和测量时长；每轮用新 run。结束后核对回执、等待池子排空，再进入下一档。</li>
+<li><strong>对齐发送与上链。</strong>同时看目标 QPS、accepted、成功回执和同时间窗内的链上交易。普通交易与 UserOperation 分开计数，多个 UserOperation 可能对应一笔外层交易；监控窗口不完整时不能强行判断丢交易。</li>
+<li><strong>一次调整一个因素。</strong>先看在途上限是否占满及阶段耗时，再决定增加并发、签名算力或减少辅助 RPC。每个改动都保留原方案作对照。</li>
+<li><strong>出现持续异常就停压。</strong>关注持续增长的 pending / queued、回执延迟、出块间隔、最终化停滞、out-of-turn 与 slash。停止 Bench 后继续观察收敛，保留节点与记录，不用 reset 掩盖问题。</li>
+</ol>
+<div class="table"><table>
+<tr><th>观察</th><th>下一步检查</th></tr>
+<tr><td>目标高，accepted 低，Gas 低，池子不持续增长</td><td>Bench CPU、在途数、限速等待、签名及 RPC 阶段；不能直接归因于链容量。</td></tr>
+<tr><td>accepted 足够，但回执速率跟不上，池子持续增长</td><td>出块和执行、费用与 nonce、传播及 RPC；PQ 还需检查 Bundler 模拟、准入和分包。</td></tr>
+<tr><td>整机 CPU 满，Bench 占比高</td><td>先将 Bench 与 Validator 分机，再测链的独立上限；仅增加线程可能加重竞争。</td></tr>
+<tr><td>签名耗时高，尤其是 SLH</td><td>先做独立签名容量对照，比较后端与 worker 数；保留真实签名和验签。签名加速不代表链上处理能力提高。</td></tr>
+</table></div>
+<p><code>timings</code> 是并发调用的墙钟耗时，包含等待和调度，不能相加当作 CPU 时间。服务 CPU 的 100% 表示约一个逻辑核，整机 CPU 的 100% 表示全部核；两者口径不同。在途数可用“目标速率 × 端到端时延”作起点，再按实测调整。</p>
+<p><strong>下一步重点：</strong>将 Bench 与 Validator 分机部署，确认 RPC 带宽和访问路径，再继续阶梯升压。这次结果说明混部署环境可以完成约 3,091 TPS 的一轮测试，不代表链已饱和，也不代表 PQ 交易吞吐。</p>
+<p><a href="../../../tools/chain-bench/load/README.md">运行与调参说明</a> · <a href="../monitor/README.md">监控说明</a> · <a href="report.html">此前本地验收</a></p>
+</html>

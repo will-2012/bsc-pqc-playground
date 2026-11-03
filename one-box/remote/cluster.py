@@ -57,7 +57,8 @@ def copy_project_sources(root, destination):
         shutil.copy2(source, target, follow_symlinks=False)
     for required in ("one-box/remote/agent.py", "one-box/remote/load_bench.py",
                      "tools/chain-bench/load/core.mjs", "tools/chain-bench/load/run.mjs",
-                     "tools/chain-bench/load/worker.mjs", "tools/chain-bench/load/inclusions.mjs"):
+                     "tools/chain-bench/load/worker.mjs", "tools/chain-bench/load/inclusions.mjs",
+                     "tools/chain-bench/load/transactions.mjs"):
         require((destination / required).is_file(),
                 "Release source missing; commit all load runner files before packaging")
 

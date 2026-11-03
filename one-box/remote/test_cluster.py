@@ -530,7 +530,8 @@ class ReleaseSourceTests(unittest.TestCase):
             subprocess.run(["git", "init", "-q", str(root)], check=True)
             for name in ("one-box/remote/agent.py", "erc4337-wallet/cli.mjs", "one-box/remote/load_bench.py",
                          "tools/chain-bench/load/core.mjs", "tools/chain-bench/load/run.mjs",
-                         "tools/chain-bench/load/worker.mjs", "tools/chain-bench/load/inclusions.mjs"):
+                         "tools/chain-bench/load/worker.mjs", "tools/chain-bench/load/inclusions.mjs",
+                         "tools/chain-bench/load/transactions.mjs"):
                 file = root / name
                 file.parent.mkdir(parents=True, exist_ok=True)
                 file.write_text("public source")

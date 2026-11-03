@@ -143,7 +143,7 @@ reconcile 不发送交易，只核对并更新结果；原轮次的统计与失�
 ## 本地复现
 
 ```bash
-node --test tools/chain-bench/load/core.test.mjs
+node --test tools/chain-bench/load/*.test.mjs
 python3 -m unittest discover -s one-box/remote -p 'test_*.py'
 
 # 先构建原生签名器；启动兼容 v4/v7 的环境和 PQ Bundler 后运行：
@@ -204,3 +204,14 @@ Bundler 同时按 gas 与编码大小分包：本地 PQ 路线预留 1 KiB 外�
 提高并发后若接收正常、上链停滞，应先检查 Bundler 拒绝原因，不能只继续增加 worker。
 
 本地实测与限制见 [验收报告](../../../docs/chain-bench/load/report.html)。
+
+## 减少普通交易的辅助 RPC
+
+Load 准备普通交易时传入已经核对过的 chainId，避免在 nonce、gas、gasPrice 均已提供时仍调用 `eth_fillTransaction`。
+回执只等待原交易哈希，关闭交易替换扫描，避免为寻找替换交易读取整块。
+这也适用于 PQ prepare 阶段的普通充值交易；ML / SLH 的 UserOperation 估算、签名和 Bundler 回执路径不变。
+
+前提是 Bench 独占实验账户，不在外部加速或替换其交易。若原交易被替换，等待会超时并保留待核对记录，不把替换交易算作成功。
+签名、发送前持久化、成功状态检查与回执核对仍保留。并发和缓存默认值不变，按机器条件调节。
+
+阶梯升压、客户端瓶颈与混部署分析见 [性能排查记录](../../../docs/chain-bench/load/performance.html)。

@@ -22,7 +22,7 @@ assert.equal(new Set(cases.map(x=>x.join(':'))).size,cases.length);
 for(const [workers,inflight] of cases)assert(workers >= 1 && workers <= 64 && inflight >= 1 && inflight <= accounts);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const runtime = path.join(root, 'one-box/.runtime', env, 'load');
-const sources = ['run.mjs', 'worker.mjs', 'core.mjs', 'timing.mjs', 'signer/client.mjs', 'signer/slh.c'];
+const sources = ['run.mjs', 'worker.mjs', 'transactions.mjs', 'core.mjs', 'timing.mjs', 'signer/client.mjs', 'signer/slh.c'];
 const snapshot = () => Object.fromEntries(sources.map(f => [f, createHash('sha256').update(fs.readFileSync(new URL(f, import.meta.url))).digest('hex')]));
 const sourceHashes = snapshot();
 const dataset = `sweep-${algorithm}-${Date.now().toString(36)}`;

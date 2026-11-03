@@ -14,7 +14,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const runtime = path.join(root, 'one-box/.runtime', env, 'load');
 const stamp = Date.now().toString(36);
 const sources = ['tools/chain-bench/load/core.mjs', 'tools/chain-bench/load/run.mjs', 'tools/chain-bench/load/inclusions.mjs',
-  'tools/chain-bench/load/worker.mjs', 'erc4337-wallet/common/wallet.mjs', 'tools/chain-bench/load/timing.mjs',
+  'tools/chain-bench/load/worker.mjs', 'tools/chain-bench/load/transactions.mjs',
+  'erc4337-wallet/common/wallet.mjs', 'tools/chain-bench/load/timing.mjs',
   'tools/chain-bench/load/signer/client.mjs', 'tools/chain-bench/load/signer/slh.c'];
 const output = {checkedAt: new Date().toISOString(), platform: process.platform, arch: process.arch, node: process.version,
   sourceSha256: Object.fromEntries(sources.map(file => [file, createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')])),

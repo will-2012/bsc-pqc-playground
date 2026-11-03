@@ -12,6 +12,7 @@ import {profiles, read, save, AccountCache} from './core.mjs';
 import {receiptEvidence} from './inclusions.mjs';
 import {SlhSigner} from './signer/client.mjs';
 import {Timings} from './timing.mjs';
+import {prepareTransaction, waitForTransaction} from './transactions.mjs';
 const timings = new Timings();
 
 const {spec, env, directory} = workerData;
@@ -143,9 +144,7 @@ async function task({index, sequence}) {
 }
 
 async function raw(wallet, tx, journal, entry, file, action, admitted = false) {
-  const request = await timings.measure('prepareTransaction', () => wallet.prepareTransactionRequest({...tx, gas: 21000n, ...ctx.fee}));
-  // context already verified the RPC chain/genesis; bind every signed request to it.
-  assert.equal(request.chainId, ctx.chain.id, 'Transaction chain mismatch');
+  const request = await timings.measure('prepareTransaction', () => prepareTransaction(ctx, wallet, tx));
   const signed = await timings.measure('sign', () => wallet.account.signTransaction(request, {serializer: ctx.chain.serializers?.transaction}));
   const record = {kind: 'transaction', action, index: entry.index, hash: keccak256(signed), signed, state: 'pending'};
   if (!admitted) await allowSend();
@@ -163,7 +162,7 @@ async function confirm(record, journal, entry, file) {
     record.gasUsed = receipt.actualGasUsed;
     record.state = receipt.success && receipt.receipt.status === 'success' ? 'confirmed' : 'reverted';
   } else {
-    const receipt = await timings.measure('receipt', () => ctx.client.waitForTransactionReceipt({hash: record.hash, timeout: 180000}));
+    const receipt = await timings.measure('receipt', () => waitForTransaction(ctx.client, record.hash));
     record.transactionHash = receipt.transactionHash; record.gasUsed = receipt.gasUsed;
     record.blockNumber = receipt.blockNumber; record.blockHash = receipt.blockHash;
     record.state = receipt.status === 'success' ? 'confirmed' : 'reverted';
