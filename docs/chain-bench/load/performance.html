@@ -67,6 +67,17 @@ a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
 <p><strong>Bundler 支持并发，但各阶段不同。</strong>请求接收与 bundle 提交可并发；当前打包前的第二次验证仍逐笔执行。<code>mempool-max-parallel-ops</code> 限制同一发送者的并行操作，不是模拟线程数；增加 executor 也不会直接加速这段验证。后续若并行模拟，需要限制在途数，并保留按顺序执行的存储冲突、发送者与 Paymaster 余额检查。</p>
 <p>另一项历史对象复用实验中，6 组完整 trace 输出相同，但耗时收益不稳定，未纳入代码。下一步应单独验证有界并行模拟或更低开销的 tracer，并保持存储访问、实体信誉、nonce 与打包安全检查；继续增大 QPS 本身无法绕过这一瓶颈。</p>
 
+<h2>发布版复测：在途数影响等待，不等于链容量</h2>
+<p>版本 <code>50ca76c</code>，同一 10,000 个 ML 账户池随机互转。两轮均为总目标 50 UserOp/s、每台 8 个 Worker、派发 300 秒后收齐回执；只调整每台在途上限。三台节点的 ECDSA / ML / SLH 创建和转账验收均通过。</p>
+<div class="table"><table>
+<thead><tr><th>每台在途上限</th><th>实际 UserOp/s</th><th>最终确认数</th><th>回执等待均值</th><th>Gas 均值</th><th>整机 CPU 均值</th></tr></thead>
+<tbody>
+<tr><td>128</td><td>20.33</td><td>6,099</td><td>15.74 s</td><td>2.55%</td><td>39.0%</td></tr>
+<tr><td>32</td><td>17.30</td><td>5,190</td><td>4.59 s</td><td>2.31%</td><td>30.6%</td></tr>
+</tbody></table></div>
+<p>两轮失败和未决均为 0。各取运行第 30–290 秒内的 26 个完整监控窗口：最大出块间隔均为 450 ms，未观察到 out-of-turn 或 slash，单节点交易池 pending 最大为 3、queued 为 0。CPU 与 gas 取这些窗口；回执等待按完成调用次数加权，不包含限速等待。第二轮抽查 200 个签名操作，覆盖 198 个收款地址、131 笔跨分片转账，无自转账，并核对 3 笔规范区块回执。</p>
+<p><strong>较小在途数减少等待，但没有提高吞吐。</strong>128 在途轮的 10 秒 Validator CPU 采样中，约 64% 落在 JS tracer 指令回调。当前瓶颈仍在上链前的模拟与打包路径，不能把约 20 UserOp/s 当作链容量。这是两次单轮对照，不修改默认在途数，也不据此宣称日志优化提高了吞吐；下一步应验证低开销 tracer 与有界并行模拟的安全等价性。</p>
+
 <h2>下一轮怎么排查</h2>
 <ol>
 <li><strong>建立空载基线。</strong>确认出块、safe / finalized、peer、交易池与监控覆盖正常。先等监控初始化完成，再启动 load，避免初始化阶段的环境锁冲突。</li>
