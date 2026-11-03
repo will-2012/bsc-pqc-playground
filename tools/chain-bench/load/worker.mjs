@@ -10,6 +10,9 @@ const {getUserOperationHash} = require('viem/account-abstraction');
 import {context, newIdentity, loadIdentity, prepare, smartAccount} from '../../../erc4337-wallet/common/wallet.mjs';
 import {profiles, read, save, AccountCache} from './core.mjs';
 import {receiptEvidence} from './inclusions.mjs';
+import {SlhSigner} from './signer/client.mjs';
+import {Timings} from './timing.mjs';
+const timings = new Timings();
 
 const {spec, env, directory} = workerData;
 const ctx = await context(env, profiles[spec.algorithm]);
@@ -19,26 +22,38 @@ if (spec.algorithm !== 'ecdsa') {
   assert.equal(ctx.deployment.entryPoint, ctx.base.entryPoint);
 }
 const cache = new AccountCache(spec.cacheAccounts);
-let permit, nonceReply;
+let signer;
+if (spec.algorithm === 'slh' && spec.slhBackend === 'openssl') signer = new SlhSigner();
+let requestId = 0;
+const replies = new Map();
 class SendCancelled extends Error {}
 parentPort.on('message', async msg => {
-  if (msg.type === 'nonce') { nonceReply(msg.nonce); return; }
-  if (msg.type === 'permit') { permit?.(msg.allowed !== false); return; }
+  if (msg.type === 'nonce' || msg.type === 'permit') {
+    const reply = replies.get(msg.requestId);
+    assert(reply, 'Unknown worker request');
+    replies.delete(msg.requestId);
+    reply(msg);
+    return;
+  }
   if (msg.type !== 'task') return;
   try {
     const result = await task(msg);
-    parentPort.postMessage({type: 'done', result, cacheHits: cache.hits, cacheMisses: cache.misses});
+    parentPort.postMessage({type: 'done', sequence: msg.sequence, result, timings: timings.values, cacheHits: cache.hits, cacheMisses: cache.misses});
   }
   catch (e) {
-    if (e instanceof SendCancelled) parentPort.postMessage({type: 'done', result: {state: 'cancelled'}, cacheHits: cache.hits, cacheMisses: cache.misses});
-    else parentPort.postMessage({type: 'error', error: String(e.shortMessage || e.message).slice(0, 1000)});
+    if (e instanceof SendCancelled) parentPort.postMessage({type: 'done', sequence: msg.sequence, result: {state: 'cancelled'}, timings: timings.values, cacheHits: cache.hits, cacheMisses: cache.misses});
+    else parentPort.postMessage({type: 'error', sequence: msg.sequence, timings: timings.values, error: String(e.shortMessage || e.message).slice(0, 1000)});
   }
 });
 parentPort.postMessage({type: 'ready'});
-const faucetNonce = () => new Promise(resolve => { nonceReply = resolve; parentPort.postMessage({type: 'nonce'}); });
+const request = type => new Promise(resolve => {
+  const id = requestId++;
+  replies.set(id, resolve);
+  parentPort.postMessage({type, requestId: id});
+});
+const faucetNonce = async () => (await request('nonce')).nonce;
 const allowSend = async () => {
-  const allowed = await new Promise(resolve => { permit = resolve; parentPort.postMessage({type: 'permit'}); });
-  if (!allowed) throw new SendCancelled();
+  if (!(await timings.measure('admission', () => request('permit'))).allowed) throw new SendCancelled();
 };
 
 async function task({index, sequence}) {
@@ -101,12 +116,20 @@ async function task({index, sequence}) {
     // Estimation permits SIG_VALIDATION_FAILED. Nonzero bytes conservatively price calldata.
     // The actual UserOperation is still freshly signed and locally verified by the profile.
     smart.getStubSignature = async () => '0x' + 'ff'.repeat(7856);
+    if (signer && !cached?.smart) smart.signUserOperation = async op => signer.sign(identity.secretKey, getUserOperationHash({
+      chainId: ctx.chain.id, entryPointAddress: ctx.deployment.entryPoint, entryPointVersion: ctx.profile.entryPointVersion,
+      userOperation: {...op, sender: entry.address},
+    }));
   }
   if (spec.action === 'transfer') cache.set(index, {entry, identity, smart});
-  const operation = await prepare(ctx, identity, {
+  if (!cached?.smart) {
+    const sign = smart.signUserOperation.bind(smart);
+    smart.signUserOperation = op => timings.measure('sign', () => sign(op));
+  }
+  const operation = await timings.measure('prepareUserOperation', () => prepare(ctx, identity, {
     to: spec.action === 'create' ? entry.address : ctx.manifest.accounts[1].address,
     value: spec.action === 'create' ? 0n : BigInt(spec.valueWei),
-  }, smart);
+  }, smart));
   const hash = getUserOperationHash({chainId: ctx.chain.id, entryPointAddress: ctx.deployment.entryPoint,
     entryPointVersion: ctx.profile.entryPointVersion, userOperation: operation});
   assert.equal(hash, await ctx.profile.onchainOperationHash(ctx, operation));
@@ -114,31 +137,33 @@ async function task({index, sequence}) {
   await allowSend();
   // Persist before broadcasting; cancelled, unsent work leaves no pending journal.
   record.sentAt = Date.now(); save(journal, record);
-  assert.equal(await ctx.bundler.sendUserOperation(operation), hash);
+  assert.equal(await timings.measure('submit', () => ctx.bundler.sendUserOperation(operation)), hash);
   parentPort.postMessage({type: 'accepted'});
   return confirm(record, journal, entry, file);
 }
 
 async function raw(wallet, tx, journal, entry, file, action, admitted = false) {
-  const request = await wallet.prepareTransactionRequest({...tx, gas: 21000n, ...ctx.fee});
-  const signed = await wallet.signTransaction(request);
+  const request = await timings.measure('prepareTransaction', () => wallet.prepareTransactionRequest({...tx, gas: 21000n, ...ctx.fee}));
+  // context already verified the RPC chain/genesis; bind every signed request to it.
+  assert.equal(request.chainId, ctx.chain.id, 'Transaction chain mismatch');
+  const signed = await timings.measure('sign', () => wallet.account.signTransaction(request, {serializer: ctx.chain.serializers?.transaction}));
   const record = {kind: 'transaction', action, index: entry.index, hash: keccak256(signed), signed, state: 'pending'};
   if (!admitted) await allowSend();
   record.sentAt = Date.now(); save(journal, record);
-  assert.equal(await ctx.client.sendRawTransaction({serializedTransaction: signed}), record.hash);
+  assert.equal(await timings.measure('submit', () => ctx.client.sendRawTransaction({serializedTransaction: signed})), record.hash);
   parentPort.postMessage({type: 'accepted'});
   return confirm(record, journal, entry, file);
 }
 
 async function confirm(record, journal, entry, file) {
   if (record.kind === 'userop') {
-    const receipt = await ctx.bundler.waitForUserOperationReceipt({hash: record.hash, timeout: 180000});
+    const receipt = await timings.measure('receipt', () => ctx.bundler.waitForUserOperationReceipt({hash: record.hash, timeout: 180000}));
     record.transactionHash = receipt.receipt.transactionHash;
     record.blockNumber = receipt.receipt.blockNumber; record.blockHash = receipt.receipt.blockHash;
     record.gasUsed = receipt.actualGasUsed;
     record.state = receipt.success && receipt.receipt.status === 'success' ? 'confirmed' : 'reverted';
   } else {
-    const receipt = await ctx.client.waitForTransactionReceipt({hash: record.hash, timeout: 180000});
+    const receipt = await timings.measure('receipt', () => ctx.client.waitForTransactionReceipt({hash: record.hash, timeout: 180000}));
     record.transactionHash = receipt.transactionHash; record.gasUsed = receipt.gasUsed;
     record.blockNumber = receipt.blockNumber; record.blockHash = receipt.blockHash;
     record.state = receipt.status === 'success' ? 'confirmed' : 'reverted';

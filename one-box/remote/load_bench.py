@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from model import require
 
 
-def shards(c, *, action, algorithm, dataset, run, accounts, count, qps, workers, fund_wei, value_wei, cache_accounts=64, duration=0):
+def shards(c, *, action, algorithm, dataset, run, accounts, count, qps, workers, fund_wei, value_wei, cache_accounts=64, duration=0, max_inflight=None, slh_backend='noble'):
     hosts = [h for h in c['hosts'] if 'bench' in h['roles']]
     require(hosts, 'No bench hosts configured')
     require(action in ('prepare', 'create', 'transfer', 'reconcile'), 'Invalid action')
@@ -17,12 +17,15 @@ def shards(c, *, action, algorithm, dataset, run, accounts, count, qps, workers,
     require(math.isfinite(qps) and 0 < qps <= 1_000_000, 'Invalid QPS')
     if count is None:
         count = math.ceil(qps * duration) + len(hosts) if duration and action == 'transfer' else accounts
+    require(slh_backend in ('noble', 'openssl'), 'Invalid SLH backend')
     require(algorithm in ('ecdsa', 'ml', 'slh'), 'Use ecdsa, ml or slh')
     for name in (dataset, run):
         require(re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}', name), 'Invalid dataset/run name')
     require(accounts >= len(hosts) and count >= len(hosts), 'Need at least one account/operation per bench')
     require(accounts <= 10_000_000 and count <= 100_000_000, 'Workload too large')
     require(1 <= workers <= 64, 'Invalid workers')
+    max_inflight = workers if max_inflight is None else max_inflight
+    require(type(max_inflight) is int and 1 <= max_inflight <= 4096, 'Invalid max inflight')
     require(0 <= cache_accounts <= 4096, 'Invalid cache capacity')
     require(fund_wei.isdigit() and int(fund_wei) > 0 and value_wei.isdigit() and int(value_wei) > 0, 'Invalid wei amount')
     if action in ('prepare', 'create'):
@@ -31,7 +34,7 @@ def shards(c, *, action, algorithm, dataset, run, accounts, count, qps, workers,
         return n // len(hosts) + (i < n % len(hosts))
     return [(h, dict(action=action, algorithm=algorithm, dataset=dataset, run=run,
                      accounts=split(accounts, i), count=split(count, i), qps=qps / len(hosts),
-                     workers=workers, cacheAccounts=cache_accounts, fundWei=fund_wei, valueWei=value_wei,
+                     workers=workers, maxInflight=max_inflight, slhBackend=slh_backend, cacheAccounts=cache_accounts, fundWei=fund_wei, valueWei=value_wei,
                      durationSeconds=duration, startAt=0))
             for i, h in enumerate(hosts)]
 
@@ -73,7 +76,7 @@ def execute(cluster, args):
         require(cluster.state.get('ready'), 'Complete deployment acceptance before load testing')
     plan = shards(cluster.c, action=args.load_action, algorithm=args.algorithm, dataset=args.dataset,
                   run=args.run, accounts=args.accounts, count=args.count, qps=args.qps, workers=args.workers,
-                  fund_wei=args.fund_wei, value_wei=args.value_wei, cache_accounts=args.cache_accounts, duration=args.duration)
+                  fund_wei=args.fund_wei, value_wei=args.value_wei, cache_accounts=args.cache_accounts, duration=args.duration, max_inflight=args.max_inflight, slh_backend=args.slh_backend)
     # Configure all machines first, then arm a common future start time.
     start = int(time.time() * 1000) + 120_000
     for h, spec in plan:
@@ -84,7 +87,7 @@ def execute(cluster, args):
         for h, spec in plan:
             cluster.call(h, 'start', roles=['bench'])
             limit = f", {spec['durationSeconds']:g}s dispatch window" if spec['durationSeconds'] else ''
-            print(f"{h['id']}: {spec['count']} operations max, {spec['qps']:.3f} target QPS, {spec['workers']} workers{limit}")
+            print(f"{h['id']}: {spec['count']} operations max, {spec['qps']:.3f} target QPS, {spec['workers']} workers, {min(spec['maxInflight'], spec['accounts'], spec['count'])} max inflight{limit}")
     except Exception:
         cluster.control('stop', roles=['bench'])
         raise

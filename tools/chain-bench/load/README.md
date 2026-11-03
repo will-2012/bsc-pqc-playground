@@ -14,23 +14,24 @@ PQ 准备阶段生成独立密钥、预测地址并预充值；创建和转账�
 
 ## 中控操作
 
-已有环境使用 `upgrade`，不要 reset 或重新创建创世块。本次仅修改钱包、Bench 和管理脚本，没有新增合约或修改 BSC 二进制；中控原来的 Linux 构建缓存有效时，无需重新 build。
+已有环境使用 `upgrade`，不要 reset。此次新增原生 SLH 签名器，需要先 build，再升级；账户、链数据与合约保持不变。
 
 代码提交并推送后，在中控仓库根目录执行：
 
 ```bash
 git pull --ff-only
 CONFIG=one-box/.runtime/cluster-config/ap-pq.json
+./tools/cluster build --config "$CONFIG"
 ./tools/cluster upgrade --config "$CONFIG"
 ```
 
-若提示构建缺失或过期，先执行 `./tools/cluster build --config "$CONFIG"`，再重试 upgrade。发布包检查发生在停止服务之前；缺少新脚本会直接报错。
+发布包检查发生在停止服务之前；构建缺失或过期会直接报错。
 
-当前 upgrade 是整套发布：停止 Bench / Bundler，滚动重启 validator，再启动 Bundler；保留链数据、密钥和账户池。它会补齐已有环境的 Bench 连接配置，并在每台 Bench 上验证三种算法各 1 个账户的准备、创建和转账。全部成功后才允许正式压测，Bench 服务仍保持停止。若验收失败，会尝试回退程序并保留现场，不能把服务 active 当作链路通过。
+当前 upgrade 是整套发布：停止 Bench / Bundler，滚动重启 validator，再启动 Bundler；保留链数据、密钥和账户池。它会补齐已有环境的 Bench 连接配置，并在每台 Bench 上验证三种算法各 1 个账户的准备、创建和转账。其中 SLH 创建使用原实现、转账验证原生签名器。全部成功后才允许正式压测，Bench 服务仍保持停止。若验收失败，会尝试回退程序并保留现场，不能把服务 active 当作链路通过。
 
 新环境仍按远程说明 build、deploy。下面各阶段要等待完成后再执行下一步。
 
-下面示例总计 1,000 个账户、100 QPS，三台 Bench 分到 334 / 333 / 333 个账户，各自目标约 33.33 QPS：
+下面示例总计 1,000 个账户，三台 Bench 分到 334 / 333 / 333 个账户；转账总目标 100 QPS，PQ 创建阶段先降速，避免触发 Factory 准入限制：
 
 ```bash
 CONFIG=one-box/.runtime/cluster-config/ap-pq.json
@@ -43,7 +44,7 @@ CONFIG=one-box/.runtime/cluster-config/ap-pq.json
 # 2. 使用上述账户池创建合约；等待完成。
 ./tools/cluster load --config "$CONFIG" --load-action create \
   --algorithm ml --dataset ml-1000 --run create1 \
-  --accounts 1000 --qps 100 --workers 32
+  --accounts 1000 --qps 6 --workers 1
 
 # 3. 从相同账户池轮转发出 10,000 笔转账。
 ./tools/cluster load --config "$CONFIG" --load-action transfer \
@@ -59,7 +60,21 @@ CONFIG=one-box/.runtime/cluster-config/ap-pq.json
 
 改为 `--algorithm ecdsa` 或 `slh`，并使用独立的 `--dataset`，即可运行另外两组。每次新转账轮次用新 `--run`；账户数与原账户池保持一致。`--fund-wei` 默认每账户 0.1 BNB，`--value-wei` 默认每次 1 wei，可按资金与 gas 预算调整。资金不足会停止继续派发，不自动补款。
 
-`--workers` 是**每台客户端**的并发上限（1–64）。工作线程并行完成签名与 RPC；同一账户只允许一笔在途操作，避免 nonce 冲突。各客户端使用独立的预充值账户。共享文件系统只用于既有部署分发；压测账户和发送日志应落在目标机本地磁盘。
+`--workers` 是**每台客户端**的工作线程上限（1–64）；`--max-inflight` 是每台处理中的操作上限（1–4096，默认等于 workers）。同一线程可以在等待 RPC 或回执时处理其他账户，但同一账户只允许一笔在途操作，避免 nonce 冲突。各客户端使用独立的预充值账户。共享文件系统只用于既有部署分发；压测账户和发送日志应落在目标机本地磁盘。
+
+## 独立控制线程与在途操作
+
+例如，三台客户端总目标 800 QPS，每台 16 个线程、最多 256 个处理中的操作：
+
+```bash
+./tools/cluster load --config "$CONFIG" --load-action transfer \
+  --algorithm ecdsa --dataset ecdsa-10000 --run "transfer-$(date +%Y%m%d-%H%M%S)" \
+  --accounts 10000 --qps 800 --workers 16 --max-inflight 256 --cache-accounts 256 --duration 600
+```
+
+ECDSA、ML、SLH 共用调度。每个线程内允许多个不同账户的异步任务；等待回执不会占住该线程唯一的任务位置，CPU 签名由工作线程或其原生签名进程执行。发送许可和充值账户 nonce 由主线程统一分配，回复带独立请求编号，避免并发任务串用结果。
+
+`maxInflight` 的实际上限取参数、该客户端账户数和操作数的最小值，包含构造、签名、等待发送许可及回执的全过程；`peakInflight` 记录实际峰值。未指定新参数时保持原有并发规模。提高在途数会增加内存、RPC 和待确认交易，不能保证达到目标 QPS；SLH 若受签名 CPU 限制，增加在途数也不能替代更多计算能力。到时停止分配及发送许可，已获许可的任务继续完成，密钥和发送前日志仍持久化。
 
 ## 按持续时间压测
 
@@ -82,7 +97,7 @@ CONFIG=one-box/.runtime/cluster-config/ap-pq.json
 
 ## 并发与内存复用
 
-`--workers` 控制每台并行操作数；`--cache-accounts` 控制每个 worker 最多缓存多少个账户，默认 64、上限 4096，设为 0 可关闭缓存进行对照。按 LRU 淘汰，不会自动把整个账户池读入内存。
+`--workers` 控制线程数，`--max-inflight` 独立控制操作并发；`--cache-accounts` 控制每个 worker 最多缓存多少个账户，默认 64、上限 4096，设为 0 可关闭缓存进行对照。按 LRU 淘汰，不会自动把整个账户池读入内存。
 
 缓存复用账户身份、钱包和智能账户对象，省去重复读盘、账户初始化及部分 RPC。nonce、gas 估算、真实签名和回执仍逐笔处理。状态中的 `cacheHits / cacheMisses` 用于判断是否值得扩大缓存；大量新账户只使用一次时，缓存通常没有收益。缓存中的密钥随进程退出释放，JavaScript GC 不保证立即擦除内存。
 
@@ -105,7 +120,7 @@ node tools/chain-bench/load/signing-bench.mjs 12
 - `inflight` 包括签名、估算、发送和等待回执。创建 / 转账的 `acceptedPerSecond` 与 `confirmedPerSecond` 按启动工作线程之后的执行时间计算，包含尾部回执等待。
 - QPS 是发送上限，**不是保底吞吐**。三个客户端预约同一开始时间，但 SSM、初始化与时钟偏差仍会影响实际起跑；`startLagMs` 记录迟到量。不会在停顿后突发补发。
 
-并发上限会限制吞吐，粗略关系为「所需并发 ≈ 目标 QPS × 单笔端到端时延」。SLH 签名、Bundler 模拟、链上容量、回执等待和本地持久化均可能成为瓶颈。先逐步增加 workers，再提高 QPS；与 validator 同机时还应观察 CPU、磁盘和出块表现。
+并发上限会限制吞吐，粗略关系为「所需并发 ≈ 目标 QPS × 单笔端到端时延」。SLH 签名、Bundler 模拟、链上容量、回执等待和本地持久化均可能成为瓶颈。先固定 workers、逐步增加 max-inflight；若签名 CPU 已满，再评估增加 workers；与 validator 同机时还应观察 CPU、磁盘和出块表现。
 
 状态查询会在中控私有目录 `one-box/.runtime/clusters/<环境>/load-results/latest.json` 保存最近结果。目标机的 `runtime/load/<dataset>/runs/<run>/progress.json` 每秒更新；任务结束时立即刷新，避免每笔操作重复刷进度文件；`spec.json`、`operations/` 保存参数与发送回执，服务日志仍为 `logs/bench.log`。
 
@@ -131,10 +146,61 @@ reconcile 不发送交易，只核对并更新结果；原轮次的统计与失�
 node --test tools/chain-bench/load/core.test.mjs
 python3 -m unittest discover -s one-box/remote -p 'test_*.py'
 
-# 已启动兼容 v4/v7 的环境和 PQ Bundler 后运行：
+# 先构建原生签名器；启动兼容 v4/v7 的环境和 PQ Bundler 后运行：
+python3 tools/chain-bench/load/signer/build.py
 node tools/chain-bench/load/integration.mjs <环境名>
 ```
 
 集成测试生成独立账户池，验证三种算法的创建、连续转账、收款余额、公私钥不变、重复 run 拒绝及回执核对；私有原始记录保留在该环境的 `load/` 下。本地测试不替代真实三机的吞吐验收。
 
-限速器每次等待后重新检查单调时钟，达到最小发送间隔才放行；不会因定时器提前唤醒而超发，也不追赶停顿期间积累的额度。目标 QPS 是发送许可的速率上限，实际 RPC 提交和上链时间仍受调度、网络与节点处理影响。
+限速器每次等待后重新检查单调时钟，不追赶停顿期间积累的额度。目标 QPS 约束发送许可，实际 RPC 提交和上链时间仍受调度、网络与节点处理影响。
+
+### SLH 原生签名与容量验证
+
+默认 `--slh-backend noble` 保留原签名实现；`--slh-backend openssl` 使用常驻的原生签名进程。
+算法仍为 Pure SLH-DSA-SHA2-128s、空上下文，沿用原密钥、账户与链上预编译。
+每个 worker 对应一个签名进程，复用进程而非每笔重新启动；多个 worker 并行使用 CPU。
+每笔生成新签名并本地验签，不缓存签名或省略随机数。密钥只通过匿名管道传递，禁止 core dump。
+
+中控 `cluster build` 会构建并交叉验证原生签名器，随 release 分发，不要求目标机安装新版 OpenSSL。
+源码及校验和复用 `tools/crypto-bench/sources.json`；原生签名器独立于 Validator，不改变预编译实现或 gas。
+Linux 构建需 `cc`、`make`、`perl`，不强制使用构建机器特有的 CPU 指令。
+首次需要编译 OpenSSL；同一源码与编译器的后续构建复用产物。
+
+```bash
+# 本地单独构建与交叉验签；支持 macOS arm64、Linux x86_64 / aarch64
+python3 tools/chain-bench/load/signer/build.py
+# 无链签名容量：1 / 2 / 4 worker，每次使用不同消息并验签
+node tools/chain-bench/load/signer/capacity.mjs
+# 真实链路：新建独立数据集，核对余额；比较线程数和在途数量
+node tools/chain-bench/load/sweep.mjs devnet-v4 ecdsa 32 96
+node tools/chain-bench/load/sweep.mjs devnet-v4 ml 32 96
+node tools/chain-bench/load/sweep.mjs devnet-v4 slh 16 32
+# 可选最后一项：workers:inflight 的比较点（账户池须足够大）
+node tools/chain-bench/load/sweep.mjs devnet-v4 ecdsa 256 768 4:64,4:256,8:256
+```
+
+远程 SLH 转账在原命令追加 `--slh-backend openssl --workers 4 --max-inflight 32` 即可。
+先按物理 CPU 条件逐步增加 worker；过多线程会与同机 Validator、Bundler 争抢 CPU。
+原生签名器不可用时直接失败，不静默切换后端。Bench 服务使用 `KillMode=mixed`：先通知主进程停派，
+让签名与回执等待完成；超时后 systemd 清理整个进程组。
+
+账户按 worker 固定分组，`--cache-accounts` 仍是每 worker 的 LRU 上限。
+覆盖该 worker 的账户数时，后续轮转可以复用账户对象；不会缓存 nonce、回执或签名。
+状态里的 `timings` 给出签名、提交、回执等待、限速等待等阶段的次数、总耗时、均值与最大值（ms）。
+这是已结束调用的墙钟耗时：并发会重叠，`prepareUserOperation` 包含签名，原生签名时间包含队列等待，不能相加当作 CPU 时间。
+
+目标 QPS 高但接收率低时，先看 `peakInflight` 与 `timings`：回执等待占主导可增加在途上限；
+签名占主导且 CPU 高，应增加签名算力或拆分 Bench 与 Validator 的机器。
+链上 gas 低、txpool 不持续增长时，不应将客户端吞吐上限解释为链的饱和点。
+
+每客户端超过 1,000 QPS 时，限速器按 `ceil(QPS / 1000)` 笔做小批次，避免逐笔定时器限制吞吐；
+批次间按目标速率间隔，停顿后不积累补发额度。准备、创建每个账户只处理一次，转账才轮转复用。
+容量脚本先低并发创建 PQ 账户，再测转账；高并发创建可能触发 Bundler 的 Factory 准入限制，
+需要单独评估，不能当作 Validator 饱和，也不会自动绕过 Bundler 校验。
+
+Bundler 同时按 gas 与编码大小分包：本地 PQ 路线预留 1 KiB 外层交易开销，避免超过 BSC 的 128 KiB 交易限制。
+修正了 Alto 的 AA95 gas 下限计算中重复计入整批 calldata 的问题；calldata 只计一次，实际 gas 估算仍保留。
+提高并发后若接收正常、上链停滞，应先检查 Bundler 拒绝原因，不能只继续增加 worker。
+
+本地实测与限制见 [验收报告](../../../docs/chain-bench/load/report.html)。

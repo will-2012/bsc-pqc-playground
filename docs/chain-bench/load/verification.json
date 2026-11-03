@@ -1,80 +1,165 @@
 {
-  "checkedAt": "2026-11-02T09:29:51.634Z",
+  "checkedAt": "2026-11-02T13:57:54.280Z",
   "platform": "darwin",
   "arch": "arm64",
   "node": "v25.9.0",
   "sourceSha256": {
-    "tools/chain-bench/load/core.mjs": "5fceff3776aa8cfd21be43502e7d43c1e5ef87a98c3e71e03339464a08865113",
-    "tools/chain-bench/load/run.mjs": "4aaedf86fbe751599a2af187a8bf7fc855c6238b38d95424ed99ec9de4310727",
-    "tools/chain-bench/load/worker.mjs": "39aab3a5b1a4517c6a5fc9aebff6bb296ad9c5cfba3441b3bd65cf95aa225e51",
-    "erc4337-wallet/common/wallet.mjs": "65beab97fe195b8332bb9cb972725bd0ce4d5e7e2f0cf0a3f08fbd4c49c95847"
+    "tools/chain-bench/load/core.mjs": "67a751d302f5fd5e0ca19f0c2c42cae4181c990e7bd829bcc3626105e3ea4f5e",
+    "tools/chain-bench/load/run.mjs": "588f8ebabeb8b73715b2b3a5c8c5cdafbeccbe30256405f91644febc1c302fb4",
+    "tools/chain-bench/load/inclusions.mjs": "cb773f9d5344c680349b6aebae7cb64a777687ec46ec3842761563d7dc92d052",
+    "tools/chain-bench/load/worker.mjs": "89bf6d58ffc368a1b16d669dd6a92f0dd9620d5e86cea9bcfd6914fabf93eedb",
+    "erc4337-wallet/common/wallet.mjs": "bc63e74943bc4afbedf0d3b19b7a52e082512ddb9d974e99677d4886de5f0c78",
+    "tools/chain-bench/load/timing.mjs": "b5e2cb3357477b2584c72e5a50578be9874a2bd978fcc918ed76595b05943c44",
+    "tools/chain-bench/load/signer/client.mjs": "2df59c99f799e28eeb6728053e2a1ee61c692127a067c4c81bbd58e9a6348112",
+    "tools/chain-bench/load/signer/slh.c": "5b4643609831441327bd9d10fa3607dfe2ccb4613e9bea6398ee0af013e681e8"
   },
   "rows": [
     {
       "algorithm": "ecdsa",
       "action": "create",
       "count": 3,
-      "elapsedSeconds": 1.126,
+      "elapsedSeconds": 1.065,
       "cacheHits": 0,
       "cacheMisses": 0,
       "targetQps": 5,
-      "acceptedPerSecond": 2.664298401420959,
-      "confirmedPerSecond": 2.664298401420959
+      "acceptedPerSecond": 2.8169014084507045,
+      "confirmedPerSecond": 2.8169014084507045
     },
     {
       "algorithm": "ecdsa",
       "action": "transfer",
       "count": 6,
-      "elapsedSeconds": 1.922,
-      "cacheHits": 0,
-      "cacheMisses": 6,
+      "elapsedSeconds": 1.587,
+      "cacheHits": 3,
+      "cacheMisses": 3,
       "targetQps": 5,
-      "acceptedPerSecond": 3.121748178980229,
-      "confirmedPerSecond": 3.121748178980229
+      "acceptedPerSecond": 3.780718336483932,
+      "confirmedPerSecond": 3.780718336483932
+    },
+    {
+      "algorithm": "ecdsa",
+      "action": "serial",
+      "count": 12,
+      "workers": 1,
+      "maxInflight": 1,
+      "peakInflight": 1,
+      "elapsedSeconds": 6.402
+    },
+    {
+      "algorithm": "ecdsa",
+      "action": "pipeline",
+      "count": 12,
+      "workers": 1,
+      "maxInflight": 3,
+      "peakInflight": 3,
+      "elapsedSeconds": 3.193
     },
     {
       "algorithm": "ml",
       "action": "create",
       "count": 3,
-      "elapsedSeconds": 3.384,
+      "elapsedSeconds": 2.511,
       "cacheHits": 0,
       "cacheMisses": 0,
       "targetQps": 5,
-      "acceptedPerSecond": 0.8865248226950355,
-      "confirmedPerSecond": 0.8865248226950355
+      "acceptedPerSecond": 1.194743130227001,
+      "confirmedPerSecond": 1.194743130227001
     },
     {
       "algorithm": "ml",
       "action": "transfer",
       "count": 6,
-      "elapsedSeconds": 3.987,
-      "cacheHits": 2,
-      "cacheMisses": 4,
+      "elapsedSeconds": 3.528,
+      "cacheHits": 3,
+      "cacheMisses": 3,
       "targetQps": 5,
-      "acceptedPerSecond": 1.5048908954100828,
-      "confirmedPerSecond": 1.5048908954100828
+      "acceptedPerSecond": 1.7006802721088434,
+      "confirmedPerSecond": 1.7006802721088434
+    },
+    {
+      "algorithm": "ml",
+      "action": "pipeline",
+      "count": 12,
+      "workers": 1,
+      "maxInflight": 3,
+      "peakInflight": 3,
+      "elapsedSeconds": 6.301
     },
     {
       "algorithm": "slh",
       "action": "create",
       "count": 3,
-      "elapsedSeconds": 5.366,
+      "elapsedSeconds": 6.535,
       "cacheHits": 0,
       "cacheMisses": 0,
       "targetQps": 5,
-      "acceptedPerSecond": 0.5590756615728663,
-      "confirmedPerSecond": 0.5590756615728663
+      "acceptedPerSecond": 0.4590665646518745,
+      "confirmedPerSecond": 0.4590665646518745
     },
     {
       "algorithm": "slh",
       "action": "transfer",
       "count": 6,
-      "elapsedSeconds": 9.882,
-      "cacheHits": 2,
-      "cacheMisses": 4,
+      "elapsedSeconds": 12.055,
+      "cacheHits": 3,
+      "cacheMisses": 3,
       "targetQps": 5,
-      "acceptedPerSecond": 0.6071645415907712,
-      "confirmedPerSecond": 0.6071645415907712
+      "acceptedPerSecond": 0.4977187888842804,
+      "confirmedPerSecond": 0.4977187888842804
+    },
+    {
+      "algorithm": "slh",
+      "action": "pipeline",
+      "count": 12,
+      "workers": 1,
+      "maxInflight": 3,
+      "peakInflight": 3,
+      "elapsedSeconds": 21.736
+    },
+    {
+      "algorithm": "slh",
+      "action": "native",
+      "count": 12,
+      "workers": 2,
+      "maxInflight": 3,
+      "elapsedSeconds": 6.976,
+      "timings": {
+        "sign": {
+          "count": 12,
+          "failed": 0,
+          "totalMs": 3007.4372079999994,
+          "maxMs": 494.95229199999994,
+          "meanMs": 250.61976733333327
+        },
+        "prepareUserOperation": {
+          "count": 12,
+          "failed": 0,
+          "totalMs": 3301.127830000001,
+          "maxMs": 533.1211669999998,
+          "meanMs": 275.0939858333334
+        },
+        "admission": {
+          "count": 12,
+          "failed": 0,
+          "totalMs": 55.74458399999912,
+          "maxMs": 22.330041999999594,
+          "meanMs": 4.645381999999927
+        },
+        "submit": {
+          "count": 12,
+          "failed": 0,
+          "totalMs": 2530.852543000002,
+          "maxMs": 321.9845,
+          "meanMs": 210.90437858333348
+        },
+        "receipt": {
+          "count": 12,
+          "failed": 0,
+          "totalMs": 14169.383665999994,
+          "maxMs": 1521.4584999999997,
+          "meanMs": 1180.7819721666663
+        }
+      }
     }
   ],
   "cacheRows": [
@@ -83,68 +168,40 @@
       "cacheHits": 3,
       "cacheMisses": 3,
       "confirmed": 6,
-      "elapsedSeconds": 3.265
+      "elapsedSeconds": 3.214
     },
     {
       "algorithm": "ml",
       "cacheHits": 3,
       "cacheMisses": 3,
       "confirmed": 6,
-      "elapsedSeconds": 7.831
+      "elapsedSeconds": 8.574
     },
     {
       "algorithm": "slh",
       "cacheHits": 3,
       "cacheMisses": 3,
       "confirmed": 6,
-      "elapsedSeconds": 16.917
+      "elapsedSeconds": 17.05
     }
   ],
   "checks": [
+    "uneven worker partitions: every setup account generated once",
     "ecdsa: independent persistent keys; recipient balance; duplicate-run rejection; pending receipt recovery without resending; skip existing accounts",
     "scheduled start cancellation: zero dispatched operations",
     "graceful stop: dispatch halted, in-flight drained, balance matched, reconcile did not resend",
+    "ecdsa: one worker, three in-flight accounts, unique nonces and recipient balance verified",
+    "ecdsa: timed dispatch stopped, unsent work cancelled, receipts drained and balance matched",
     "ecdsa: bounded cache reused signing context; fresh nonces and balances verified",
     "ml: independent persistent keys; recipient balance; duplicate-run rejection; pending receipt recovery without resending; skip existing accounts",
+    "ml: one worker, three in-flight accounts, unique nonces and recipient balance verified",
+    "ml: timed dispatch stopped, unsent work cancelled, receipts drained and balance matched",
     "ml: bounded cache reused signing context; fresh nonces and balances verified",
     "slh: independent persistent keys; recipient balance; duplicate-run rejection; pending receipt recovery without resending; skip existing accounts",
-    "slh: bounded cache reused signing context; fresh nonces and balances verified"
-  ],
-  "configuration": {
-    "validators": 3,
-    "benchClients": 1,
-    "accountsPerAlgorithm": 3,
-    "transferCountPerAlgorithm": 6,
-    "workers": 2,
-    "targetQps": 5,
-    "tests": {
-      "remoteOffline": 43,
-      "oneboxRegression": 19,
-      "loadCore": 6
-    }
-  },
-  "upgradeReview": {
-    "checkedAt": "2026-11-02T09:22:15.816464+00:00",
-    "remoteOfflineTests": 42,
-    "oneboxTests": 19,
-    "loadTests": 6,
-    "agentLoadSmoke": "Passed on local three-validator devnet; systemd/base path mocked; real transactions for all three algorithms",
-    "remoteExecution": false,
-    "sourceSha256": {
-      "one-box/remote/agent.py": "10cbb94025aff88fdaecac04bd766c11cf167b8963d29d126e174e351310c9dc",
-      "one-box/remote/cluster.py": "f6037383ab8aab8e8acd6036fc623aea6ca6b391bee8d92787d55b0fbbc69174",
-      "one-box/remote/load_bench.py": "b374cda9ed68a6dbe57a79983fc0385516048b9669e93ff6e0b0e6ca23b3ab21"
-    }
-  },
-  "latestOfflineReview": {
-    "checkedAt": "2026-11-02T09:32:04.426490+00:00",
-    "remoteOfflineTests": 43,
-    "oneboxTests": 19,
-    "loadTests": 6,
-    "sourceSha256": {
-      "one-box/remote/agent.py": "e7b3c0dcd1279525fd5c27786d5d78601cb77a265464d20589e240fb7e4cf235",
-      "one-box/remote/cluster.py": "71c72a5dfb898c083f2adde3c715e1ee6232549ec4f6c6080a50307f3b215d98",
-      "one-box/remote/load_bench.py": "28337fb144dd67dbe56586b89f60f8ad7e81f449b6107fafce60b84b6475f432"
-    }
-  }
+    "slh: one worker, three in-flight accounts, unique nonces and recipient balance verified",
+    "SLH native signer: existing keys, independent on-chain verifier, concurrent transfers and balance verified",
+    "slh: timed dispatch stopped, unsent work cancelled, receipts drained and balance matched",
+    "slh: bounded cache reused signing context; fresh nonces and balances verified",
+    "timed ECDSA creation: no faucet nonce gap; next run completes remaining accounts"
+  ]
 }

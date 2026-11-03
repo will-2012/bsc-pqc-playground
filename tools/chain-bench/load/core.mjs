@@ -9,9 +9,13 @@ export function validate(s) {
   assert(Object.hasOwn(profiles, s.algorithm), 'Use ecdsa, ml or slh');
   for (const k of ['dataset', 'run']) assert.match(s[k], /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/);
   for (const k of ['accounts', 'count', 'workers']) assert(Number.isSafeInteger(s[k]) && s[k] > 0, `Invalid ${k}`);
+  s.slhBackend ??= 'noble';
+  assert(['noble', 'openssl'].includes(s.slhBackend), 'Invalid SLH backend');
   s.cacheAccounts ??= 64;
   assert(Number.isSafeInteger(s.cacheAccounts) && s.cacheAccounts >= 0 && s.cacheAccounts <= 4096, 'Invalid cache capacity');
   assert(s.workers <= 64, 'At most 64 workers per client');
+  s.maxInflight ??= s.workers;
+  assert(Number.isSafeInteger(s.maxInflight) && s.maxInflight > 0 && s.maxInflight <= 4096, 'Invalid max inflight');
   assert(Number.isFinite(s.qps) && s.qps > 0, 'Invalid QPS');
   assert(Number.isFinite(s.startAt) && s.startAt >= 0, 'Invalid start time');
   s.durationSeconds ??= 0;
@@ -46,10 +50,12 @@ export function acquire(p, recover = false) {
   fs.closeSync(fd);
   return () => fs.unlinkSync(p);
 }
-// No catch-up burst: delays lower achieved throughput rather than accumulate tokens.
+// No catch-up burst. At >1000 QPS, admit ceil(QPS / 1000) operations per batch.
 export class Pacer {
   constructor(qps, now = () => performance.now(), sleep = ms => new Promise(r => setTimeout(r, ms))) {
-    this.interval = 1000 / qps; this.now = now; this.sleep = sleep; this.last = -Infinity;
+    this.batch = Math.max(1, Math.ceil(qps / 1000));
+    this.interval = 1000 * this.batch / qps; this.remaining = 0;
+    this.now = now; this.sleep = sleep; this.last = -Infinity;
     this.queue = Promise.resolve();
   }
   take(deadline = Infinity, cancelled = () => false) {
@@ -57,12 +63,13 @@ export class Pacer {
       while (true) {
         const now = this.now();
         if (cancelled() || now >= deadline) return false;
+        if (this.remaining > 0 && now < this.last + this.interval) { this.remaining--; return true; }
         const wait = this.last + this.interval - now;
         if (wait <= 0) break;
         // Timers can wake early; recheck the monotonic clock before granting a permit.
         await this.sleep(Math.max(1, Math.ceil(Math.min(wait, deadline - now))));
       }
-      this.last = this.now();
+      this.last = this.now(); this.remaining = this.batch - 1;
       return true;
     });
     this.queue = next.catch(() => {});
@@ -70,10 +77,14 @@ export class Pacer {
   }
 }
 export class Accounts {
-  constructor(count) { this.count = count; this.next = 0; this.busy = new Set(); }
-  take() {
-    for (let i = 0; i < this.count; i++) {
-      const index = this.next++ % this.count;
+  constructor(count) { this.count = count; this.next = new Map(); this.busy = new Set(); }
+  take(owner = 0, owners = 1) {
+    assert(Number.isInteger(owners) && owners > 0 && Number.isInteger(owner) && owner >= 0 && owner < owners);
+    const count = Math.ceil((this.count - owner) / owners);
+    for (let i = 0; i < count; i++) {
+      const cursor = this.next.get(owner) || 0;
+      this.next.set(owner, (cursor + 1) % count);
+      const index = owner + (cursor % count) * owners;
       if (!this.busy.has(index)) { this.busy.add(index); return index; }
     }
     return null;

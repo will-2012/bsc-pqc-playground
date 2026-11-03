@@ -179,7 +179,7 @@ Type=simple
 WorkingDirectory={base(c)}/current
 ExecStart={command}
 KillSignal=SIGTERM
-KillMode=control-group
+KillMode={'mixed' if role == 'bench' else 'control-group'}
 TimeoutStopSec=300
 UMask=0077
 LimitNOFILE=65536
@@ -407,7 +407,7 @@ def perform(action, p):
                 spec = read(job) if job.exists() else {}
                 progress = b / "runtime/load" / spec.get("dataset", "none") / "runs" / spec.get("run", "none") / "progress.json"
                 data = read(progress) if progress.exists() else {}
-                allowed = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "durationSeconds", "cancelled", "endReason", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt", "inclusions", "inclusionTruncated")
+                allowed = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "workers", "maxInflight", "peakInflight", "slhBackend", "timings", "durationSeconds", "cancelled", "endReason", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt", "inclusions", "inclusionTruncated")
                 result = {"service": active, "run": spec.get("run"), "dataset": spec.get("dataset"),
                           "progress": {k: data[k] for k in allowed if k in data}}
             else:
@@ -481,6 +481,7 @@ def perform(action, p):
                 for step in ("prepare", "create", "transfer"):
                     spec = dict(action=step, algorithm=algorithm, dataset=dataset, run=step,
                                 accounts=1, count=1, qps=1, workers=1, cacheAccounts=4,
+                                slhBackend="openssl" if algorithm == "slh" and step == "transfer" else "noble",
                                 fundWei="100000000000000000", valueWei="1", startAt=0)
                     file = b / "runtime/load-checks" / tag / f"{algorithm}-{step}.json"
                     write(file, spec)

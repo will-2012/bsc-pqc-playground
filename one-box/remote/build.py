@@ -25,6 +25,9 @@ def inputs_manifest():
     ]
     for version in ("v2", "v4"):
         paths.extend(p for p in (BOX / "precompile" / version).rglob("*") if p.is_file())
+    paths.extend((ROOT / "tools/chain-bench/load/signer").glob("*.*"))
+    paths.append(ROOT / "tools/crypto-bench/sources.json")
+    paths.append(ROOT / "tools/crypto-bench/run.py")
     paths.append(ROOT / "tools/crypto-bench/testdata/standard.tsv")
     return {str(p.relative_to(ROOT)): digest(p) for p in sorted(paths)}
 
@@ -151,7 +154,7 @@ def build():
     if platform.system() != "Linux" or platform.machine() not in ("x86_64", "aarch64"):
         raise RuntimeError("Build on the Linux target architecture; macOS artifacts must not be deployed")
     doctor()
-    missing = [tool for tool in ("cc", "make", "patch", "pnpm") if not shutil.which(tool)]
+    missing = [tool for tool in ("cc", "make", "patch", "pnpm", "perl") if not shutil.which(tool)]
     if missing:
         raise RuntimeError("Missing build tools: " + ", ".join(missing))
     if not hasattr(tarfile, "data_filter"):
@@ -163,6 +166,10 @@ def build():
         raise RuntimeError("Install the repository-pinned pnpm 8.15.4")
     # A failed rebuild must not leave stale metadata marking old binaries as current.
     (WORK / "binary.json").unlink(missing_ok=True)
+    signer_spec = importlib.util.spec_from_file_location("slh_signer_build", ROOT / "tools/chain-bench/load/signer/build.py")
+    signer_module = importlib.util.module_from_spec(signer_spec)
+    signer_spec.loader.exec_module(signer_module)
+    signer_module.build(WORK / "bsc-pqc-slh-signer")
     commit = prepare_sources()
     source, log = WORK / "bsc", WORK / "build.log"
     package = source / "crypto/pqmldsa"
@@ -266,6 +273,7 @@ def build():
             "algorithms": ["ML-DSA-44", "SLH-DSA-SHA2-128s"],
             "ml_backend": "portable C OPT=0 AUTO=0",
             "helper_sha256": digest(WORK / "pq-wallet"),
+            "slh_signer_sha256": digest(WORK / "bsc-pqc-slh-signer"),
             "library_sha256": digest(package / "libmldsa44.a"),
         },
     )

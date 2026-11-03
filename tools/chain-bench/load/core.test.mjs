@@ -1,3 +1,4 @@
+import {Timings, mergeTimings} from './timing.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -45,6 +46,14 @@ test('duration is optional and only valid for create or transfer', () => {
   assert.equal(validate({...s, durationSeconds: 5}).durationSeconds, 5);
   for (const value of [-1, NaN, Infinity, 86401]) assert.throws(() => validate({...s, durationSeconds: value}));
   assert.throws(() => validate({...s, action: 'prepare', count: 2, durationSeconds: 1}));
+});
+
+test('inflight bound is independent of thread count and defaults to legacy concurrency', () => {
+  const s = {action: 'transfer', algorithm: 'ecdsa', dataset: 'a', run: 'r', accounts: 10,
+    count: 20, workers: 2, qps: 100, startAt: 0, fundWei: '100', valueWei: '1'};
+  assert.equal(validate({...s}).maxInflight, 2);
+  assert.equal(validate({...s, maxInflight: 100}).maxInflight, 100);
+  for (const maxInflight of [0, -1, 4097, 1.5, NaN, Infinity]) assert.throws(() => validate({...s, maxInflight}));
 });
 
 test('one pending operation per account, round robin does not reuse a busy account', () => {
@@ -150,4 +159,59 @@ test('same-height different hashes remain distinct for reorg checks', async () =
     blockHash: '0x' + '11'.repeat(32), transactionHash: '0x' + '22'.repeat(32)};
   w.add(result); w.add({...result, blockHash: '0x' + '33'.repeat(32)});
   assert.equal(w.blocks.length, 2);
+});
+
+
+test('account affinity keeps keys on the same worker without concurrent reuse', () => {
+  const a = new Accounts(7);
+  for (let round = 0; round < 3; round++) {
+    const rows = [[], [], []];
+    for (let slot = 0; slot < 3; slot++) {
+      for (;;) {
+        const index = a.take(slot, 3);
+        if (index === null) break;
+        assert.equal(index % 3, slot);
+        rows[slot].push(index);
+      }
+    }
+    assert.equal(new Set(rows.flat()).size, 7);
+    for (const index of rows.flat()) a.release(index);
+  }
+});
+
+test('SLH backend is explicit and defaults to the existing implementation', () => {
+  const base = {action: 'transfer', algorithm: 'slh', dataset: 'a', run: 'r', accounts: 2, count: 2, workers: 1, qps: 10, startAt: 0, fundWei: '100', valueWei: '1'};
+  assert.equal(validate({...base}).slhBackend, 'noble');
+  assert.equal(validate({...base, slhBackend: 'openssl'}).slhBackend, 'openssl');
+  assert.throws(() => validate({...base, slhBackend: 'unknown'}));
+});
+
+
+test('stage timings merge cumulative worker counters without double counting', async () => {
+  const t = new Timings();
+  await t.measure('sign', () => 42);
+  await assert.rejects(t.measure('sign', () => Promise.reject(new Error('test'))));
+  assert.equal(t.values.sign.count, 2);
+  const total = {}, first = structuredClone(t.values);
+  mergeTimings(total, first, {});
+  mergeTimings(total, first, first);
+  assert.equal(total.sign.count, 2);
+  await t.measure('sign', () => 43);
+  mergeTimings(total, t.values, first);
+  assert.equal(total.sign.count, 3);
+  assert(total.sign.maxMs >= total.sign.meanMs);
+});
+
+
+test('high QPS uses bounded millisecond batches without accumulating catch-up work', async () => {
+  let now = 0;
+  const p = new Pacer(10000, () => now, async ms => { now += ms; });
+  for (let i = 0; i < 10; i++) assert(await p.take());
+  assert.equal(now, 0);
+  assert(await p.take()); assert.equal(now, 1);
+  now = 100;
+  for (let i = 0; i < 10; i++) assert(await p.take());
+  assert.equal(now, 100);
+  assert(await p.take()); assert.equal(now, 101);
+  assert.equal(await p.take(101), false);
 });

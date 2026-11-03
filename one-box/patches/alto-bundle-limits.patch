@@ -1,0 +1,86 @@
+--- a/src/mempool/mempool.ts
++++ b/src/mempool/mempool.ts
+@@ -1,3 +1,4 @@
++import { encodeHandleOpsCalldata } from "../executor/utils"
+ import type { EventManager } from "@alto/handlers"
+ import {
+     EntryPointV06Abi,
+@@ -699,6 +700,22 @@
+                     break
+                 }
+
++                // BSC caps the signed outer transaction at 128 KiB. Reserve
++                // 1 KiB for the transaction envelope in local PQ profiles.
++                if (
++                    ["V2", "V3", "V4", "V5", "V6"].some(
++                        version => process.env[`ALTO_LOCAL_PRECOMPILE_${version}`] === "1"
++                    ) &&
++                    currentBundle.userOps.length > 0 &&
++                    (encodeHandleOpsCalldata({
++                        userOps: [...currentBundle.userOps, userOpInfo],
++                        beneficiary: entryPoint
++                    }).length - 2) / 2 > 131072 - 1024
++                ) {
++                    await this.store.addOutstanding({ entryPoint, userOpInfo })
++                    break
++                }
++
+                 seenOps.add(userOpInfo.userOpHash)
+
+                 const { userOp } = userOpInfo
+--- a/src/executor/utils.ts
++++ b/src/executor/utils.ts
+@@ -38,6 +38,7 @@
+     userOps: UserOpInfo[],
+     beneficiary: Address
+ ): bigint {
++    if (userOps.length === 0) return 0n
+     let gasFloor = 0n
+
+     for (const userOpInfo of userOps) {
+@@ -57,16 +58,7 @@
+             // There is a ~27,170 gas overhead for EntryPoint's re-entrency check
+             gasFloor += 30_000n
+
+-            // There is a variable gas overhead for calldata gas when calling handleOps
+-            const calldata = encodeHandleOpsCalldata({
+-                userOps: userOps,
+-                beneficiary
+-            })
+-            const handleOpsCalldataCost = toBytes(calldata)
+-                .map((x) => (x === 0 ? 4 : 16))
+-                .reduce((sum, x) => sum + x)
+-
+-            gasFloor += BigInt(handleOpsCalldataCost)
++
+         } else {
+             gasFloor +=
+                 userOp.callGasLimit + userOp.verificationGasLimit + 5000n
+@@ -77,20 +69,16 @@
+             // There is a ~27,179 gas overhead for EntryPoint's re-entrency check
+             gasFloor += 30_000n
+
+-            // There is a variable gas overhead for calldata gas when calling handleOps
+-            const calldata = encodeHandleOpsCalldata({
+-                userOps: userOps,
+-                beneficiary
+-            })
+-            const handleOpsCalldataCost = toBytes(calldata)
+-                .map((x) => (x === 0 ? 4 : 16))
+-                .reduce((sum, x) => sum + x)
+-
+-            gasFloor += BigInt(handleOpsCalldataCost)
++
+         }
+     }
+
+-    return gasFloor
++    // Transaction calldata is charged once for the whole bundle, not once per op.
++    const calldata = encodeHandleOpsCalldata({ userOps, beneficiary })
++    const calldataCost = toBytes(calldata).reduce(
++        (sum, byte) => sum + (byte === 0 ? 4 : 16), 0
++    )
++    return gasFloor + BigInt(calldataCost)
+ }
+
+ export const getUserOpHashes = (userOpInfos: UserOpInfo[]) => {

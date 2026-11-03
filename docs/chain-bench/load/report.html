@@ -1,38 +1,41 @@
 <!doctype html>
 <html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>分布式账户压测：本地功能验收</title>
-<style>body{max-width:1040px;margin:40px auto;padding:0 24px;font:16px/1.8 system-ui;color:#24364b}h1{font-size:28px}h2{font-size:21px;margin-top:30px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:10px;border:1px solid #d8e2ee;text-align:left}th{background:#edf4fa}.note{background:#edf8f2;border-left:4px solid #399776;padding:14px 18px}a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}pre{overflow:auto;background:#f6f8fa;padding:16px}</style>
-<h1>分布式账户压测：本地功能验收</h1>
-<p class="note">三种账户的准备、创建、转账与回执核对均通过。中控按总 QPS 分配负载，客户端保留独立公私钥；PQ 使用公钥位于 storage 的合约账户。</p>
-<h2>测试范围</h2>
-<p>macOS arm64，Node.js v25.9.0；本地 3 个 validator、1 个 Bundler、1 个 Bench 客户端。每种算法 3 个账户、6 次转账，2 个工作线程，目标发送上限 5 QPS。记录时间：2026-11-02T09:29:51.634Z。</p>
-<p>这是功能回归的小样本，包含尾部回执等待，不能据此推断最大 TPS 或三台真实机器能否达到 100 QPS。全局 100 QPS 分为三份的逻辑已通过离线测试；真实机器的签名、模拟、网络和出块容量仍需实测。</p>
-<h2>最终一轮结果</h2>
-<table><thead><tr><th>算法 / 账户</th><th>操作</th><th>成功数</th><th>执行时间</th><th>确认率</th></tr></thead><tbody><tr><td>ECDSA EOA</td><td>创建</td><td>3</td><td>1.126 s</td><td>2.66 /s</td></tr><tr><td>ECDSA EOA</td><td>转账</td><td>6</td><td>1.922 s</td><td>3.12 /s</td></tr><tr><td>ML-DSA-44（v4）</td><td>创建</td><td>3</td><td>3.384 s</td><td>0.89 /s</td></tr><tr><td>ML-DSA-44（v4）</td><td>转账</td><td>6</td><td>3.987 s</td><td>1.50 /s</td></tr><tr><td>SLH-DSA-SHA2-128s（v7 storage）</td><td>创建</td><td>3</td><td>5.366 s</td><td>0.56 /s</td></tr><tr><td>SLH-DSA-SHA2-128s（v7 storage）</td><td>转账</td><td>6</td><td>9.882 s</td><td>0.61 /s</td></tr></tbody></table>
-<p>全部失败数与未决数为 0。ECDSA 创建指首次充值；PQ 创建指经 UserOperation 部署合约，预充值另在准备阶段完成。</p>
-<h2>正确性检查</h2>
-<ul><li>每账户独立公私钥，文件权限 600；创建和转账前后密钥保持不变。</li>
-<li>PQ 创建后核对合约公钥；每组 6 次 1 wei 转账，收款账户准确增加 6 wei。</li>
-<li>同一账户串行、不同账户并发；重复 run 被拒绝，重复创建跳过已有账户。</li>
-<li>模拟未记录完成的充值与转账，核对真实回执后恢复；未核定任务阻止下一轮发送。</li>
-<li>三种算法各补测 6 次转账，单 worker 缓存 3 个账户，均命中 3 次、未命中 3 次；nonce 与收款余额正确。</li>
-<li>收到停止信号后停止派发，等待在途操作；预约开始前停止时不发送交易。余额与成功回执一致，恢复核对不重发。</li>
-<li>6 项限速、缓存与账户池测试、43 项远程管理离线测试、19 项原有 one-box 回归全部通过。</li></ul>
-<h2>签名侧优化与空间</h2>
-<p>已实现：保留多 worker 并发，新增有上限的账户对象缓存，并在 Bench 内省去 SLH 的真实占位签名。真实操作依然逐笔签名、验签和查询 nonce；不缓存签名或复用 nonce。</p>
-<p>以下诊断在本地链停止后进行，Apple M1 Pro、纯 JavaScript noble-post-quantum 0.7.1。每项完成相同的 12 条消息签名与验签，密钥生成和预热不计时。</p>
-<table><thead><tr><th>Workers</th><th>流程</th><th>墙钟</th><th>有效签名吞吐</th><th>进程 CPU</th></tr></thead><tbody><tr><td>1</td><td>真实占位签名＋真实操作签名</td><td>33.94 s</td><td>0.35 /s</td><td>33.81 s</td></tr><tr><td>1</td><td>仅真实操作签名</td><td>17.22 s</td><td>0.70 /s</td><td>16.95 s</td></tr><tr><td>2</td><td>仅真实操作签名</td><td>8.62 s</td><td>1.39 /s</td><td>17.07 s</td></tr><tr><td>4</td><td>仅真实操作签名</td><td>5.10 s</td><td>2.35 /s</td><td>18.75 s</td></tr></tbody></table>
-<p>省去重复签名使单 worker 的耗时接近减半；在优化后单 worker 基础上，4 个 worker 的吞吐约提高 3.38 倍。这是一次小样本诊断，不是链上 TPS，也不保证在其他 CPU 上线性增长。采样 RSS 约 74–125 MiB，反映本诊断进程，不能作为完整 Bench 的内存预算。<a href="signing.json">原始统计、依赖版本与脚本摘要</a>。</p>
-<p><strong>内存用在反复使用的数据上。</strong>每个 worker 默认缓存 64 个账户，使用 <code>--cache-accounts</code> 调整，0 为关闭。缓存仅包含身份与钱包对象，不是 SLH 内部树节点预计算。大量只使用一次的账户，扩大缓存帮助不大；三种算法的热账户复用测试均已通过。</p>
-<p><strong>进一步优化优先看实现。</strong>当前 SLH 使用 JavaScript SHA-2；下一步值得比较使用硬件 SHA 指令的原生实现，并考虑常驻签名进程。ML 当前每次调用原生 helper 都启动进程，也有复用空间。更换后端须保持 Pure 模式、上下文和编码一致，并通过标准向量及双向验签验证；本次尚未替换后端。<a href="https://docs.openssl.org/master/man7/EVP_SIGNATURE-SLH-DSA/">OpenSSL SLH-DSA 接口</a>。</p>
-<p><strong>算法内部也有空间，但需要专门实现。</strong>根据 SLH 的树结构，可探索并行计算独立子树、缓存热密钥的可复用树节点；消息摘要决定的签名工作仍需执行。树缓存应按完整密钥和树地址隔离，保留现有随机化策略与每笔签名计算。128s 侧重短签名，换成 128f 属于改变参数方案，不是同一算法参数下的无代价加速。<a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.205.pdf">FIPS 205</a>。</p>
-<h2>已有环境升级检查</h2>
-<p>升级包现在校验新 Bench 必需文件；升级时补齐每台 Bench 的连接配置，执行三种算法的准备、创建和转账后才标记 ready。该验收动作已在本地三节点链上实际执行通过；本地仅替代了 systemd 状态与目录映射，没有替代链上交易。</p>
-<p>远程 SSM 分发和目标机性能尚未由本次本地测试验证。已有环境使用 upgrade 保留数据和密钥，无需 reset；这是整套发布，会滚动重启 validator 和重启 Bundler。脚本更新可复用有效的 Linux 构建缓存。</p>
-<h2>使用和复现</h2>
-<p>中控使用 <code>tools/cluster load</code>，按 <code>prepare → create → transfer</code> 执行，通过 <code>status</code> 查看进度、<code>stop</code> 停止、<code>reconcile</code> 核对未决请求。原有部署与 Bench 入口保持兼容。</p>
-<pre>node --test tools/chain-bench/load/core.test.mjs
-python3 -m unittest discover -s one-box/remote -p 'test_*.py'
-node tools/chain-bench/load/integration.mjs &lt;已启动的环境名&gt;</pre>
-<p><a href="../../../tools/chain-bench/load/README.md">完整操作说明</a> · <a href="verification.json">结果与源码 SHA-256</a></p>
+<title>Bench 优化与本地验收</title>
+<style>body{max-width:1040px;margin:40px auto;padding:0 24px;font:16px/1.8 system-ui;color:#24364b}h1{font-size:28px}h2{font-size:21px;margin-top:30px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:9px;border:1px solid #d8e2ee;text-align:left}th{background:#edf4fa}.note{background:#edf8f2;border-left:4px solid #399776;padding:14px 18px}a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}pre{overflow:auto;background:#f6f8fa;padding:16px}</style>
+<h1>Bench 优化与本地验收</h1>
+<p class="note">通过并发流水线、账户缓存和原生 SLH 签名，提高有效发送能力；同时修复大签名打包超限。三种账户的创建、转账、停止与回执恢复均通过本地验收。</p>
+<p>2026-11-02，Apple M1 Pro / macOS arm64、Node.js v25.9.0。本地 3 个 Validator、1 个 Bundler、1 个 Bench；这是功能与容量诊断，不是远程三机的饱和吞吐结论。</p>
+<h2>改了什么</h2>
+<ul><li><strong>线程与在途数分开。</strong><code>--workers</code> 控制计算线程，<code>--max-inflight</code> 控制构造、签名、发送及等待回执中的操作数；同一账户仍只允许一笔在途操作。</li>
+<li><strong>复用账户对象。</strong>账户固定分给 worker，LRU 缓存有上限；不缓存 nonce 或签名。准备和创建阶段每账户只处理一次。</li>
+<li><strong>SLH 可选原生后端。</strong><code>--slh-backend openssl</code> 使用常驻进程与 CPU 的 SHA 实现；原密钥、Pure 模式、空上下文和链上预编译不变，默认仍为 noble。</li>
+<li><strong>定位各阶段开销。</strong>记录签名、RPC 提交、回执等待及限速等待的次数、均值与最大耗时；按时停派、持久化日志和未决请求保护保留。</li></ul>
+<h2>SLH 签名能力</h2>
+<p>预热后每 worker 完成 8 条不同消息，每笔生成新签名并由 noble 验签；不含密钥生成。以下是签名与验签流程的墙钟吞吐，不是链上 TPS。</p>
+<table><tr><th>Workers</th><th>noble</th><th>OpenSSL</th><th>相对 noble</th></tr><tr><td>1</td><td>0.71 /s</td><td>5.06 /s</td><td>7.16 倍</td></tr><tr><td>2</td><td>1.40 /s</td><td>10.05 /s</td><td>7.17 倍</td></tr><tr><td>4</td><td>2.35 /s</td><td>18.40 /s</td><td>7.83 倍</td></tr></table>
+<p>原生后端使用固定版本的 OpenSSL 静态库。密钥通过匿名管道传递，不进入命令行或日志；每笔签名在原生端验签，另通过 noble 及链上 Go 预编译交叉验证。编译参数为 <code>-O3</code>，不强制使用构建机器特有的 CPU 指令。</p>
+<h2>端到端到账率</h2>
+<p>每组使用独立账户池，目标发送上限 10,000 QPS，覆盖完整转账流程及尾部回执等待。ECDSA 为 32 个账户、每档 96 笔；ML 为 16 个账户、每档 48 笔；SLH 为 16 个账户、每档 32 笔，使用原生后端。不同算法的样本规模不同，不用于算法性能排名。</p>
+<table><tr><th>账户</th><th>Workers</th><th>在途上限</th><th>成功数</th><th>墙钟</th><th>到账率</th></tr><tr><td>ECDSA EOA</td><td>1</td><td>1</td><td>96</td><td>51.283 s</td><td>1.87 /s</td></tr><tr><td>ECDSA EOA</td><td>4</td><td>4</td><td>96</td><td>13.486 s</td><td>7.12 /s</td></tr><tr><td>ECDSA EOA</td><td>4</td><td>32</td><td>96</td><td>2.784 s</td><td>34.48 /s</td></tr><tr><td>ML-DSA-44</td><td>1</td><td>1</td><td>48</td><td>59.785 s</td><td>0.80 /s</td></tr><tr><td>ML-DSA-44</td><td>4</td><td>4</td><td>48</td><td>25.295 s</td><td>1.90 /s</td></tr><tr><td>ML-DSA-44</td><td>4</td><td>16</td><td>48</td><td>13.816 s</td><td>3.47 /s</td></tr><tr><td>SLH-DSA-SHA2-128s</td><td>1</td><td>1</td><td>32</td><td>49.037 s</td><td>0.65 /s</td></tr><tr><td>SLH-DSA-SHA2-128s</td><td>4</td><td>4</td><td>32</td><td>16.584 s</td><td>1.93 /s</td></tr><tr><td>SLH-DSA-SHA2-128s</td><td>4</td><td>16</td><td>32</td><td>11.112 s</td><td>2.88 /s</td></tr></table>
+<p>所有转账均核对收款余额。这里比较当前实现的不同并发设置，不是旧版本与新版本的严格 A/B 测试。ML、SLH 还包含 Bundler 模拟、打包和链上验签；签名加速不会等比例变成到账率提升。</p>
+<h2>更大在途数：ECDSA</h2><p>256 个独立账户，每档 768 次转账；同样逐笔核对回执与收款余额。</p><table><tr><th>Workers</th><th>在途上限</th><th>到账率</th></tr><tr><td>4</td><td>64</td><td>67.32 /s</td></tr><tr><td>4</td><td>256</td><td>88.17 /s</td></tr><tr><td>8</td><td>256</td><td>98.16 /s</td></tr></table>
+<h2>高并发暴露的两个打包问题</h2>
+<ul><li><strong>交易编码超限：</strong>16 笔 SLH 操作合并后约 136 KB，超过 BSC 的 128 KiB 限制。所有本地 PQ 路线现在按实际 calldata 长度拆包，并预留 1 KiB 外层编码空间。</li>
+<li><strong>gas 下限重复计算：</strong>Alto 将整批 calldata 的 gas 按操作数反复累加，造成约 3,250 万 gas 的请求被节点拒绝。现改为整批只计一次，保留实际 gas 估算与 AA95 保护。</li></ul>
+<p>新增测试覆盖分包不丢单、不重复，以及 EntryPoint v0.6 / v0.7 的 calldata gas 计数。失败测试记录保留在私有 runtime；本地未决操作用原签名恢复后逐笔核对，未把失败轮次计入成功容量结果。</p>
+<h2>如何继续压到瓶颈</h2>
+<ol><li>ECDSA / ML 先增加在途上限，再看提交率是否提高；不用把 worker 堆到几百。SLH 先启用原生签名，再按 CPU 余量增加 worker。</li>
+<li>缓存覆盖该 worker 反复使用的账户。例如三客户端共享 1 万账户、每客户端 16 worker，每 worker 缓存 256 个账户即可覆盖分片。</li>
+<li>只有发送率达到目标，链侧 gas、txpool、出块及最终化指标才有助于判断饱和。签名、Bundler 模拟或回执等待受限，应先定位对应组件。</li>
+<li>多角色同机争抢 CPU；需要更高压力时，可通过现有配置把 Bench、Bundler 与 Validator 分机。逐档提高 QPS，保留监控及异常停压。</li></ol>
+<p>阶段耗时是已结束调用的墙钟统计，并发可重叠，不能相加当作 CPU 时间。ECDSA 已在启动时核对链身份，签名前校验 chainId 后直接本地签名，省去逐笔重复的链 ID RPC。Linux x86_64 构建与远程性能仍需在目标机器验收；不直接套用本机吞吐。</p>
+<h2>验证与复现</h2>
+<p>通过 18 项 Bench 单测、120 项远程管理测试、19 项 one-box 回归，以及真实链上的密钥、公钥、余额、并发 nonce、重复 run、缓存、到时停派和停止恢复检查。</p>
+<pre>python3 tools/chain-bench/load/signer/build.py
+node tools/chain-bench/load/signer/capacity.mjs
+node tools/chain-bench/load/integration.mjs &lt;环境名&gt;
+node tools/chain-bench/load/sweep.mjs &lt;环境名&gt; slh 16 32
+node tools/chain-bench/load/sweep.mjs &lt;环境名&gt; ecdsa 256 768 4:64,4:256,8:256</pre>
+<p>中控更新后先 <code>build</code>，再 <code>upgrade</code>，保留原账户池与链数据。新参数不填写时沿用原并发规模和签名后端。</p>
+<p><a href="../../../tools/chain-bench/load/README.md">操作说明</a> · <a href="capacity.json">容量统计与源码摘要</a> · <a href="verification.json">功能验收记录</a> · <a href="signing.json">早期 JS 签名诊断（历史记录）</a></p>
 </html>

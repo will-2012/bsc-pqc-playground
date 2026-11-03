@@ -1,3 +1,4 @@
+import {mergeTimings} from './timing.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -106,6 +107,7 @@ try {
     save(path.join(runDir, 'spec.json'), spec);
     summary = {run: spec.run, dataset: spec.dataset, algorithm: spec.algorithm, action: spec.action,
       targetQps: spec.qps, total: spec.count, startedAt: Date.now(), status: 'starting',
+      slhBackend: spec.slhBackend, workers: spec.workers, maxInflight: Math.min(spec.maxInflight, spec.accounts, spec.count), peakInflight: 0, timings: {},
       durationSeconds: spec.durationSeconds, cancelled: 0, endReason: null,
       dispatched: 0, attempted: 0, accepted: 0, confirmed: 0, failed: 0, skipped: 0, pending: 0, inflight: 0, cacheHits: 0, cacheMisses: 0, cacheAccounts: spec.cacheAccounts};
     const stop = () => { interrupted = true; summary.endReason ??= 'signal'; summary.status = 'draining'; progress(); };
@@ -115,7 +117,7 @@ try {
     const pacer = new Pacer(spec.qps), accounts = new Accounts(spec.accounts);
     let nonce = await ctx.client.getTransactionCount({address: ctx.wallet.account.address, blockTag: 'pending'});
     let nextSequence = 0;
-    const poolSize = Math.min(spec.workers, spec.accounts, spec.count);
+    const poolSize = Math.min(spec.workers, summary.maxInflight);
     timer = setInterval(progress, 1000);
     const slots = await Promise.all(Array.from({length: poolSize}, () => new Promise((resolve, reject) => {
       const worker = new Worker(new URL('./worker.mjs', import.meta.url), {workerData: {spec, env, directory}});
@@ -138,47 +140,59 @@ try {
       deadline = performance.now() + spec.durationSeconds * 1000;
       durationTimer = setTimeout(() => { expire(); progress(); }, spec.durationSeconds * 1000);
     }
-    await Promise.all(slots.map(worker => new Promise((resolve, reject) => {
-      let activeIndex, cacheHits = 0, cacheMisses = 0;
+    await Promise.all(slots.map((worker, slot) => new Promise((resolve, reject) => {
+      const capacity = Math.floor(summary.maxInflight / poolSize) + (slot < summary.maxInflight % poolSize ? 1 : 0);
+      const active = new Map();
+      let cacheHits = 0, cacheMisses = 0, previousTimings = {}, assigned = 0;
       const dispatch = () => {
-        if (expire()) { resolve(); return; }
-        if (nextSequence >= spec.count) { summary.endReason ??= 'count'; resolve(); return; }
-        activeIndex = accounts.take();
-        assert.notEqual(activeIndex, null);
-        const sequence = nextSequence++;
-        summary.dispatched++; summary.inflight++;
-        worker.postMessage({type: 'task', index: activeIndex, sequence});
+        while (active.size < capacity && !expire() && nextSequence < spec.count) {
+          if (spec.action !== 'transfer' && assigned >= Math.ceil((spec.accounts - slot) / poolSize)) break;
+          const index = accounts.take(slot, poolSize);
+          assigned++;
+          assert.notEqual(index, null);
+          const sequence = nextSequence++;
+          active.set(sequence, index);
+          summary.dispatched++; summary.inflight++;
+          summary.peakInflight = Math.max(summary.peakInflight, summary.inflight);
+          worker.postMessage({type: 'task', index, sequence});
+        }
+        if (nextSequence >= spec.count) summary.endReason ??= 'count';
+        if (active.size === 0) resolve();
       };
       worker.on('error', reject);
       worker.on('exit', code => reject(new Error(`Worker exited: ${code}`)));
       worker.on('message', async msg => {
-        if (msg.type === 'nonce') { worker.postMessage({type: 'nonce', nonce: nonce++}); return; }
-        if (msg.type === 'permit') {
-          try {
+        try {
+          if (msg.type === 'nonce') { worker.postMessage({type: 'nonce', requestId: msg.requestId, nonce: nonce++}); return; }
+          if (msg.type === 'permit') {
             const allowed = await pacer.take(deadline, expire);
             if (allowed) summary.attempted++;
-            worker.postMessage({type: 'permit', allowed});
-          } catch (error) { reject(error); }
-          return;
-        }
-        if (msg.type === 'accepted') { summary.accepted++; return; }
-        if (msg.type === 'done' || msg.type === 'error') {
-          summary.inflight--; accounts.release(activeIndex);
-          if (msg.type === 'done') {
-            summary.cacheHits += msg.cacheHits - cacheHits;
-            summary.cacheMisses += msg.cacheMisses - cacheMisses;
-            cacheHits = msg.cacheHits; cacheMisses = msg.cacheMisses;
-            if (msg.result?.state === 'cancelled') summary.cancelled++;
-            else if (msg.result?.state === 'skipped') summary.skipped++;
-            else { summary.confirmed++; inclusions.add(msg.result); }
+            worker.postMessage({type: 'permit', requestId: msg.requestId, allowed});
+            return;
           }
-          else {
-            summary.failed++; interrupted = true;
-            // Full errors can contain transaction payloads; retain privately only.
-            save(path.join(runDir, `error-${activeIndex}.json`), {error: msg.error});
+          if (msg.type === 'accepted') { summary.accepted++; return; }
+          if (msg.type === 'done' || msg.type === 'error') {
+            mergeTimings(summary.timings, msg.timings, previousTimings);
+            previousTimings = msg.timings || {};
+            assert(active.has(msg.sequence), 'Unknown or duplicate task reply');
+            const index = active.get(msg.sequence);
+            active.delete(msg.sequence);
+            summary.inflight--; accounts.release(index);
+            if (msg.type === 'done') {
+              summary.cacheHits += msg.cacheHits - cacheHits;
+              summary.cacheMisses += msg.cacheMisses - cacheMisses;
+              cacheHits = msg.cacheHits; cacheMisses = msg.cacheMisses;
+              if (msg.result?.state === 'cancelled') summary.cancelled++;
+              else if (msg.result?.state === 'skipped') summary.skipped++;
+              else { summary.confirmed++; inclusions.add(msg.result); }
+            } else {
+              summary.failed++; interrupted = true;
+              // Full errors can contain transaction payloads; retain privately only.
+              save(path.join(runDir, `error-${index}.json`), {error: msg.error});
+            }
+            dispatch();
           }
-          dispatch();
-        }
+        } catch (error) { reject(error); }
       });
       dispatch();
     })));

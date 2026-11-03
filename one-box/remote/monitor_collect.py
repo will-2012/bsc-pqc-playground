@@ -17,7 +17,7 @@ NAME = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}")
 HEX_HASH = re.compile(r"0x[0-9a-fA-F]{64}")
 PROGRESS = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted",
             "confirmed", "failed", "skipped", "pending", "inflight", "targetQps",
-            "durationSeconds", "cancelled", "endReason", "startedAt", "updatedAt", "elapsedSeconds", "startLagMs", "acceptedPerSecond",
+            "workers", "maxInflight", "peakInflight", "slhBackend", "timings", "durationSeconds", "cancelled", "endReason", "startedAt", "updatedAt", "elapsedSeconds", "startLagMs", "acceptedPerSecond",
             "confirmedPerSecond", "cacheHits", "cacheMisses")
 
 

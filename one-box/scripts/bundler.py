@@ -80,6 +80,8 @@ def build():
     command(["patch", "--batch", "--forward", "-p1", "-i", mldsa65_patch], log, WORK)
     slhf_patch = BOX / "patches/alto-slhf-v6.patch"
     command(["patch", "--batch", "--forward", "-p1", "-i", slhf_patch], log, WORK)
+    bundle_patch = BOX / "patches/alto-bundle-limits.patch"
+    command(["patch", "--batch", "--forward", "-p1", "-i", bundle_patch], log, WORK)
     # Do not run upstream prepare or the unrelated e2e workspaces.
     command(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"], log, WORK, timeout=900)
     command(["pnpm", "--filter", "@pimlico/alto", "build:esm"], log, WORK, timeout=300)
@@ -100,9 +102,10 @@ def build():
         "mldsa_v4_patch_sha256": digest(mldsa_patch),
         "mldsa65_v5_patch_sha256": digest(mldsa65_patch),
         "slhf_v6_patch_sha256": digest(slhf_patch),
+        "bundle_limits_patch_sha256": digest(bundle_patch),
         "bundle_size_test_sha256": digest(BOX / "tests/bundle_size.mjs"),
         "compiled_sha256": {name: digest(WORK / name) for name in [
-            "src/esm/mempool/mempool.js", "src/esm/rpc/validation/tracer.js",
+            "src/esm/mempool/mempool.js", "src/esm/executor/utils.js", "src/esm/rpc/validation/tracer.js",
             "src/esm/rpc/validation/BundlerCollectorTracerV07.js"]},
     })
     print("Built Alto from submodule and compiled ERC-4337 contracts", flush=True)

@@ -64,6 +64,7 @@ class InventoryTests(unittest.TestCase):
         self.assertNotIn("append:", text)  # Amazon Linux 2 systemd 219
         self.assertIn("KillMode=control-group", text)
         self.assertNotIn("bsc.service", text)
+        self.assertIn("KillMode=mixed", agent.service_text(inventory(), "bench", "/usr/bin/node run.mjs"))
 
     def test_shell_values_rejected(self):
         c = inventory()

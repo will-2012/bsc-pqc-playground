@@ -1,0 +1,731 @@
+{
+  "signing": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v25.9.0",
+    "rows": [
+      {
+        "backend": "noble",
+        "workers": 1,
+        "samples": 8,
+        "elapsedMs": 11320.170541,
+        "signaturesPerSecond": 0.7067031341113786,
+        "meanWorkerMs": 11319.890791
+      },
+      {
+        "backend": "noble",
+        "workers": 2,
+        "samples": 16,
+        "elapsedMs": 11406.413833000002,
+        "signaturesPerSecond": 1.4027195781473623,
+        "meanWorkerMs": 11368.547646500001
+      },
+      {
+        "backend": "noble",
+        "workers": 4,
+        "samples": 32,
+        "elapsedMs": 13618.664250000005,
+        "signaturesPerSecond": 2.3497164929372563,
+        "meanWorkerMs": 12656.413489749999
+      },
+      {
+        "backend": "openssl",
+        "workers": 1,
+        "samples": 8,
+        "elapsedMs": 1581.4371249999967,
+        "signaturesPerSecond": 5.0586898925874255,
+        "meanWorkerMs": 1581.2032919999983
+      },
+      {
+        "backend": "openssl",
+        "workers": 2,
+        "samples": 16,
+        "elapsedMs": 1591.680250000005,
+        "signaturesPerSecond": 10.052270234552418,
+        "meanWorkerMs": 1590.7573544999977
+      },
+      {
+        "backend": "openssl",
+        "workers": 4,
+        "samples": 32,
+        "elapsedMs": 1739.0193330000038,
+        "signaturesPerSecond": 18.401175531957083,
+        "meanWorkerMs": 1732.0676249999997
+      }
+    ]
+  },
+  "nativeBuild": {
+    "inputs": {
+      "openssl": "aae016bfd52fcad2bc9657c2c782cfdf73b1ed5f",
+      "archive_sha256": "5107bc26b739daed3b2e5cc1586ab85ab01ba5c15388509f635a9fe82c1edb34",
+      "source_sha256": "5b4643609831441327bd9d10fa3607dfe2ccb4613e9bea6398ee0af013e681e8",
+      "build_sha256": "3f3eb816f62ea38867c0da58956bb64b6c7ce3930b326f09b5755bd05d85d112",
+      "check_sha256": "b6b7b19a6dcdbe9c7c90ab3ab22e9239829c965cae23c07cc0dcb3a1b61cb33e",
+      "wallet_lock_sha256": "581d67b60282adf09925dec3876f6a2c8bfd89e346774fd7ad78634478724966",
+      "system": "Darwin",
+      "arch": "arm64",
+      "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+      "flags": "-O3; OpenSSL runtime CPU dispatch; static libcrypto"
+    },
+    "binary_sha256": "9c3cad8d4e223fe661f0426f88cafa63a0df2d3f1d72d44feeb7749b1b159459"
+  },
+  "chain": [
+    {
+      "algorithm": "ecdsa",
+      "accounts": 32,
+      "count": 96,
+      "checkedAt": "2026-11-02T14:02:32.364Z",
+      "platform": "darwin",
+      "arch": "arm64",
+      "cpu": "Apple M1 Pro",
+      "logicalCpus": 10,
+      "node": "v25.9.0",
+      "sources": {
+        "run.mjs": "588f8ebabeb8b73715b2b3a5c8c5cdafbeccbe30256405f91644febc1c302fb4",
+        "worker.mjs": "89bf6d58ffc368a1b16d669dd6a92f0dd9620d5e86cea9bcfd6914fabf93eedb",
+        "core.mjs": "67a751d302f5fd5e0ca19f0c2c42cae4181c990e7bd829bcc3626105e3ea4f5e",
+        "timing.mjs": "b5e2cb3357477b2584c72e5a50578be9874a2bd978fcc918ed76595b05943c44",
+        "signer/client.mjs": "2df59c99f799e28eeb6728053e2a1ee61c692127a067c4c81bbd58e9a6348112",
+        "signer/slh.c": "5b4643609831441327bd9d10fa3607dfe2ccb4613e9bea6398ee0af013e681e8"
+      },
+      "rows": [
+        {
+          "workers": 1,
+          "maxInflight": 1,
+          "confirmed": 96,
+          "elapsedSeconds": 51.283,
+          "receiptTPS": 1.87196536864068,
+          "peakInflight": 1,
+          "cacheHits": 64,
+          "cacheMisses": 32,
+          "timings": {
+            "prepareTransaction": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 124.06132999997499,
+              "maxMs": 10.177416999998968,
+              "meanMs": 1.2923055208330727
+            },
+            "sign": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 90.64403999997194,
+              "maxMs": 2.341625000000022,
+              "meanMs": 0.9442087499997077
+            },
+            "admission": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 39.590415999985,
+              "maxMs": 26.209458000001177,
+              "meanMs": 0.4124001666665104
+            },
+            "submit": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 203.86041700000897,
+              "maxMs": 22.625334000000294,
+              "meanMs": 2.12354601041676
+            },
+            "receipt": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 49349.85070899999,
+              "maxMs": 1010.6692919999996,
+              "meanMs": 514.0609448854166
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "maxInflight": 4,
+          "confirmed": 96,
+          "elapsedSeconds": 13.486,
+          "receiptTPS": 7.1184932522616045,
+          "peakInflight": 4,
+          "cacheHits": 64,
+          "cacheMisses": 32,
+          "timings": {
+            "prepareTransaction": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 113.05575000000408,
+              "maxMs": 4.2237920000002305,
+              "meanMs": 1.1776640625000425
+            },
+            "sign": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 120.181296999996,
+              "maxMs": 5.296332999999777,
+              "meanMs": 1.2518885104166249
+            },
+            "admission": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 17.830669000001308,
+              "maxMs": 2.328208000000359,
+              "meanMs": 0.1857361354166803
+            },
+            "submit": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 366.5533730000034,
+              "maxMs": 11.118625000000975,
+              "meanMs": 3.8182643020833686
+            },
+            "receipt": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 49308.71825099997,
+              "maxMs": 1011.779125,
+              "meanMs": 513.6324817812497
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "maxInflight": 32,
+          "confirmed": 96,
+          "elapsedSeconds": 2.784,
+          "receiptTPS": 34.48275862068966,
+          "peakInflight": 32,
+          "cacheHits": 64,
+          "cacheMisses": 32,
+          "timings": {
+            "prepareTransaction": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 2124.452462999999,
+              "maxMs": 135.36179200000015,
+              "meanMs": 22.12971315624999
+            },
+            "sign": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 76.65315900000405,
+              "maxMs": 4.611167000000023,
+              "meanMs": 0.7984704062500422
+            },
+            "admission": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 2658.455420000002,
+              "maxMs": 91.86016699999982,
+              "meanMs": 27.692243958333354
+            },
+            "submit": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 4170.396666000001,
+              "maxMs": 130.08674999999994,
+              "meanMs": 43.441631937500006
+            },
+            "receipt": {
+              "count": 96,
+              "failed": 0,
+              "totalMs": 61563.83471200001,
+              "maxMs": 1102.48875,
+              "meanMs": 641.2899449166667
+            }
+          }
+        }
+      ]
+    },
+    {
+      "algorithm": "ml",
+      "accounts": 16,
+      "count": 48,
+      "checkedAt": "2026-11-02T14:04:47.980Z",
+      "platform": "darwin",
+      "arch": "arm64",
+      "cpu": "Apple M1 Pro",
+      "logicalCpus": 10,
+      "node": "v25.9.0",
+      "sources": {
+        "run.mjs": "588f8ebabeb8b73715b2b3a5c8c5cdafbeccbe30256405f91644febc1c302fb4",
+        "worker.mjs": "89bf6d58ffc368a1b16d669dd6a92f0dd9620d5e86cea9bcfd6914fabf93eedb",
+        "core.mjs": "67a751d302f5fd5e0ca19f0c2c42cae4181c990e7bd829bcc3626105e3ea4f5e",
+        "timing.mjs": "b5e2cb3357477b2584c72e5a50578be9874a2bd978fcc918ed76595b05943c44",
+        "signer/client.mjs": "2df59c99f799e28eeb6728053e2a1ee61c692127a067c4c81bbd58e9a6348112",
+        "signer/slh.c": "5b4643609831441327bd9d10fa3607dfe2ccb4613e9bea6398ee0af013e681e8"
+      },
+      "rows": [
+        {
+          "workers": 1,
+          "maxInflight": 1,
+          "confirmed": 48,
+          "elapsedSeconds": 59.785,
+          "receiptTPS": 0.8028769758300578,
+          "peakInflight": 1,
+          "cacheHits": 32,
+          "cacheMisses": 16,
+          "timings": {
+            "sign": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 804.2183370000143,
+              "maxMs": 32.908709000003,
+              "meanMs": 16.7545486875003
+            },
+            "prepareUserOperation": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 1634.9470819999883,
+              "maxMs": 58.1607920000024,
+              "meanMs": 34.06139754166642
+            },
+            "admission": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 5.19888000000492,
+              "maxMs": 0.3249170000003687,
+              "meanMs": 0.10831000000010249
+            },
+            "submit": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 14144.609960000018,
+              "maxMs": 906.6951670000017,
+              "meanMs": 294.67937416666706
+            },
+            "receipt": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 42786.04554499999,
+              "maxMs": 1548.1539580000026,
+              "meanMs": 891.3759488541665
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "maxInflight": 4,
+          "confirmed": 48,
+          "elapsedSeconds": 25.295,
+          "receiptTPS": 1.8976082229689661,
+          "peakInflight": 4,
+          "cacheHits": 32,
+          "cacheMisses": 16,
+          "timings": {
+            "sign": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 895.1958320000035,
+              "maxMs": 49.274083000000246,
+              "meanMs": 18.64991316666674
+            },
+            "prepareUserOperation": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 1850.9541219999956,
+              "maxMs": 68.21683299999859,
+              "meanMs": 38.56154420833324
+            },
+            "admission": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 5.16583200001196,
+              "maxMs": 0.3360410000000229,
+              "meanMs": 0.10762150000024917
+            },
+            "submit": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 17998.418662000004,
+              "maxMs": 666.8056660000002,
+              "meanMs": 374.9670554583334
+            },
+            "receipt": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 79476.19379800001,
+              "maxMs": 2050.8936249999997,
+              "meanMs": 1655.7540374583334
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "maxInflight": 16,
+          "confirmed": 48,
+          "elapsedSeconds": 13.816,
+          "receiptTPS": 3.4742327735958307,
+          "peakInflight": 16,
+          "cacheHits": 32,
+          "cacheMisses": 16,
+          "timings": {
+            "sign": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 1128.1933779999972,
+              "maxMs": 48.79162499999984,
+              "meanMs": 23.504028708333276
+            },
+            "prepareUserOperation": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 4302.453622000005,
+              "maxMs": 199.05862499999967,
+              "meanMs": 89.63445045833345
+            },
+            "admission": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 310.5862879999954,
+              "maxMs": 56.79008299999987,
+              "meanMs": 6.4705476666665716
+            },
+            "submit": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 22808.614543000003,
+              "maxMs": 729.3847089999999,
+              "meanMs": 475.1794696458334
+            },
+            "receipt": {
+              "count": 48,
+              "failed": 0,
+              "totalMs": 187172.50582899997,
+              "maxMs": 4130.657958,
+              "meanMs": 3899.4272047708328
+            }
+          }
+        }
+      ]
+    },
+    {
+      "algorithm": "slh",
+      "accounts": 16,
+      "count": 32,
+      "checkedAt": "2026-11-02T14:06:52.128Z",
+      "platform": "darwin",
+      "arch": "arm64",
+      "cpu": "Apple M1 Pro",
+      "logicalCpus": 10,
+      "node": "v25.9.0",
+      "sources": {
+        "run.mjs": "588f8ebabeb8b73715b2b3a5c8c5cdafbeccbe30256405f91644febc1c302fb4",
+        "worker.mjs": "89bf6d58ffc368a1b16d669dd6a92f0dd9620d5e86cea9bcfd6914fabf93eedb",
+        "core.mjs": "67a751d302f5fd5e0ca19f0c2c42cae4181c990e7bd829bcc3626105e3ea4f5e",
+        "timing.mjs": "b5e2cb3357477b2584c72e5a50578be9874a2bd978fcc918ed76595b05943c44",
+        "signer/client.mjs": "2df59c99f799e28eeb6728053e2a1ee61c692127a067c4c81bbd58e9a6348112",
+        "signer/slh.c": "5b4643609831441327bd9d10fa3607dfe2ccb4613e9bea6398ee0af013e681e8"
+      },
+      "rows": [
+        {
+          "workers": 1,
+          "maxInflight": 1,
+          "confirmed": 32,
+          "elapsedSeconds": 49.037,
+          "receiptTPS": 0.6525684687073027,
+          "peakInflight": 1,
+          "cacheHits": 16,
+          "cacheMisses": 16,
+          "timings": {
+            "sign": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 6445.1499560000075,
+              "maxMs": 344.0082079999993,
+              "meanMs": 201.41093612500023
+            },
+            "prepareUserOperation": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 7257.801122000008,
+              "maxMs": 393.9673750000002,
+              "meanMs": 226.80628506250025
+            },
+            "admission": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 3.1746260000018083,
+              "maxMs": 0.2655000000004293,
+              "meanMs": 0.09920706250005651
+            },
+            "submit": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 7313.691917,
+              "maxMs": 680.3980419999998,
+              "meanMs": 228.55287240625
+            },
+            "receipt": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 33946.289080999995,
+              "maxMs": 1526.2712499999998,
+              "meanMs": 1060.8215337812499
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "maxInflight": 4,
+          "confirmed": 32,
+          "elapsedSeconds": 16.584,
+          "receiptTPS": 1.929570670525808,
+          "peakInflight": 4,
+          "cacheHits": 16,
+          "cacheMisses": 16,
+          "timings": {
+            "sign": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 6424.352711999997,
+              "maxMs": 205.7674589999997,
+              "meanMs": 200.7610222499999
+            },
+            "prepareUserOperation": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 7323.386834000003,
+              "maxMs": 242.02258399999846,
+              "meanMs": 228.85583856250008
+            },
+            "admission": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 3.843999000000167,
+              "maxMs": 0.32037499999978536,
+              "meanMs": 0.12012496875000522
+            },
+            "submit": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 7133.343414999999,
+              "maxMs": 268.92362499999945,
+              "meanMs": 222.91698171874998
+            },
+            "receipt": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 50929.77695699999,
+              "maxMs": 2051.0449579999986,
+              "meanMs": 1591.5555299062496
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "maxInflight": 16,
+          "confirmed": 32,
+          "elapsedSeconds": 11.112,
+          "receiptTPS": 2.8797696184305255,
+          "peakInflight": 16,
+          "cacheHits": 16,
+          "cacheMisses": 16,
+          "timings": {
+            "sign": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 14004.024375999998,
+              "maxMs": 939.3373750000001,
+              "meanMs": 437.6257617499999
+            },
+            "prepareUserOperation": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 15925.743208,
+              "maxMs": 1025.1418330000001,
+              "meanMs": 497.67947525
+            },
+            "admission": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 28.23325100000011,
+              "maxMs": 9.558499999999185,
+              "meanMs": 0.8822890937500034
+            },
+            "submit": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 17689.805498,
+              "maxMs": 1230.9974579999998,
+              "meanMs": 552.8064218125
+            },
+            "receipt": {
+              "count": 32,
+              "failed": 0,
+              "totalMs": 128001.76437299998,
+              "maxMs": 5094.9183330000005,
+              "meanMs": 4000.0551366562495
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "higherInflight": {
+    "algorithm": "ecdsa",
+    "accounts": 256,
+    "count": 768,
+    "checkedAt": "2026-11-02T14:07:47.806Z",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M1 Pro",
+    "logicalCpus": 10,
+    "node": "v25.9.0",
+    "sources": {
+      "run.mjs": "588f8ebabeb8b73715b2b3a5c8c5cdafbeccbe30256405f91644febc1c302fb4",
+      "worker.mjs": "89bf6d58ffc368a1b16d669dd6a92f0dd9620d5e86cea9bcfd6914fabf93eedb",
+      "core.mjs": "67a751d302f5fd5e0ca19f0c2c42cae4181c990e7bd829bcc3626105e3ea4f5e",
+      "timing.mjs": "b5e2cb3357477b2584c72e5a50578be9874a2bd978fcc918ed76595b05943c44",
+      "signer/client.mjs": "2df59c99f799e28eeb6728053e2a1ee61c692127a067c4c81bbd58e9a6348112",
+      "signer/slh.c": "5b4643609831441327bd9d10fa3607dfe2ccb4613e9bea6398ee0af013e681e8"
+    },
+    "rows": [
+      {
+        "workers": 4,
+        "maxInflight": 64,
+        "confirmed": 768,
+        "elapsedSeconds": 11.409,
+        "receiptTPS": 67.31527741256902,
+        "peakInflight": 64,
+        "cacheHits": 512,
+        "cacheMisses": 256,
+        "timings": {
+          "prepareTransaction": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 35793.85961800003,
+            "maxMs": 307.5693329999999,
+            "meanMs": 46.60658804427087
+          },
+          "sign": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 424.1459059999893,
+            "maxMs": 3.3055420000000595,
+            "meanMs": 0.5522733151041527
+          },
+          "admission": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 31880.646171,
+            "maxMs": 254.03595799999994,
+            "meanMs": 41.51125803515625
+          },
+          "submit": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 53621.235447,
+            "maxMs": 310.00616599999967,
+            "meanMs": 69.81931698828124
+          },
+          "receipt": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 473817.0708310007,
+            "maxMs": 1256.60225,
+            "meanMs": 616.9493109778655
+          }
+        }
+      },
+      {
+        "workers": 4,
+        "maxInflight": 256,
+        "confirmed": 768,
+        "elapsedSeconds": 8.71,
+        "receiptTPS": 88.17451205510906,
+        "peakInflight": 256,
+        "cacheHits": 512,
+        "cacheMisses": 256,
+        "timings": {
+          "prepareTransaction": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 192974.5943330001,
+            "maxMs": 1262.650208,
+            "meanMs": 251.26900303776054
+          },
+          "sign": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 363.21903699999666,
+            "maxMs": 5.8446670000003,
+            "meanMs": 0.47294145442707897
+          },
+          "admission": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 216838.55591799994,
+            "maxMs": 1041.6803330000002,
+            "meanMs": 282.34186968489576
+          },
+          "submit": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 437873.88536500017,
+            "maxMs": 1247.7398750000002,
+            "meanMs": 570.1482882356773
+          },
+          "receipt": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 623267.131361,
+            "maxMs": 2542.9915839999994,
+            "meanMs": 811.5457439596354
+          }
+        }
+      },
+      {
+        "workers": 8,
+        "maxInflight": 256,
+        "confirmed": 768,
+        "elapsedSeconds": 7.824,
+        "receiptTPS": 98.15950920245399,
+        "peakInflight": 256,
+        "cacheHits": 512,
+        "cacheMisses": 256,
+        "timings": {
+          "prepareTransaction": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 185851.07156399998,
+            "maxMs": 1180.2021249999998,
+            "meanMs": 241.99358276562498
+          },
+          "sign": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 594.8981369999951,
+            "maxMs": 15.424875000000156,
+            "meanMs": 0.7746069492187436
+          },
+          "admission": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 221032.9323900001,
+            "maxMs": 1039.899875,
+            "meanMs": 287.8032973828126
+          },
+          "submit": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 401222.12420499994,
+            "maxMs": 1209.953042,
+            "meanMs": 522.424640891927
+          },
+          "receipt": {
+            "count": 768,
+            "failed": 0,
+            "totalMs": 563665.736278,
+            "maxMs": 5148.682917,
+            "meanMs": 733.9397607786459
+          }
+        }
+      }
+    ]
+  },
+  "bundler": {
+    "measuredCompiledSha256": {
+      "src/esm/mempool/mempool.js": "55bba3bd8ce28d61a9e77d1e7462871dc895d027cdef0e7b8fc75145fdfa1ccb",
+      "src/esm/executor/utils.js": "4a6991bfbd72ae6e857d8859c6ad4b28927fba13f95fd78894353aa8905cd4be"
+    },
+    "patchSha256": "e4a44775ba77e13189e815ab538dbb607177eefffdfa41660a30c0aed0b0a5c1",
+    "limitBytes": 131072,
+    "envelopeReserveBytes": 1024
+  }
+}

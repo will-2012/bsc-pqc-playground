@@ -148,7 +148,8 @@ class Cluster:
         )
         require(
             devnet.digest(WORK / "geth") == info["sha256"]
-            and devnet.digest(WORK / "pq-wallet") == info["helper_sha256"],
+            and devnet.digest(WORK / "pq-wallet") == info["helper_sha256"]
+            and devnet.digest(WORK / "bsc-pqc-slh-signer") == info["slh_signer_sha256"],
             "Build artifact checksum mismatch",
         )
         require(
@@ -169,6 +170,10 @@ class Cluster:
         (app / "node_modules").symlink_to("erc4337-wallet/node_modules", target_is_directory=True)
         for name in ["bundler.json", "pq-bundler.json", "forks.json", "config.json"]:
             shutil.copy2(devnet.BOX / name, app / "one-box" / name)
+        signer_dest = app / "one-box/.runtime/build"
+        signer_dest.mkdir(parents=True, exist_ok=True)
+        for file in ("bsc-pqc-slh-signer", "bsc-pqc-slh-signer.json"):
+            shutil.copy2(WORK / file, signer_dest / file)
         dest = app / "one-box/.runtime/build/v4"
         dest.mkdir(parents=True)
         for file in ("geth", "binary.json", "pq-wallet", "mldsa-public.json"):
@@ -762,7 +767,9 @@ def main():
     p.add_argument("--accounts", type=int, default=1000, help="Total accounts across all bench clients")
     p.add_argument("--count", type=int, help="Total operations; defaults to accounts")
     p.add_argument("--qps", type=float, default=100, help="Total target send rate across all bench clients")
-    p.add_argument("--workers", type=int, default=8, help="Concurrent operations per bench client")
+    p.add_argument("--workers", type=int, default=8, help="Worker threads per bench client")
+    p.add_argument("--slh-backend", choices=["noble", "openssl"], default="noble", help="SLH signing backend; chain verification is unchanged")
+    p.add_argument("--max-inflight", type=int, help="Outstanding operations per bench client; defaults to workers")
     p.add_argument("--cache-accounts", type=int, default=64, help="Cached accounts per worker; 0 disables caching")
     p.add_argument("--fund-wei", default="100000000000000000")
     p.add_argument("--value-wei", default="1")

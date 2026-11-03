@@ -17,6 +17,16 @@ class ShardingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             shards(inventory(), count=None, **{**base, 'action': 'prepare'})
 
+    def test_max_inflight_is_per_host_and_optional(self):
+        base = dict(action='transfer', algorithm='ecdsa', dataset='d', run='r', accounts=1000,
+                    count=1000, qps=800, workers=8, fund_wei='100', value_wei='1')
+        self.assertTrue(all(s['maxInflight'] == 8 for _, s in shards(inventory(), **base)))
+        self.assertTrue(all(s['maxInflight'] == 256 for _, s in shards(inventory(), max_inflight=256, **base)))
+        self.assertTrue(all(s['slhBackend'] == 'openssl' for _, s in shards(inventory(), slh_backend='openssl', **base)))
+        with self.assertRaises(ValueError): shards(inventory(), slh_backend='unknown', **base)
+        for value in (0, -1, 4097, 1.5):
+            with self.assertRaises(ValueError): shards(inventory(), max_inflight=value, **base)
+
     def test_status_hides_receipt_details_but_preserves_private_record(self):
         import contextlib
         import io

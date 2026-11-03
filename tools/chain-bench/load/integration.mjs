@@ -14,7 +14,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const runtime = path.join(root, 'one-box/.runtime', env, 'load');
 const stamp = Date.now().toString(36);
 const sources = ['tools/chain-bench/load/core.mjs', 'tools/chain-bench/load/run.mjs', 'tools/chain-bench/load/inclusions.mjs',
-  'tools/chain-bench/load/worker.mjs', 'erc4337-wallet/common/wallet.mjs'];
+  'tools/chain-bench/load/worker.mjs', 'erc4337-wallet/common/wallet.mjs', 'tools/chain-bench/load/timing.mjs',
+  'tools/chain-bench/load/signer/client.mjs', 'tools/chain-bench/load/signer/slh.c'];
 const output = {checkedAt: new Date().toISOString(), platform: process.platform, arch: process.arch, node: process.version,
   sourceSha256: Object.fromEntries(sources.map(file => [file, createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')])),
   rows: [], cacheRows: [], checks: []};
@@ -37,9 +38,18 @@ async function execute(spec, expectFailure = false, stopAfterFirst = false) {
   clearInterval(timer);
   assert.equal(code === 0, !expectFailure, 'Runner failed; inspect private verification logs');
 }
+// Uneven worker partitions must prepare every account exactly once.
+const uneven = {algorithm: 'ecdsa', dataset: `verify-${stamp}-uneven`, run: 'prepare', action: 'prepare',
+  accounts: 7, count: 7, workers: 3, maxInflight: 5, qps: 100, startAt: 0,
+  fundWei: '100000000000000000', valueWei: '1'};
+await execute(uneven);
+const unevenFiles = fs.readdirSync(path.join(runtime, uneven.dataset, 'accounts')).filter(f => f.endsWith('.json'));
+assert.equal(unevenFiles.length, 7);
+assert.equal(new Set(unevenFiles.map(f => read(path.join(runtime, uneven.dataset, 'accounts', f)).address)).size, 7);
+output.checks.push('uneven worker partitions: every setup account generated once');
 for (const algorithm of Object.keys(profiles)) {
   const spec = {algorithm, dataset: `verify-${stamp}-${algorithm}`, run: 'prepare', action: 'prepare',
-    accounts: 3, count: 3, workers: 2, qps: 5, startAt: 0, fundWei: '100000000000000000', valueWei: '1'};
+    accounts: 3, count: 3, workers: 1, maxInflight: 3, qps: 5, startAt: 0, fundWei: '100000000000000000', valueWei: '1'};
   const dir = path.join(runtime, spec.dataset);
   await execute(spec);
   const fingerprint = () => createHash('sha256').update(JSON.stringify(Array.from({length: 3}, (_, i) => {
@@ -109,15 +119,54 @@ for (const algorithm of Object.keys(profiles)) {
     output.checks.push('scheduled start cancellation: zero dispatched operations');
     output.checks.push('graceful stop: dispatch halted, in-flight drained, balance matched, reconcile did not resend');
   }
+  if (algorithm === 'ecdsa') {
+    await execute({...spec, action: 'transfer', run: 'serial', count: 12, qps: 50, workers: 1, maxInflight: 1});
+    const serial = read(path.join(dir, 'runs/serial/progress.json'));
+    assert.equal(serial.confirmed, 12); assert.equal(serial.failed, 0);
+    output.rows.push({algorithm, action: 'serial', count: 12, workers: 1, maxInflight: 1,
+      peakInflight: serial.peakInflight, elapsedSeconds: serial.elapsedSeconds});
+  }
+  const beforePipeline = await ctx.client.getBalance({address: recipient});
+  await execute({...spec, action: 'transfer', run: 'pipeline', count: 12, qps: 50, workers: 1, maxInflight: 3});
+  const pipeline = read(path.join(dir, 'runs/pipeline/progress.json'));
+  assert.equal(pipeline.timings.sign.count, 12);
+  assert.equal(pipeline.timings.receipt.count, 12);
+  assert.equal(pipeline.confirmed, 12); assert.equal(pipeline.failed, 0);
+  assert.equal(pipeline.peakInflight, 3); assert.equal(pipeline.inflight, 0);
+  assert.equal(await ctx.client.getBalance({address: recipient}) - beforePipeline, 12n);
+  const nonces = new Map();
+  for (let i = 0; i < 12; i++) {
+    const record = read(path.join(dir, 'runs/pipeline/operations', `${i}.json`));
+    const nonce = algorithm === 'ecdsa'
+      ? (await ctx.client.getTransaction({hash: record.hash})).nonce : record.signed.nonce;
+    const seen = nonces.get(record.index) || new Set();
+    assert(!seen.has(String(nonce)), 'Account nonce reused');
+    seen.add(String(nonce)); nonces.set(record.index, seen);
+  }
+  output.checks.push(`${algorithm}: one worker, three in-flight accounts, unique nonces and recipient balance verified`);
+  output.rows.push({algorithm, action: 'pipeline', count: 12, workers: 1, maxInflight: 3,
+    peakInflight: pipeline.peakInflight, elapsedSeconds: pipeline.elapsedSeconds});
+  if (algorithm === 'slh') {
+    const balance = await ctx.client.getBalance({address: recipient});
+    await execute({...spec, action: 'transfer', run: 'native', count: 12, qps: 50,
+      workers: 2, maxInflight: 3, slhBackend: 'openssl'});
+    const native = read(path.join(dir, 'runs/native/progress.json'));
+    assert.equal(native.confirmed, 12); assert.equal(native.failed, 0);
+    assert.equal(native.timings.sign.count, 12);
+    assert.equal(await ctx.client.getBalance({address: recipient}) - balance, 12n);
+    output.rows.push({algorithm, action: 'native', count: 12, workers: 2, maxInflight: 3,
+      elapsedSeconds: native.elapsedSeconds, timings: native.timings});
+    output.checks.push('SLH native signer: existing keys, independent on-chain verifier, concurrent transfers and balance verified');
+  }
   const beforeCache = await ctx.client.getBalance({address: recipient});
-  await execute({...spec, action: 'transfer', run: 'cache', count: 6, workers: 1, cacheAccounts: 3});
+  await execute({...spec, action: 'transfer', run: 'cache', count: 6, workers: 1, maxInflight: 1, cacheAccounts: 3});
   const cacheResult = read(path.join(dir, 'runs/cache/progress.json'));
   assert.equal(cacheResult.cacheHits, 3); assert.equal(cacheResult.cacheMisses, 3);
   assert.equal(await ctx.client.getBalance({address: recipient}) - beforeCache, 6n);
   output.cacheRows.push({algorithm, cacheHits: cacheResult.cacheHits, cacheMisses: cacheResult.cacheMisses,
     confirmed: cacheResult.confirmed, elapsedSeconds: cacheResult.elapsedSeconds});
   const beforeTimed = await ctx.client.getBalance({address: recipient});
-  await execute({...spec, action: 'transfer', run: 'timed', count: 100, qps: 20, durationSeconds: 2});
+  await execute({...spec, action: 'transfer', run: 'timed', count: 100, qps: 20, durationSeconds: 2, workers: 1, maxInflight: 3});
   const timed = read(path.join(dir, 'runs/timed/progress.json'));
   assert.equal(timed.status, 'complete'); assert.equal(timed.endReason, 'duration');
   assert.equal(timed.failed, 0); assert.equal(timed.pending, 0); assert.equal(timed.inflight, 0);
@@ -130,7 +179,7 @@ for (const algorithm of Object.keys(profiles)) {
   console.log(`${algorithm}: PASS`);
 }
 const partial = {algorithm: 'ecdsa', dataset: `verify-${stamp}-timed-create`, run: 'prepare', action: 'prepare',
-  accounts: 6, count: 6, workers: 3, qps: 1, startAt: 0, fundWei: '100000000000000000', valueWei: '1'};
+  accounts: 6, count: 6, workers: 1, maxInflight: 3, qps: 1, startAt: 0, fundWei: '100000000000000000', valueWei: '1'};
 await execute(partial);
 await execute({...partial, action: 'create', run: 'limited', durationSeconds: 1.5});
 const created = read(path.join(runtime, partial.dataset, 'runs/limited/progress.json'));
