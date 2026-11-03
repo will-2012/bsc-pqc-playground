@@ -50,3 +50,22 @@ for(const n of [1,4,8]){
   assert.equal(calculateAA95GasFloor(v6,entryPoint),BigInt(n)*(30000n+330000n*2n+5000n+30000n)+intrinsic6);
 }
 console.log('PASS: bundle calldata gas is counted once');
+
+// ML account creation can fit in bytes while exceeding the per-transaction gas cap.
+for (const enabled of [false,true]) {
+  if(enabled)process.env.ALTO_LOCAL_PRECOMPILE_V4='1';
+  else delete process.env.ALTO_LOCAL_PRECOMPILE_V4;
+  const ops=Array.from({length:8},(_,i)=>({...operations[i],userOp:{...operations[i].userOp,
+    signature:'0x'+'11'.repeat(2420),verificationGasLimit:2400000n}}));
+  const queue=[...ops],processed=[];
+  const mock={store:{peekOutstanding:async()=>queue[0],popOutstanding:async()=>queue.shift(),
+    addOutstanding:async({userOpInfo})=>queue.push(userOpInfo),addProcessing:({userOpInfo})=>processed.push(userOpInfo)},
+    getKnownEntities:async()=>({}),shouldSkip:async args=>({...args,skip:false}),
+    reputationManager:{decreaseUserOperationCount:()=>{}}};
+  const bundles=await Mempool.prototype.process.call(mock,{entryPoint,maxGasLimit:50000000n,minOpsPerBundle:1});
+  assert.deepEqual(bundles.map(b=>b.userOps.length),enabled?[6,2]:[8]);
+  assert.equal(new Set(processed.map(op=>op.userOpHash)).size,8);
+  if(enabled)for(const b of bundles)assert(calculateAA95GasFloor(b.userOps,entryPoint)+10000n<=16777216n);
+}
+delete process.env.ALTO_LOCAL_PRECOMPILE_V4;
+console.log('PASS: PQ creation bundles respect the outer gas floor and preserve every operation');

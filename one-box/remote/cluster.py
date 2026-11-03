@@ -774,6 +774,7 @@ def main():
     p.add_argument("--cache-accounts", type=int, default=64, help="Cached accounts per worker; 0 disables caching")
     p.add_argument("--fund-wei", default="100000000000000000")
     p.add_argument("--value-wei", default="1")
+    p.add_argument("--recipients-file", type=Path, help="Private JSON array of account-pool addresses; random transfers excluding self")
     p.add_argument("--interval", type=float, default=10, help="Monitor report interval in seconds")
     p.add_argument("--duration", type=float, default=0, help="Seconds: monitor lifetime or load create/transfer dispatch window; 0 disables limit")
     p.add_argument("--auto-stop", action="store_true", help="Stop only the explicitly bound load run on instability")

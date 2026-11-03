@@ -1,0 +1,39 @@
+--- a/src/rpc/validation/BundlerCollectorTracerV07.ts
++++ b/src/rpc/validation/BundlerCollectorTracerV07.ts
+@@ -208,11 +208,10 @@
+             }
+             const opcode = log.op.toString()
+
+-            const stackSize = log.stack.length()
+-            const stackTop3 = []
+-            for (let i = 0; i < 3 && i < stackSize; i++) {
+-                stackTop3.push(log.stack.peek(i))
+-            }
++            // History only reads the address operand of EXTCODE* instructions.
++            // Avoid crossing the Go/JS boundary for unused stack values.
++            const stackTop3 = opcode.startsWith("EXT") && log.stack.length() > 0
++                ? [log.stack.peek(0)] : []
+             this.lastThreeOpcodes.push({ opcode, stackTop3 })
+             if (this.lastThreeOpcodes.length > 3) {
+                 this.lastThreeOpcodes.shift()
+--- a/src/rpc/validation/SafeValidator.ts
++++ b/src/rpc/validation/SafeValidator.ts
+@@ -537,11 +537,13 @@
+             }
+         )
+ 
+-        this.logger.info(
+-            `tracerResult: ${JSON.stringify(tracerResult, (_k, v) =>
+-                typeof v === "bigint" ? v.toString() : v
+-            )}`
+-        )
++        if (this.logger.isLevelEnabled("debug")) {
++            this.logger.debug(
++                `tracerResult: ${JSON.stringify(tracerResult, (_k, v) =>
++                    typeof v === "bigint" ? v.toString() : v
++                )}`
++            )
++        }
+ 
+         const lastResult = tracerResult.calls.slice(-1)[0]
+         if (lastResult.type !== "REVERT") {

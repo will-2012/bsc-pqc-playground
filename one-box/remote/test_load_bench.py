@@ -3,6 +3,35 @@ from test_cluster import inventory
 from load_bench import shards
 
 class ShardingTests(unittest.TestCase):
+    def test_random_recipient_pool_is_shared_without_key_material(self):
+        import json
+        import tempfile
+        import contextlib
+        import io
+        from pathlib import Path
+        from types import SimpleNamespace
+        from load_bench import execute
+        addresses = ['0x' + format(i, '040x') for i in (1, 2, 3)]
+        with tempfile.TemporaryDirectory() as folder:
+            pool = Path(folder) / 'addresses.json'
+            pool.write_text(json.dumps(addresses))
+            calls = []
+            cluster = SimpleNamespace(c=inventory(), state={'ready': True},
+                call=lambda h, action, **kw: calls.append((action, kw)))
+            args = SimpleNamespace(load_action='transfer', algorithm='ml', dataset='d', run='r',
+                accounts=3, count=3, qps=3, workers=1, max_inflight=1, cache_accounts=1,
+                fund_wei='100', value_wei='1', duration=0, slh_backend='noble', recipients_file=pool)
+            with contextlib.redirect_stdout(io.StringIO()):
+                execute(cluster, args)
+            specs = [kw['spec'] for action, kw in calls if action == 'load-config']
+            self.assertEqual(len(specs), 3)
+            self.assertTrue(all(s['recipientAddresses'] == addresses for s in specs))
+            calls.clear()
+            pool.write_text(json.dumps([addresses[0], addresses[0]]))
+            with self.assertRaisesRegex(ValueError, 'Duplicate'):
+                execute(cluster, args)
+            self.assertEqual(calls, [])
+
     def test_duration_preserves_accounts_and_allows_count_cap(self):
         base = dict(action='transfer', algorithm='ecdsa', dataset='d', run='r', accounts=10000,
                     qps=100, workers=32, fund_wei='100', value_wei='1', duration=600)

@@ -8,7 +8,7 @@ const {generatePrivateKey, privateKeyToAccount} = require('viem/accounts');
 const {createWalletClient, custom, keccak256} = require('viem');
 const {getUserOperationHash} = require('viem/account-abstraction');
 import {context, newIdentity, loadIdentity, prepare, smartAccount} from '../../../erc4337-wallet/common/wallet.mjs';
-import {profiles, read, save, AccountCache} from './core.mjs';
+import {profiles, read, save, AccountCache, RecipientPool, failureDetails} from './core.mjs';
 import {receiptEvidence} from './inclusions.mjs';
 import {SlhSigner} from './signer/client.mjs';
 import {Timings} from './timing.mjs';
@@ -23,6 +23,7 @@ if (spec.algorithm !== 'ecdsa') {
   assert.equal(ctx.deployment.entryPoint, ctx.base.entryPoint);
 }
 const cache = new AccountCache(spec.cacheAccounts);
+const recipients = spec.recipientAddresses ? new RecipientPool(spec.recipientAddresses) : null;
 let signer;
 if (spec.algorithm === 'slh' && spec.slhBackend === 'openssl') signer = new SlhSigner();
 let requestId = 0;
@@ -43,7 +44,7 @@ parentPort.on('message', async msg => {
   }
   catch (e) {
     if (e instanceof SendCancelled) parentPort.postMessage({type: 'done', sequence: msg.sequence, result: {state: 'cancelled'}, timings: timings.values, cacheHits: cache.hits, cacheMisses: cache.misses});
-    else parentPort.postMessage({type: 'error', sequence: msg.sequence, timings: timings.values, error: String(e.shortMessage || e.message).slice(0, 1000)});
+    else parentPort.postMessage({type: 'error', sequence: msg.sequence, timings: timings.values, ...failureDetails(e)});
   }
 });
 parentPort.postMessage({type: 'ready'});
@@ -98,6 +99,7 @@ async function task({index, sequence}) {
   assert(!fs.existsSync(journal), 'Operation already exists; reconcile instead of resending');
   if (spec.action === 'create' && entry.created) return {state: 'skipped'};
   if (spec.action === 'transfer') assert(entry.created, 'Create this account first');
+  const to = spec.action === 'transfer' ? (recipients?.pick(entry.address) || ctx.manifest.accounts[1].address) : entry.address;
   if (spec.algorithm === 'ecdsa') {
     if (spec.action === 'create') {
       assert(!(await ctx.client.getCode({address: entry.address})), 'EOA has contract code');
@@ -109,7 +111,7 @@ async function task({index, sequence}) {
       transport: custom({request: args => ctx.client.request(args)})});
     cache.set(index, {entry, identity, wallet});
     const nonce = await ctx.client.getTransactionCount({address: entry.address, blockTag: 'pending'});
-    return raw(wallet, {to: ctx.manifest.accounts[1].address, value: BigInt(spec.valueWei), nonce}, journal, entry, file, 'transfer');
+    return raw(wallet, {to, value: BigInt(spec.valueWei), nonce}, journal, entry, file, 'transfer');
   }
   assert(entry.funded, 'PQ account not prefunded');
   const smart = cached?.smart || await smartAccount(ctx, identity);
@@ -128,13 +130,13 @@ async function task({index, sequence}) {
     smart.signUserOperation = op => timings.measure('sign', () => sign(op));
   }
   const operation = await timings.measure('prepareUserOperation', () => prepare(ctx, identity, {
-    to: spec.action === 'create' ? entry.address : ctx.manifest.accounts[1].address,
+    to,
     value: spec.action === 'create' ? 0n : BigInt(spec.valueWei),
   }, smart));
   const hash = getUserOperationHash({chainId: ctx.chain.id, entryPointAddress: ctx.deployment.entryPoint,
     entryPointVersion: ctx.profile.entryPointVersion, userOperation: operation});
   assert.equal(hash, await ctx.profile.onchainOperationHash(ctx, operation));
-  const record = {kind: 'userop', action: spec.action, index, hash, state: 'pending', signed: operation};
+  const record = {kind: 'userop', action: spec.action, index, hash, to, value: spec.action === 'create' ? '0' : spec.valueWei, state: 'pending', signed: operation};
   await allowSend();
   // Persist before broadcasting; cancelled, unsent work leaves no pending journal.
   record.sentAt = Date.now(); save(journal, record);
@@ -146,7 +148,7 @@ async function task({index, sequence}) {
 async function raw(wallet, tx, journal, entry, file, action, admitted = false) {
   const request = await timings.measure('prepareTransaction', () => prepareTransaction(ctx, wallet, tx));
   const signed = await timings.measure('sign', () => wallet.account.signTransaction(request, {serializer: ctx.chain.serializers?.transaction}));
-  const record = {kind: 'transaction', action, index: entry.index, hash: keccak256(signed), signed, state: 'pending'};
+  const record = {kind: 'transaction', action, index: entry.index, hash: keccak256(signed), to: tx.to, value: tx.value, signed, state: 'pending'};
   if (!admitted) await allowSend();
   record.sentAt = Date.now(); save(journal, record);
   assert.equal(await timings.measure('submit', () => ctx.client.sendRawTransaction({serializedTransaction: signed})), record.hash);

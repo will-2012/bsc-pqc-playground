@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {Pacer, Accounts, save, read, acquire, validate} from './core.mjs';
+import {Pacer, Accounts, save, read, acquire, validate, RecipientPool, failureDetails} from './core.mjs';
 
 test('100 QPS is paced at 10ms and never catches up after stalls', async () => {
   let now = 0;
@@ -214,4 +214,26 @@ test('high QPS uses bounded millisecond batches without accumulating catch-up wo
   assert.equal(now, 100);
   assert(await p.take()); assert.equal(now, 101);
   assert.equal(await p.take(101), false);
+});
+
+
+test('recipient pool selects every other account without selecting self', () => {
+  const addresses = [1, 2, 3, 4].map(n => '0x' + n.toString(16).padStart(40, '0'));
+  const pool = new RecipientPool(addresses);
+  for (const sender of addresses) {
+    const selected = [0, 1, 2].map(i => pool.pick(sender, max => { assert.equal(max, 3); return i; }));
+    assert.deepEqual(selected, addresses.filter(a => a !== sender));
+  }
+  assert.throws(() => pool.pick('0x' + 'ff'.repeat(20)), /missing/);
+  for (const bad of [[], [addresses[0]], [addresses[0], addresses[0]], [addresses[0], '0x0'], [addresses[0], '0x' + '00'.repeat(20)]]) {
+    assert.throws(() => new RecipientPool(bad));
+  }
+});
+
+test('private failure details retain nested RPC codes without dumping request objects', () => {
+  const cause={code:-32504,details:'factory admission limit',request:{secret:'do not serialize'}};
+  const error={shortMessage:'UserOperation rejected',cause};cause.cause=error;
+  assert.deepEqual(failureDetails(error),{error:'UserOperation rejected',rpcCode:-32504,details:'factory admission limit'});
+  assert.equal(failureDetails(new Error('timeout')).error,'timeout');
+  assert.equal(failureDetails({message:'x',details:'a'.repeat(10000)}).details.length,2000);
 });

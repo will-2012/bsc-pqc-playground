@@ -2,9 +2,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {performance} from 'node:perf_hooks';
+import {randomInt} from 'node:crypto';
 
 export const profiles = {ecdsa: 'mldsa-v4', ml: 'mldsa-v4', slh: 'slh-dsa-v7'};
 export function validate(s) {
+  if (s.recipientAddresses !== undefined) {
+    assert(s.action === 'transfer', 'Recipient pool applies only to transfers');
+    new RecipientPool(s.recipientAddresses);
+  }
   assert(['prepare', 'create', 'transfer', 'reconcile'].includes(s.action), 'Invalid action');
   assert(Object.hasOwn(profiles, s.algorithm), 'Use ecdsa, ml or slh');
   for (const k of ['dataset', 'run']) assert.match(s[k], /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/);
@@ -106,4 +111,33 @@ export class AccountCache {
     this.items.delete(key); this.items.set(key, value);
     if (this.items.size > this.capacity) this.items.delete(this.items.keys().next().value);
   }
+}
+
+export class RecipientPool {
+  constructor(addresses) {
+    assert(Array.isArray(addresses) && addresses.length >= 2, 'Need at least two recipients');
+    assert(addresses.every(a => typeof a === 'string' && /^0x[0-9a-fA-F]{40}$/.test(a) && !/^0x0{40}$/.test(a)), 'Invalid recipient address');
+    this.addresses = addresses;
+    this.indices = new Map(addresses.map((a, i) => [a.toLowerCase(), i]));
+    assert.equal(this.indices.size, addresses.length, 'Duplicate recipient');
+  }
+  pick(sender, random = randomInt) {
+    const self = this.indices.get(sender.toLowerCase());
+    assert(self !== undefined, 'Sender missing from recipient pool');
+    const i = random(this.addresses.length - 1);
+    return this.addresses[i >= self ? i + 1 : i];
+  }
+}
+
+// Keep RPC causes in private run logs; the console still receives a short message.
+export function failureDetails(error) {
+  const result = {error: String(error?.shortMessage || error?.message || error).slice(0, 1000)};
+  const seen = new Set(), details = [];
+  for (let e = error; e && typeof e === 'object' && !seen.has(e) && seen.size < 8; e = e.cause) {
+    seen.add(e);
+    if (typeof e.code === 'number') result.rpcCode = e.code;
+    if (typeof e.details === 'string' && !details.includes(e.details)) details.push(e.details.slice(0, 2000));
+  }
+  if (details.length) result.details = details.join('\n').slice(0, 4000);
+  return result;
 }

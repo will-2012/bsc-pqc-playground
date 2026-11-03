@@ -103,6 +103,13 @@ try {
     assert(!fs.existsSync(runDir), 'Run ID exists; use reconcile, never blindly resend');
     // A durable run marker avoids scanning every private key on large datasets.
     assert(!fs.existsSync(unresolved), 'Unresolved run exists: reconcile the run in load/unresolved.json first');
+    if (spec.recipientAddresses) {
+      const recipients = new Set(spec.recipientAddresses.map(a => a.toLowerCase()));
+      for (let i = 0; i < spec.accounts; i++) {
+        const entry = read(path.join(directory, 'accounts', `${i}.json`));
+        assert(entry.created && recipients.has(entry.address.toLowerCase()), 'Recipient pool must include every created sender');
+      }
+    }
     if (spec.algorithm !== 'ecdsa') await deployment(ctx);
     save(path.join(runDir, 'spec.json'), spec);
     summary = {run: spec.run, dataset: spec.dataset, algorithm: spec.algorithm, action: spec.action,
@@ -188,7 +195,7 @@ try {
             } else {
               summary.failed++; interrupted = true;
               // Full errors can contain transaction payloads; retain privately only.
-              save(path.join(runDir, `error-${index}.json`), {error: msg.error});
+              save(path.join(runDir, `error-${index}.json`), {error: msg.error, rpcCode: msg.rpcCode, details: msg.details});
             }
             dispatch();
           }

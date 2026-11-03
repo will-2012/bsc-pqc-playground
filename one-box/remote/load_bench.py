@@ -77,6 +77,15 @@ def execute(cluster, args):
     plan = shards(cluster.c, action=args.load_action, algorithm=args.algorithm, dataset=args.dataset,
                   run=args.run, accounts=args.accounts, count=args.count, qps=args.qps, workers=args.workers,
                   fund_wei=args.fund_wei, value_wei=args.value_wei, cache_accounts=args.cache_accounts, duration=args.duration, max_inflight=args.max_inflight, slh_backend=args.slh_backend)
+    recipients_file = getattr(args, 'recipients_file', None)
+    if recipients_file:
+        require(args.load_action == 'transfer', 'Recipient pool applies only to transfers')
+        addresses = json.loads(recipients_file.read_text())
+        require(isinstance(addresses, list) and len(addresses) >= 2, 'Need at least two recipients')
+        require(all(isinstance(a, str) and re.fullmatch(r'0x[0-9a-fA-F]{40}', a) and int(a, 16) for a in addresses), 'Invalid recipient address')
+        require(len(set(a.lower() for a in addresses)) == len(addresses), 'Duplicate recipient')
+        for _, spec in plan:
+            spec['recipientAddresses'] = addresses
     # Configure all machines first, then arm a common future start time.
     start = int(time.time() * 1000) + 120_000
     for h, spec in plan:
