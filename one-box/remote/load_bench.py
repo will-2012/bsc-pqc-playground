@@ -77,6 +77,25 @@ def execute(cluster, args):
     plan = shards(cluster.c, action=args.load_action, algorithm=args.algorithm, dataset=args.dataset,
                   run=args.run, accounts=args.accounts, count=args.count, qps=args.qps, workers=args.workers,
                   fund_wei=args.fund_wei, value_wei=args.value_wei, cache_accounts=args.cache_accounts, duration=args.duration, max_inflight=args.max_inflight, slh_backend=args.slh_backend)
+    ml_backend = getattr(args, 'ml_backend', 'process')
+    require(ml_backend in ('process', 'persistent'), 'Invalid ML backend')
+    require(ml_backend == 'process' or args.algorithm == 'ml', 'Persistent ML backend requires ML')
+    for _, spec in plan:
+        spec['mlBackend'] = ml_backend
+    submission = getattr(args, 'submission', 'bundler')
+    require(submission in ('bundler', 'direct'), 'Invalid submission mode')
+    if submission == 'direct':
+        require(args.load_action in ('transfer', 'reconcile') and args.algorithm in ('ml', 'slh'), 'Direct mode supports existing PQ transfers only')
+        gas_file = getattr(args, 'direct_gas_file', None)
+        require(gas_file is not None, 'Direct mode requires explicit gas limits')
+        gas = json.loads(gas_file.read_text())
+        require(isinstance(gas, dict), 'Direct gas limits must be an object')
+        for k in ('callGasLimit', 'verificationGasLimit', 'preVerificationGas', 'outerGasLimit'):
+            require(isinstance(gas.get(k), str) and gas[k].isdigit() and 0 < int(gas[k]) <= 16777216, 'Invalid direct gas limits')
+        require(int(gas['outerGasLimit']) > sum(int(gas[k]) for k in ('callGasLimit', 'verificationGasLimit', 'preVerificationGas')), 'Outer gas needs execution headroom')
+        for _, spec in plan:
+            spec.update(submission='direct', directGas=gas)
+        print('CHAIN CAPACITY CONTROL: direct handleOps; no Bundler simulation', flush=True)
     recipients_file = getattr(args, 'recipients_file', None)
     if recipients_file:
         require(args.load_action == 'transfer', 'Recipient pool applies only to transfers')

@@ -51,6 +51,7 @@ def build():
     command(['go','test','-mod=readonly','-tags','pqprecompile','./core/vm','-run','^$','-fuzz','^FuzzMLDSAV4$','-fuzztime=5s','-parallel=1'],log,SOURCE,timeout=180)
     command(['go','build','-mod=readonly','-tags','pqprecompile','-buildvcs=false','-trimpath','-o',BINARY,'./cmd/geth'],log,SOURCE,timeout=1800)
     command(['go','build','-mod=readonly','-buildvcs=false','-trimpath','-o',WORK/'pq-wallet','./cmd/pq-wallet'],log,SOURCE,timeout=600)
+    command(['node',BOX/'tests/ml_signer.mjs',WORK/'pq-wallet'],log,ROOT,timeout=120)
     def wallet(payload):return json.loads(subprocess.check_output([WORK/'pq-wallet'],input=json.dumps(payload).encode()))
     key=wallet({'action':'keygen'});message='00'*32
     sig=wallet({'action':'sign','secretKey':key['secretKey'],'message':message})['signature']

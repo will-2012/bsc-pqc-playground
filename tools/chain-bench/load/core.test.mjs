@@ -237,3 +237,12 @@ test('private failure details retain nested RPC codes without dumping request ob
   assert.equal(failureDetails(new Error('timeout')).error,'timeout');
   assert.equal(failureDetails({message:'x',details:'a'.repeat(10000)}).details.length,2000);
 });
+
+test('persistent ML signing is opt-in and cannot select another algorithm', () => {
+  const base = {action: 'transfer', algorithm: 'ml', dataset: 'a', run: 'r', accounts: 2, count: 2,
+    workers: 1, qps: 10, startAt: 0, fundWei: '100', valueWei: '1'};
+  assert.equal(validate({...base}).mlBackend, 'process');
+  assert.equal(validate({...base, mlBackend: 'persistent'}).mlBackend, 'persistent');
+  assert.throws(() => validate({...base, mlBackend: 'unknown'}));
+  assert.throws(() => validate({...base, algorithm: 'slh', mlBackend: 'persistent'}));
+});

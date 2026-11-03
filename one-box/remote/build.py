@@ -26,6 +26,7 @@ def inputs_manifest():
     for version in ("v2", "v4"):
         paths.extend(p for p in (BOX / "precompile" / version).rglob("*") if p.is_file())
     paths.extend((ROOT / "tools/chain-bench/load/signer").glob("*.*"))
+    paths.append(BOX / "tests/ml_signer.mjs")
     paths.append(ROOT / "tools/crypto-bench/sources.json")
     paths.append(ROOT / "tools/crypto-bench/run.py")
     paths.append(ROOT / "tools/crypto-bench/testdata/standard.tsv")
@@ -245,6 +246,8 @@ def build():
             source,
             timeout=1800,
         )
+
+    command(["node", BOX / "tests/ml_signer.mjs", WORK / "pq-wallet"], log, ROOT, timeout=120)
 
     def helper(v):
         return json.loads(subprocess.check_output([WORK / "pq-wallet"], input=json.dumps(v).encode()))

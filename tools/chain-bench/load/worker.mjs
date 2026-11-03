@@ -9,7 +9,9 @@ const {createWalletClient, custom, keccak256} = require('viem');
 const {getUserOperationHash} = require('viem/account-abstraction');
 import {context, newIdentity, loadIdentity, prepare, smartAccount} from '../../../erc4337-wallet/common/wallet.mjs';
 import {profiles, read, save, AccountCache, RecipientPool, failureDetails} from './core.mjs';
+import {prepareDirect, directCalldata, applyDirectReceipt} from './direct.mjs';
 import {receiptEvidence} from './inclusions.mjs';
+import {MlSigner} from './signer/ml-client.mjs';
 import {SlhSigner} from './signer/client.mjs';
 import {Timings} from './timing.mjs';
 import {prepareTransaction, waitForTransaction} from './transactions.mjs';
@@ -24,6 +26,7 @@ if (spec.algorithm !== 'ecdsa') {
 }
 const cache = new AccountCache(spec.cacheAccounts);
 const recipients = spec.recipientAddresses ? new RecipientPool(spec.recipientAddresses) : null;
+const mlSigner = spec.algorithm === 'ml' && spec.mlBackend === 'persistent' ? new MlSigner() : null;
 let signer;
 if (spec.algorithm === 'slh' && spec.slhBackend === 'openssl') signer = new SlhSigner();
 let requestId = 0;
@@ -124,20 +127,37 @@ async function task({index, sequence}) {
       userOperation: {...op, sender: entry.address},
     }));
   }
+  if (mlSigner && !cached?.smart) smart.signUserOperation = op => mlSigner.sign(identity.secretKey, identity.publicKey, getUserOperationHash({
+    chainId: ctx.chain.id, entryPointAddress: ctx.deployment.entryPoint, entryPointVersion: ctx.profile.entryPointVersion,
+    userOperation: {...op, sender: entry.address},
+  }));
   if (spec.action === 'transfer') cache.set(index, {entry, identity, smart});
   if (!cached?.smart) {
     const sign = smart.signUserOperation.bind(smart);
     smart.signUserOperation = op => timings.measure('sign', () => sign(op));
   }
-  const operation = await timings.measure('prepareUserOperation', () => prepare(ctx, identity, {
-    to,
-    value: spec.action === 'create' ? 0n : BigInt(spec.valueWei),
-  }, smart));
+  const call = {to, value: spec.action === 'create' ? 0n : BigInt(spec.valueWei)};
+  const operation = spec.submission === 'direct'
+    ? await timings.measure('prepareUserOperation', () => prepareDirect(ctx, smart, call, spec.directGas))
+    : await timings.measure('prepareUserOperation', () => prepare(ctx, identity, call, smart));
   const hash = getUserOperationHash({chainId: ctx.chain.id, entryPointAddress: ctx.deployment.entryPoint,
     entryPointVersion: ctx.profile.entryPointVersion, userOperation: operation});
   assert.equal(hash, await ctx.profile.onchainOperationHash(ctx, operation));
   const record = {kind: 'userop', action: spec.action, index, hash, to, value: spec.action === 'create' ? '0' : spec.valueWei, state: 'pending', signed: operation};
   await allowSend();
+  if (spec.submission === 'direct') {
+    const request = await ctx.wallet.prepareTransactionRequest({
+      to: ctx.deployment.entryPoint, data: directCalldata(operation, ctx.wallet.account.address),
+      chainId: ctx.chain.id, nonce: await faucetNonce(), gas: BigInt(spec.directGas.outerGasLimit), ...ctx.fee,
+    });
+    const signedTransaction = await ctx.wallet.account.signTransaction(request, {serializer: ctx.chain.serializers?.transaction});
+    Object.assign(record, {submission: 'direct', entryPoint: ctx.deployment.entryPoint,
+      signedTransaction, transactionHash: keccak256(signedTransaction), sentAt: Date.now()});
+    save(journal, record);
+    assert.equal(await timings.measure('submit', () => ctx.client.sendRawTransaction({serializedTransaction: signedTransaction})), record.transactionHash);
+    parentPort.postMessage({type: 'accepted'});
+    return confirm(record, journal, entry, file);
+  }
   // Persist before broadcasting; cancelled, unsent work leaves no pending journal.
   record.sentAt = Date.now(); save(journal, record);
   assert.equal(await timings.measure('submit', () => ctx.bundler.sendUserOperation(operation)), hash);
@@ -157,7 +177,9 @@ async function raw(wallet, tx, journal, entry, file, action, admitted = false) {
 }
 
 async function confirm(record, journal, entry, file) {
-  if (record.kind === 'userop') {
+  if (record.submission === 'direct') {
+    applyDirectReceipt(record, await timings.measure('receipt', () => waitForTransaction(ctx.client, record.transactionHash)));
+  } else if (record.kind === 'userop') {
     const receipt = await timings.measure('receipt', () => ctx.bundler.waitForUserOperationReceipt({hash: record.hash, timeout: 180000}));
     record.transactionHash = receipt.receipt.transactionHash;
     record.blockNumber = receipt.receipt.blockNumber; record.blockHash = receipt.receipt.blockHash;

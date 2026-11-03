@@ -5,9 +5,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"syscall"
+
 	"github.com/ethereum/go-ethereum/crypto/pqfalcon"
 	"github.com/ethereum/go-ethereum/crypto/pqmldsa"
-	"os"
 )
 
 type Request struct{ Action, Algorithm, PublicKey, SecretKey, Message, Signature string }
@@ -20,10 +23,30 @@ func decode(s string) []byte {
 	return b
 }
 func main() {
-	var r Request
-	if e := json.NewDecoder(os.Stdin).Decode(&r); e != nil {
-		panic(e)
+	serve := len(os.Args) == 2 && os.Args[1] == "--serve"
+	if len(os.Args) > 1 && !serve {
+		panic("unknown option")
 	}
+	if serve {
+		if err := syscall.Setrlimit(syscall.RLIMIT_CORE, &syscall.Rlimit{Cur: 0, Max: 0}); err != nil {
+			panic("cannot disable core dumps")
+		}
+	}
+	decoder := json.NewDecoder(os.Stdin)
+	for {
+		var r Request
+		if err := decoder.Decode(&r); err == io.EOF && serve {
+			return
+		} else if err != nil {
+			panic("invalid request")
+		}
+		handle(r)
+		if !serve {
+			return
+		}
+	}
+}
+func handle(r Request) {
 	keygen, sign, verify := pqmldsa.Keygen, pqmldsa.Sign, pqmldsa.Verify
 	if r.Algorithm == "falcon" {
 		keygen, sign, verify = pqfalcon.Keygen, pqfalcon.Sign, pqfalcon.Verify
@@ -40,12 +63,15 @@ func main() {
 		out["publicKey"] = hex.EncodeToString(p)
 		out["secretKey"] = hex.EncodeToString(s)
 		defer clear(s)
-	case "sign":
+	case "sign", "signVerify":
 		s := decode(r.SecretKey)
 		defer clear(s)
 		sig, e := sign(s, decode(r.Message))
 		if e != nil {
 			panic(e)
+		}
+		if r.Action == "signVerify" && !verify(decode(r.PublicKey), decode(r.Message), sig) {
+			panic("signature verification failed")
 		}
 		out["signature"] = hex.EncodeToString(sig)
 	case "verify":

@@ -6,6 +6,15 @@ import {randomInt} from 'node:crypto';
 
 export const profiles = {ecdsa: 'mldsa-v4', ml: 'mldsa-v4', slh: 'slh-dsa-v7'};
 export function validate(s) {
+  s.submission ??= 'bundler';
+  assert(['bundler', 'direct'].includes(s.submission), 'Invalid submission mode');
+  if (s.submission === 'direct') {
+    assert(['transfer', 'reconcile'].includes(s.action) && ['ml', 'slh'].includes(s.algorithm), 'Direct mode supports existing PQ transfers only');
+    for (const k of ['callGasLimit', 'verificationGasLimit', 'preVerificationGas', 'outerGasLimit'])
+      assert(typeof s.directGas?.[k] === 'string' && /^\d+$/.test(s.directGas[k]) && BigInt(s.directGas[k]) > 0n && BigInt(s.directGas[k]) <= 16777216n, `Invalid direct gas: ${k}`);
+    assert(BigInt(s.directGas.outerGasLimit) > BigInt(s.directGas.callGasLimit) + BigInt(s.directGas.verificationGasLimit) + BigInt(s.directGas.preVerificationGas), 'Outer gas needs execution headroom');
+  }
+
   if (s.recipientAddresses !== undefined) {
     assert(s.action === 'transfer', 'Recipient pool applies only to transfers');
     new RecipientPool(s.recipientAddresses);
@@ -14,6 +23,9 @@ export function validate(s) {
   assert(Object.hasOwn(profiles, s.algorithm), 'Use ecdsa, ml or slh');
   for (const k of ['dataset', 'run']) assert.match(s[k], /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/);
   for (const k of ['accounts', 'count', 'workers']) assert(Number.isSafeInteger(s[k]) && s[k] > 0, `Invalid ${k}`);
+  s.mlBackend ??= 'process';
+  assert(['process', 'persistent'].includes(s.mlBackend), 'Invalid ML backend');
+  assert(s.mlBackend === 'process' || s.algorithm === 'ml', 'Persistent ML backend requires ML');
   s.slhBackend ??= 'noble';
   assert(['noble', 'openssl'].includes(s.slhBackend), 'Invalid SLH backend');
   s.cacheAccounts ??= 64;

@@ -1,3 +1,4 @@
+import {applyDirectReceipt} from './direct.mjs';
 import {mergeTimings} from './timing.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -60,7 +61,9 @@ try {
       const record = read(file);
       if (record.state === 'pending') {
         try {
-          if (record.kind === 'transaction') {
+          if (record.submission === 'direct') {
+            applyDirectReceipt(record, await ctx.client.getTransactionReceipt({hash: record.transactionHash}));
+          } else if (record.kind === 'transaction') {
             const receipt = await ctx.client.getTransactionReceipt({hash: record.hash});
             record.state = receipt.status === 'success' ? 'confirmed' : 'reverted';
             record.gasUsed = receipt.gasUsed;
@@ -113,8 +116,8 @@ try {
     if (spec.algorithm !== 'ecdsa') await deployment(ctx);
     save(path.join(runDir, 'spec.json'), spec);
     summary = {run: spec.run, dataset: spec.dataset, algorithm: spec.algorithm, action: spec.action,
-      targetQps: spec.qps, total: spec.count, startedAt: Date.now(), status: 'starting',
-      slhBackend: spec.slhBackend, workers: spec.workers, maxInflight: Math.min(spec.maxInflight, spec.accounts, spec.count), peakInflight: 0, timings: {},
+      submission: spec.submission, targetQps: spec.qps, total: spec.count, startedAt: Date.now(), status: 'starting',
+      slhBackend: spec.slhBackend, mlBackend: spec.mlBackend, workers: spec.workers, maxInflight: Math.min(spec.maxInflight, spec.accounts, spec.count), peakInflight: 0, timings: {},
       durationSeconds: spec.durationSeconds, cancelled: 0, endReason: null,
       dispatched: 0, attempted: 0, accepted: 0, confirmed: 0, failed: 0, skipped: 0, pending: 0, inflight: 0, cacheHits: 0, cacheMisses: 0, cacheAccounts: spec.cacheAccounts};
     const stop = () => { interrupted = true; summary.endReason ??= 'signal'; summary.status = 'draining'; progress(); };

@@ -3,6 +3,33 @@ from test_cluster import inventory
 from load_bench import shards
 
 class ShardingTests(unittest.TestCase):
+    def test_direct_and_signer_options_are_explicit_and_validated_before_remote_calls(self):
+        import contextlib, io, json, tempfile
+        from pathlib import Path
+        from types import SimpleNamespace
+        from load_bench import execute
+        with tempfile.TemporaryDirectory() as folder:
+            gas_file = Path(folder) / 'gas.json'
+            gas = dict(callGasLimit='30000', verificationGasLimit='300000', preVerificationGas='150000', outerGasLimit='750000')
+            gas_file.write_text(json.dumps(gas))
+            calls = []
+            cluster = SimpleNamespace(c=inventory(), state={'ready': True},
+                call=lambda h, action, **kw: calls.append((action, kw)))
+            base = dict(load_action='transfer', algorithm='ml', dataset='d', run='r', accounts=3,
+                count=3, qps=3, workers=1, max_inflight=1, cache_accounts=1,
+                fund_wei='100', value_wei='1', duration=0, slh_backend='noble',
+                submission='direct', direct_gas_file=gas_file, ml_backend='persistent')
+            with contextlib.redirect_stdout(io.StringIO()):
+                execute(cluster, SimpleNamespace(**base))
+            specs = [kw['spec'] for action, kw in calls if action == 'load-config']
+            self.assertEqual(len(specs), 3)
+            self.assertTrue(all(s['submission'] == 'direct' and s['mlBackend'] == 'persistent' and s['directGas'] == gas for s in specs))
+            for changes in ({'algorithm': 'ecdsa'}, {'ml_backend': 'unknown'}, {'direct_gas_file': None}, {'load_action': 'create'}):
+                calls.clear()
+                with self.assertRaises(ValueError):
+                    execute(cluster, SimpleNamespace(**{**base, **changes}))
+                self.assertEqual(calls, [])
+
     def test_random_recipient_pool_is_shared_without_key_material(self):
         import json
         import tempfile

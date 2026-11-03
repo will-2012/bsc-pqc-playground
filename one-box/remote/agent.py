@@ -331,6 +331,7 @@ def serve(path, role):
         os.environ.update(
             ALTO_LOCAL_PRECOMPILE_V2="1",
             ALTO_LOCAL_PRECOMPILE_V4="1",
+            ALTO_LOCAL_VALIDATION_CONCURRENCY=os.environ.get("BSC_PQC_VALIDATION_CONCURRENCY", "1"),
             DOTENV_CONFIG_PATH="/dev/null",
             ALTO_LOCAL_TRACE_TIMEOUT="180000ms",
             ALTO_LOCAL_RPC_TIMEOUT="180000",
@@ -407,7 +408,7 @@ def perform(action, p):
                 spec = read(job) if job.exists() else {}
                 progress = b / "runtime/load" / spec.get("dataset", "none") / "runs" / spec.get("run", "none") / "progress.json"
                 data = read(progress) if progress.exists() else {}
-                allowed = ("status", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "workers", "maxInflight", "peakInflight", "slhBackend", "timings", "durationSeconds", "cancelled", "endReason", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt", "inclusions", "inclusionTruncated")
+                allowed = ("status", "submission", "algorithm", "action", "total", "dispatched", "attempted", "accepted", "confirmed", "failed", "skipped", "pending", "reconciliation", "inflight", "workers", "maxInflight", "peakInflight", "slhBackend", "mlBackend", "timings", "durationSeconds", "cancelled", "endReason", "cacheHits", "cacheMisses", "cacheAccounts", "startLagMs", "targetQps", "elapsedSeconds", "acceptedPerSecond", "confirmedPerSecond", "startedAt", "updatedAt", "inclusions", "inclusionTruncated")
                 result = {"service": active, "run": spec.get("run"), "dataset": spec.get("dataset"),
                           "progress": {k: data[k] for k in allowed if k in data}}
             else:

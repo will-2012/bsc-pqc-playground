@@ -1,0 +1,170 @@
+--- a/src/mempool/mempool.ts
++++ b/src/mempool/mempool.ts
+@@ -33,7 +33,19 @@
+ import type { AltoConfig } from "../createConfig"
+ import type { MempoolStore } from "@alto/store"
+
++type BundleValidation = ValidationResult & { storageMap: StorageMap }
++type ValidationOutcome = PromiseSettledResult<BundleValidation>
++
++export function localValidationConcurrency(): number {
++    const value = process.env.ALTO_LOCAL_VALIDATION_CONCURRENCY ?? "1"
++    if (!["1", "2", "4", "8"].includes(value)) {
++        throw new Error("ALTO_LOCAL_VALIDATION_CONCURRENCY must be 1, 2, 4 or 8")
++    }
++    return Number(value)
++}
++
+ export class Mempool {
++    private validationConcurrency: number
+     private config: AltoConfig
+     private monitor: Monitor
+     private reputationManager: InterfaceReputationManager
+@@ -58,6 +70,10 @@
+         store: MempoolStore
+         eventManager: EventManager
+     }) {
++        this.validationConcurrency = config.safeMode &&
++            ["V2", "V3", "V4", "V5", "V6"].some(
++                v => process.env[`ALTO_LOCAL_PRECOMPILE_${v}`] === "1"
++            ) ? localValidationConcurrency() : 1
+         this.store = store
+         this.config = config
+         this.reputationManager = reputationManager
+@@ -351,6 +367,19 @@
+         return [true, ""]
+     }
+
++    async validateForBundle(userOpInfo: UserOpInfo, entryPoint: Address): Promise<BundleValidation> {
++        const { userOp, referencedContracts } = userOpInfo
++        const queuedUserOperations = isVersion06(userOp) ? [] :
++            await this.getQueuedOustandingUserOps({ userOp, entryPoint })
++        return await this.validator.validateUserOperation({
++            shouldCheckPrefund: false,
++            userOperation: userOp,
++            queuedUserOperations,
++            entryPoint,
++            referencedContracts
++        })
++    }
++
+     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
+     async shouldSkip({
+         userOpInfo,
+@@ -359,8 +388,10 @@
+         knownEntities,
+         senders,
+         storageMap,
+-        entryPoint
++        entryPoint,
++        validation
+     }: {
++        validation?: Promise<ValidationOutcome>
+         userOpInfo: UserOpInfo
+         paymasterDeposit: { [paymaster: string]: bigint }
+         stakedEntityCount: { [addr: string]: number }
+@@ -396,7 +427,7 @@
+             }
+         }
+
+-        const { userOp, userOpHash, referencedContracts } = userOpInfo
++        const { userOp, userOpHash } = userOpInfo
+
+         const isUserOpV06 = isVersion06(userOp)
+
+@@ -498,22 +529,13 @@
+         let validationResult: ValidationResult & { storageMap: StorageMap }
+
+         try {
+-            let queuedUserOperations: UserOperation[] = []
+-
+-            if (!isUserOpV06) {
+-                queuedUserOperations = await this.getQueuedOustandingUserOps({
+-                    userOp,
+-                    entryPoint
+-                })
+-            }
+-
+-            validationResult = await this.validator.validateUserOperation({
+-                shouldCheckPrefund: false,
+-                userOperation: userOp,
+-                queuedUserOperations,
+-                entryPoint,
+-                referencedContracts
+-            })
++            if (validation) {
++                const outcome = await validation
++                if (outcome.status === "rejected") throw outcome.reason
++                validationResult = outcome.value
++            } else {
++                validationResult = await this.validateForBundle(userOpInfo, entryPoint)
++            }
+         } catch (e) {
+             this.logger.error(
+                 {
+@@ -684,8 +706,31 @@
+                 break
+             }
+
++            // Only prefetch independent, already-deployed v0.7 accounts.
++            // Shared bundle checks and state mutations remain ordered in shouldSkip.
++            const validations = new Map<string, Promise<ValidationOutcome>>()
+             // Keep adding ops to current bundle
+             while (await this.store.peekOutstanding(entryPoint)) {
++                if (this.validationConcurrency > 1 && validations.size === 0) {
++                    const outstanding = await this.store.dumpOutstanding(entryPoint)
++                    const counts = new Map<string, number>()
++                    for (const { userOp } of outstanding) {
++                        const sender = userOp.sender.toLowerCase()
++                        counts.set(sender, (counts.get(sender) ?? 0) + 1)
++                    }
++                    for (const candidate of outstanding.slice(0, this.validationConcurrency)) {
++                        const op = candidate.userOp
++                        if (seenOps.has(candidate.userOpHash) || isVersion06(op) ||
++                            op.factory || op.paymaster || (op.nonce >> 64n) !== 0n ||
++                            counts.get(op.sender.toLowerCase()) !== 1) break
++                        // Attach rejection handling immediately; never leak an unhandled rejection.
++                        const result = this.validateForBundle(candidate, entryPoint).then(
++                            value => ({ status: "fulfilled", value }) as ValidationOutcome,
++                            reason => ({ status: "rejected", reason }) as ValidationOutcome
++                        )
++                        validations.set(candidate.userOpHash, result)
++                    }
++                }
+                 const userOpInfo = await this.store.popOutstanding(entryPoint)
+                 if (!userOpInfo) {
+                     break
+@@ -725,6 +770,10 @@
+
+                 const { userOp } = userOpInfo
+
++                const validation = validations.get(userOpInfo.userOpHash)
++                validations.delete(userOpInfo.userOpHash)
++                // A store may reorder or replace its head while prefetch runs.
++                if (!validation) await Promise.all(validations.values())
+                 // Check if we should skip this operation
+                 const skipResult = await this.shouldSkip({
+                     userOpInfo,
+@@ -733,9 +782,12 @@
+                     knownEntities,
+                     senders,
+                     storageMap,
+-                    entryPoint
++                    entryPoint,
++                    validation
+                 })
+
++                // Early reputation/sender checks may skip without consuming the result.
++                if (validation) await validation
+                 if (skipResult.skip) {
+                     // Re-add to outstanding
+                     if (!skipResult.removeOutstanding) {
+@@ -779,6 +831,8 @@
+                 currentBundle.userOps.push(userOpInfo)
+             }
+
++            // Discard unused prefetches at bundle boundaries; never cache validation across bundles.
++            await Promise.all(validations.values())
+             if (currentBundle.userOps.length > 0) {
+                 bundles.push(currentBundle)
+             }

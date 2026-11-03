@@ -127,3 +127,9 @@ SSM 执行结果保存在环境目录的 `ssm/*-result.json`；远端异常保�
 终端按“负载与健康汇总、链状态表、机器资源表”展示；空载时隐藏无数据的 Bench 速率行。`Pool P/Q` 为 pending/queued；服务列为状态/CPU%，100% 表示一个逻辑核。主机 CPU% 为整机口径，磁盘与网络速率单位为 MiB/s。
 
 `BENCH_BACKLOG` 仅在完整采样中，全体 Bench 的提交增量连续超过成功回执增量达到 `consecutive` 次时提示（默认 3 次）。单节点的短暂波动不会直接触发；采样缺失、任务切换、计数重置或间隔过长会重新累计。该提示不单独触发停压，也不代表已确定链的瓶颈。
+
+### Bundler 并行验证实验
+
+打包前的第二次验证默认串行。可在 Bundler 的 systemd 私有 drop-in 中设置 `Environment=BSC_PQC_VALIDATION_CONCURRENCY=2`，执行 `daemon-reload` 并重启该 Bundler；允许值为 `1 / 2 / 4 / 8`。修改前停止 Bench 并等待未决操作收敛；恢复为 `1` 即回到串行。此设置不同于 Bench 的 `--workers` 和 `--max-inflight`。
+
+在启用本地 PQ 预编译的实验环境中，并行仅用于 safe-mode 下不同发送者的已部署 v0.7 账户，且不带 Factory / Paymaster、nonce key 为 0。同发送者或有依赖的操作回到原验证路径；入包顺序、存储冲突、信誉和余额检查保持串行。该选项用于受控实验，需同时观察模拟 CPU、回执等待和出块时限，不能只看接收 QPS。测试结果见[性能排查](../../docs/chain-bench/load/performance.html)。

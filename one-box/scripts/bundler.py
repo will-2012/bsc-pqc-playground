@@ -84,6 +84,8 @@ def build():
     command(["patch", "--batch", "--forward", "-p1", "-i", bundle_patch], log, WORK)
     tracer_patch = BOX / "patches/alto-tracer-cost.patch"
     command(["patch", "--batch", "--forward", "-p1", "-i", tracer_patch], log, WORK)
+    validation_patch = BOX / "patches/alto-validation-concurrency.patch"
+    command(["patch", "--batch", "--forward", "-p1", "-i", validation_patch], log, WORK)
     # Do not run upstream prepare or the unrelated e2e workspaces.
     command(["pnpm", "install", "--frozen-lockfile", "--ignore-scripts"], log, WORK, timeout=900)
     command(["pnpm", "--filter", "@pimlico/alto", "build:esm"], log, WORK, timeout=300)
@@ -96,6 +98,7 @@ def build():
     command(["forge", "build"], log, ROOT / "contract", timeout=300)
     command(["node", BOX / "tests/bundle_size.mjs"], log, ROOT, timeout=30)
     command(["node", BOX / "tests/tracer_cost.mjs"], log, ROOT, timeout=30)
+    command(["node", BOX / "tests/bundle_validation.mjs"], log, ROOT, timeout=30)
     write(BUILD / "alto.json", {
         "source_commit": command(["git", "rev-parse", "HEAD"], cwd=SOURCE).strip(),
         "version": package["version"], "localhost_patch_sha256": digest(patch),
@@ -107,6 +110,8 @@ def build():
         "slhf_v6_patch_sha256": digest(slhf_patch),
         "bundle_limits_patch_sha256": digest(bundle_patch),
         "tracer_cost_patch_sha256": digest(tracer_patch),
+        "validation_concurrency_patch_sha256": digest(validation_patch),
+        "validation_concurrency_test_sha256": digest(BOX / "tests/bundle_validation.mjs"),
         "bundle_size_test_sha256": digest(BOX / "tests/bundle_size.mjs"),
         "tracer_cost_test_sha256": digest(BOX / "tests/tracer_cost.mjs"),
         "compiled_sha256": {name: digest(WORK / name) for name in [

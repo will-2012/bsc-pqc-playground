@@ -10,13 +10,13 @@
 | `ml` | ML-DSA-44，v4 合约账户，公钥存于 storage。 |
 | `slh` | SLH-DSA-SHA2-128s，v7 合约账户，公钥存于 storage、代码复用。 |
 
-PQ 准备阶段生成独立密钥、预测地址并预充值；创建和转账都走真实 UserOperation，经 Bundler、EntryPoint 和预编译验签。准备阶段的充值与部署成本不计入创建轮次。ECDSA 与 PQ 的创建语义不同，不能把两者直接当作同一种交易的 TPS。
+PQ 准备阶段生成独立密钥、预测地址并预充值；创建和转账默认走真实 UserOperation，经 Bundler、EntryPoint 和预编译验签。准备阶段的充值与部署成本不计入创建轮次。ECDSA 与 PQ 的创建语义不同，不能把两者直接当作同一种交易的 TPS。
 
 ## 中控操作
 
-已有环境使用 `upgrade`，不要 reset。此次新增原生 SLH 签名器，需要先 build，再升级；账户、链数据与合约保持不变。
+已有环境使用 `upgrade`。更新原生签名工具或 Bundler 代码时，先 build，再升级；升级保留账户与链数据。
 
-代码提交并推送后，在中控仓库根目录执行：
+在中控仓库根目录执行：
 
 ```bash
 git pull --ff-only
@@ -217,3 +217,28 @@ Load 准备普通交易时传入已经核对过的 chainId，避免在 nonce、g
 签名、发送前持久化、成功状态检查与回执核对仍保留。并发和缓存默认值不变，按机器条件调节。
 
 阶梯升压、客户端瓶颈与混部署分析见 [性能排查记录](../../../docs/chain-bench/load/performance.html)。
+
+### 链容量对照（直接提交 EntryPoint）
+
+`--submission direct` 用于隔离链容量：对已创建的 ML / SLH 账户生成真实签名，每笔普通交易提交一个 `handleOps` 操作。保留链上验签、nonce、权限和执行检查；不经过 Bundler 的 gas 估算、ERC-7562 模拟和打包，不能据此报告 Bundler 全链路吞吐。默认仍是 `bundler`，创建流程不变。
+
+先在私有 JSON 中填写经过小流量验证的 `callGasLimit`、`verificationGasLimit`、`preVerificationGas`、`outerGasLimit`，各值使用十进制字符串。外层 gas 必须留出执行余量；不足时测试会失败，不自动扩大或跳过失败操作。
+
+```sh
+./tools/cluster load --config "$CONFIG" --load-action transfer \
+  --algorithm ml --dataset "$DATASET" --run "$RUN" \
+  --accounts 10000 --qps 100 --workers 8 --max-inflight 256 --duration 300 \
+  --submission direct --direct-gas-file "$GAS_FILE" --recipients-file "$RECIPIENTS_FILE"
+```
+
+发送前持久化 UserOperation 和外层签名交易，外层 nonce 由每台客户端统一分配。成功同时要求外层回执成功及唯一匹配的 `UserOperationEvent`，并核对操作哈希、发送者、nonce 和执行成功标志；恢复只查原交易，不重发。每次测试独占账户池和该客户端的外层发送账户，不与其他创建、充值或转账任务同时运行。
+
+对照结果应单列提交模式、gas 参数、每笔外层交易的操作数、实际成功速率及 CPU。直接提交与 Bundler 多操作分包的摊销不同，不把两者差值全部解释为模拟开销。
+
+### ML 常驻签名进程
+
+`--ml-backend persistent` 每个 Worker 复用一个 v4 密钥工具进程，减少逐笔启动进程的开销；默认 `process` 保持原方式。需要先构建、升级新版密钥工具，旧二进制不支持时直接失败。
+
+每笔仍对实际 UserOperation 重新签名，并在工具内使用公钥验签；不缓存签名或 nonce，不改变链上算法和 gas。请求走匿名管道，禁止 core dump；进程故障会拒绝尚未完成的请求。总排队量受 `--max-inflight` 限制。该选项同时适用于 Bundler 路线和直接提交对照。
+
+构建时执行并发顺序、交叉验签、错钥与进程退出检查；可单独运行 `node one-box/tests/ml_signer.mjs` 复核 v4 工具。高压实验仍需分开观察 Bench 和 Validator 的 CPU，不能用签名器的独立性能推算链吞吐。
