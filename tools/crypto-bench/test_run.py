@@ -1,6 +1,7 @@
 import sys
 sys.dont_write_bytecode = True
 import importlib.util
+import statistics
 from pathlib import Path
 from unittest import TestCase, main
 from unittest.mock import patch
@@ -43,5 +44,16 @@ class BenchmarkChecks(TestCase):
     def test_unvalidated_linux_backend_never_silently_runs(self):
         with patch.object(bench.sys,'platform','linux'),patch.object(bench.platform,'machine',return_value='x86_64'):
             with self.assertRaises(RuntimeError):bench.detect_profile('auto')
+    def test_x86_summary_uses_measured_run_baseline(self):
+        data=bench.read(bench.ROOT/'docs/chain-bench/pricing/linux-x86_64/results.json')
+        runs=[r for r in data['runs'] if r['backend']=='deployed-portable' and r['gc']==100]
+        def median(name):
+            return statistics.median(row['metrics']['cpu-ns/op'] for r in runs for row in r['rows'] if row['name']==name)/1000
+        page=bench.x86_performance()
+        baseline=median('PricingECDSA/ECRecover');ml=median('Pricing/ML_Valid')
+        self.assertIn(f'{baseline:,.2f} us, baseline',page)
+        self.assertIn(f'{ml:,.2f} us, {ml/baseline:,.2f} 倍 baseline',page)
+        self.assertIn('未部署',page)
+        self.assertIn('进程 CPU',page)
 
 if __name__=='__main__':main()

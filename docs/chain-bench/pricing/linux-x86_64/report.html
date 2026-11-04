@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>x86_64 预编译定价复核</title>
+<style>body{max-width:1140px;margin:40px auto;padding:0 22px;font:16px/1.8 system-ui;color:#24364b}h1{font-size:28px}h2{font-size:21px;margin-top:30px}.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:9px;border:1px solid #d8e2ee;text-align:left}th{background:#edf4fa}.note{background:#edf8f2;border-left:4px solid #399776;padding:14px 18px}summary{cursor:pointer;padding:12px 0}a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}</style>
+<h1>x86_64 预编译定价复核</h1>
+<p class="note"><strong>本轮支持保留 ML-DSA-44 的 10,000 gas、SLH-DSA-SHA2-128s 的 60,000 gas 实验价格。</strong>依据当前部署实现，在空闲 AMD 节点重复测量；没有修改链上价格。ML 的 AVX2 优化有明显收益，需作为另一种实现单独评估。</p>
+<p>2026-11-04，Linux x86_64，AMD EPYC 9R14，8 vCPU、标称 64 GiB。目标机旧节点已停止，测前 CPU 忙碌率及 steal 采样均为 0%；没有运行 Validator、Bundler 或发压程序。此次是 AMD 实测，不能代表所有 Intel / AMD 机器。</p>
+<h2>实际客户端：以 ECRECOVER 定价</h2>
+<p>同一 Go 测试框架直接调用客户端 <code>Run</code>，包括输入解析、对象分配、验签及返回值。ECDSA 基线为 ECRECOVER，恢复公钥并计算地址，主值 <strong>41.21 us, baseline，3,000 gas</strong>。表中有效验签 CPU 合并两颗核、GC=100 的 14 轮样本取中位数；定价另覆盖 GC=50 对照。</p>
+<div class="table"><table><tr><th>预编译</th><th>有效验签进程 CPU</th><th>公式报价，取整至 1,000</th><th>再取整至 10,000</th><th>当前价格</th><th>判断</th></tr><tr><td>ML-DSA-44</td><td>84.31 us, 2.05 倍 baseline</td><td>8,000 gas</td><td>10,000 gas</td><td>10,000 gas</td><td>覆盖本轮口径</td></tr><tr><td>SLH-DSA-SHA2-128s</td><td>573.47 us, 13.92 倍 baseline</td><td>59,000 gas</td><td>60,000 gas</td><td>60,000 gas</td><td>覆盖本轮口径</td></tr></table></div>
+<p>沿用原实验公式：<strong>已测验签路径的最大轮均值 ÷ 同组 ECRECOVER 中位数 × 3,000 × 1.25</strong>，再向上取整。多组配置各自归一化后取较高报价，避免把不同配置的绝对时间直接混合。10,000 gas 的档位来自本项目实验规则，不是协议规定的 PQ 最低价格。</p>
+<div class="table"><table><tr><th>方案</th><th>已测路径最大轮均值</th><th>相对同组 ECRECOVER</th><th>未加余量的 CPU 等价价格</th><th>当前价格 / CPU 等价价格</th></tr><tr><td>ML</td><td>86.07 us</td><td>2.08 倍</td><td>6,253 gas</td><td>1.60 倍</td></tr><tr><td>SLH</td><td>639.57 us</td><td>15.57 倍</td><td>46,718 gas</td><td>1.28 倍</td></tr></table></div>
+<p>ML 当前价格较保守；SLH 当前价格也覆盖本轮 25% 余量和取整口径，但额外空间更小。这里的最大值是<strong>已测路径的轮均值</strong>，不是最慢单次调用或理论最坏输入上界。上线定价仍需结合其他 CPU、持续负载和对抗输入，不因单台快速机器的成绩自动降价。</p>
+<h2>编译与 x86_64 优化核查</h2>
+<ul><li><strong>ECDSA：</strong>沿用 BSC 的 libsecp256k1 / CGO 实现及 64 位运算，使用正常 Go 优化构建，无 <code>-N -l</code>。同组已知公钥验签为 37.12 us；它与 ECRECOVER 不同，不用于本次定价分母。</li>
+<li><strong>ML：</strong>部署使用 mldsa-native v2.0.0 的可移植 C 后端，<code>OPT=0 AUTO=0</code>、<code>-O3 -fno-fast-math</code>。另以同一固定版本构建 <code>OPT=1 AUTO=1</code>，显式使用 AVX2 / BMI2 / POPCNT 和 generic 调优；没有照搬中控 Intel CPU 的 <code>-march=native</code>。</li>
+<li><strong>SLH：</strong>沿用 Trail of Bits Go v0.1.0，Go SHA-256 在目标机使用 SHA-NI；独立 3.44 s profile 中 <code>blockSHANI</code> 占 CPU 样本 27.5%，同时能看到地址编码、复制和内存分配。当前实现已经使用哈希硬件加速，仍有 Go 对象处理开销。</li></ul>
+<p>构建使用 go1.25.0、CGO、<code>GOAMD64=v1</code>。v1 不会关闭 SHA-NI 等运行时分派；ML 优化库则明确要求相应指令。静态库编译器为 cc (GCC) 7.3.1 20180712 (Red Hat 7.3.1-17)；Go CGO 包保留默认 <code>-O2 -g</code>，ML 静态库单独按上述 <code>-O3</code> 参数构建。默认 Go 编译优化与 SIMD 后端选择是不同层次。</p>
+<div class="table"><table><tr><th>后端</th><th>绑定 CPU</th><th>GC</th><th>轮数</th><th>ECRECOVER</th><th>ML 有效 Run</th><th>SLH 有效 Run</th></tr><tr><td>deployed-portable</td><td>2</td><td>100</td><td>7</td><td>41.07 us</td><td>84.05 us</td><td>573.02 us</td></tr><tr><td>deployed-portable</td><td>5</td><td>100</td><td>7</td><td>41.29 us</td><td>84.39 us</td><td>573.93 us</td></tr><tr><td>mldsa-avx2</td><td>2</td><td>100</td><td>7</td><td>41.33 us</td><td>24.83 us</td><td>576.24 us</td></tr><tr><td>deployed-portable</td><td>2</td><td>50</td><td>5</td><td>41.33 us</td><td>84.30 us</td><td>608.15 us</td></tr></table></div>
+<p>AVX2 将 ML 有效 Run 从约 84.31 us 降至 24.83 us，约快 3.40 倍；ECDSA 与 SLH 保留原后端。更快实现不自动改变 gas：当前部署仍需按可移植实现评估。SLH 的 Go 分配约 221.1 KiB/op、5,443 次/op；ML 的 Go 分配不包含 C 内存。</p>
+<details><summary><strong>签名成本参照，不参与预编译定价</strong></summary><div class="table"><table><tr><th>算法 / 后端</th><th>签名进程 CPU</th></tr><tr><td>ECDSA-secp256k1</td><td>28.95 us, baseline</td></tr><tr><td>ML-DSA-44，已部署后端</td><td>301.46 us, 10.41 倍 baseline</td></tr><tr><td>ML-DSA-44，AVX2</td><td>73.22 us, 2.53 倍 baseline</td></tr><tr><td>SLH-DSA-SHA2-128s，Go</td><td>534,983.80 us, 18,479.58 倍 baseline</td></tr></table></div><p>相同来源的 32 bytes 消息；密钥生成、计时前后验签不计入。SLH 这里测原生 Go 签名，不是钱包的 JavaScript、OpenSSL 或 AVX 签名器；不能将这些时间与钱包全链路吞吐直接换算。</p></details>
+<h2>正确性与公开资料对照</h2>
+<p>ML 按 <a href="https://csrc.nist.gov/pubs/fips/204/final">FIPS 204</a>，SLH 按 <a href="https://csrc.nist.gov/pubs/fips/205/final">FIPS 205</a>，均为 Pure、空上下文。正确编码的正例与错消息、尾字节篡改、零签名、伪随机签名、截短、加长负例均通过；计时调用逐次检查返回值；输入不变性另由正确性测试核对。现有用例另验证恰好 gas 可执行、少 1 gas 失败。ML 优化库还通过上游功能测试与 KAT。标准规定算法与编码，不规定耗时或本链 gas；测试通过不等于 FIPS 认证。</p>
+<p><a href="https://pq-code-package.github.io/mldsa-native/dev/bench/">mldsa-native 官方评测</a>在同一公开提交的 AMD EPYC 4th gen 数据中，ML-DSA-44 验签为优化 50,052 cycles、非优化 123,598 cycles，约 2.47 倍差距。本次同样观察到优化收益；源版本、编译器、调用边界和计时单位不同，不要求倍数或绝对耗时完全相同，也不拿标称频率把这些 cycles 强行换成 us。公开提交、采集时间和摘要保存在数据文件中。</p>
+<p><a href="https://eips.ethereum.org/EIPS/eip-1108">EIP-1108</a>提供了以 ECRECOVER 为参照校准计算成本、兼顾较慢实现的先例。本项目额外采用的 25% 余量和取整档位是实验选择。签名速度不参与验签预编译报价；完整 ERC-4337 交易还包含 calldata、存储及 EntryPoint 等成本。</p>
+<h2>口径与复现</h2>
+<p>单执行 P、锁定 OS 线程、绑定单核、正常启用 GC，所有组顺序运行。两颗核各七轮部署后端，七轮 AVX2 对照，五轮 GC=50 对照，共 <strong>26 轮、494 个计时组</strong>，每组 1 s。每轮固定种子调整顺序；主时钟是进程 CPU，另存线程 CPU、墙钟和 Go 分配。没有锁频；这些是重复均值，不能当作普适硬件极限。</p>
+<p>SLH 读取公开多密钥向量；ML 在计时外换钥，并签署同一消息集合、检查独立标准向量。结果对应热密钥、小工作集。源码基于 <code>2690284</code>；本次基准源码快照、编译参数、依赖、二进制摘要、原始样本及校验结果见 <a href="results.json">数据记录</a>，操作方法见 <a href="../../../../tools/chain-bench/pricing/README.md">复现说明</a>。私钥、机器连接信息及原始调试目录不发布。</p>
+<p>原 <a href="../../../crypto-bench/comparison.html">macOS 密码学报告</a>使用优化 C 后端和已知公钥 ECDSA 验签；原 <a href="../../report.html">macOS 链路报告</a>测客户端 Run。此次不覆盖历史数据，也不把两种 ECDSA 操作或不同 SLH 后端混作同一基准。</p>
+</html>

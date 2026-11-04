@@ -8,3 +8,5 @@
 - [技术调研](research/README.md)：以太坊抗量子路线与相关研究。
 
 链路对比也可查看 [HTML 报告](chain-bench/report.html)。
+
+- [x86_64 预编译定价复核](chain-bench/pricing/linux-x86_64/report.html)：空闲 AMD 节点，实际部署与 AVX2 后端、ECRECOVER 基线和 gas 校准。

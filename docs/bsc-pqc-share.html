@@ -62,7 +62,12 @@
             <li><a href="#erc4337-plan">3.3 ERC-4337 抗量子方案</a></li>
           </ul>
         </li>
-        <li><a href="#chain-bench">链路基准：预编译与 ERC-4337 交易成本</a></li>
+        <li><a href="#chain-bench">链路基准：预编译与 ERC-4337 交易成本</a>
+          <ul>
+            <li><a href="#storage-assumptions">4.1 数据假设和磁盘空间</a></li>
+            <li><a href="#precompile-performance">4.2 验签预编译性能及 gas</a></li>
+          </ul>
+        </li>
       </ol>
     </nav>
   </header>
@@ -333,7 +338,7 @@
     </section>
     <section id="chain-bench">
       <h2>4. 链路基准：预编译与 ERC-4337 交易成本</h2>
-      <h3>4.1 数据假设和磁盘空间</h3>
+      <h3 id="storage-assumptions">4.1 数据假设和磁盘空间</h3>
       <ul>
         <li><strong>每日新增地址：</strong>约 60 万个。</li>
         <li><strong>原生 BNB 余额 ≥100 BNB 的地址：</strong>暂按 10 万个作为规模估算假设，实际数量待核实。</li>
@@ -353,9 +358,30 @@
       <aside class="bsc-takeaway">
         <p><strong>结构开销可推导，实际磁盘用实测核对。</strong>百万账户下，ML 的单节点磁盘增量约 7.18 GiB，SLH 约 0.46 GiB，分别是 ECDSA 的 43.09 倍和 2.73 倍。</p>
       </aside>
+      <details class="proposal-details">
+        <summary>放大逻辑</summary>
       <p>放大来自明确的数据结构：EOA 的账户快照约 <strong>38 bytes</strong>；两个 PQ 方案因非空 storageRoot 和 codeHash，账户快照约 <strong>103 bytes</strong>。ML 的 1,312 bytes 公钥占 42 个槽，storage 快照约 4,086 bytes；SLH 的 32 bytes 公钥占 1 个槽，约 98 bytes。</p>
       <p>因此，<strong>单账户 state 快照理论上约为 38 / 4,189 / 201 bytes</strong>，ML、SLH 相对 ECDSA 约放大 110.24 倍、5.29 倍；实测为 109.63 倍、5.27 倍，与推导接近。同一规模、同一口径下，总量放大倍数等于单账户平均放大倍数。</p>
+      </details>
       <p>详细推导、记录数量核对及原始数据见<a href="chain-bench/storage/local-20261030/report.html">账户存储实验报告</a>。</p>
+
+      <section id="precompile-performance">
+        <h3>4.2 验签预编译性能及 gas</h3>
+        <div class="cost-table-wrap">
+          <table class="storage-bench" aria-label="两种硬件的预编译性能与实验定价">
+            <thead><tr><th>预编译</th><th>Apple M1 Pro · arm64</th><th>AMD EPYC 9R14 · x86_64</th><th>实验价格</th></tr></thead>
+            <tbody>
+            <tr><td>ECDSA / ECRECOVER</td><td>29.40 us, baseline</td><td>41.21 us, baseline</td><td>3,000 gas</td></tr>
+            <tr><td>ML-DSA-44</td><td>15.43 us, 0.52 倍 baseline</td><td>84.31 us, 2.05 倍 baseline</td><td>10,000 gas</td></tr>
+            <tr><td>SLH-DSA-SHA2-128s</td><td>408.31 us, 13.89 倍 baseline</td><td>573.47 us, 13.92 倍 baseline</td><td>60,000 gas</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><strong>定价逻辑：</strong>已测正、负例验签路径的最大轮均值 ÷ 同组 ECRECOVER 中位数 × 3,000 gas × 1.25，再向上取整到 1,000、10,000 gas 档位。以当前部署实现核算，签名生成不参与定价。</p>
+        <aside class="bsc-takeaway"><p><strong>当前实验价格可保留：</strong>x86_64 复核的 ML、SLH 公式报价分别为 8,000、59,000 gas，按原万级档位取整后仍为 10,000、60,000 gas。25% 余量与取整档位属于实验规则；预编译价格不等于完整转账 gas。</p></aside>
+        <p>参考：<a href="crypto-bench/comparison.html#x86-performance">性能汇总：测试口径、环境与优化</a> · <a href="chain-bench/pricing/linux-x86_64/report.html">定价报告：公式复算与原始数据</a>。</p>
+
+      </section>
 
     </section>
   </main>

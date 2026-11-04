@@ -218,6 +218,40 @@ NOTES=[
     '本地 v1 / v2；Sui Move 金库选型。',
     '本地 v6；相比 128s，签名更快，但签名更大、验签更慢，链上账户场景优势有限，仅作对照。',
 ]
+def x86_performance():
+    path=ROOT/'docs/chain-bench/pricing/linux-x86_64/results.json'
+    if not path.exists():
+        return ''
+    data=read(path)
+    deployed=[r for r in data['runs'] if r['backend']=='deployed-portable']
+    primary=[r for r in deployed if r['gc']==100]
+    native=next(r for r in data['runs'] if r['backend']=='mldsa-avx2')
+    def median(name):
+        return statistics.median(row['metrics']['cpu-ns/op'] for r in primary for row in r['rows'] if row['name']==name)/1000
+    sign_base=median('PricingECDSA/Sign');verify_base=median('PricingECDSA/ECRecover')
+    def cell(value,baseline,base=False):
+        return f'{value:,.2f} us, '+('baseline' if base else f'{value/baseline:,.2f} 倍 baseline')
+    cases=[('ECDSA-secp256k1 / ECRECOVER','libsecp256k1 / CGO',sign_base,verify_base,3000),
+           ('ML-DSA-44，当前部署','mldsa-native，可移植 C',median('PricingSign/ML'),median('Pricing/ML_Valid'),10000),
+           ('ML-DSA-44，AVX2 对照','同版本 mldsa-native，AVX2 / BMI2 / POPCNT',native['summary']['PricingSign/ML']['medianUs'],native['summary']['Pricing/ML_Valid']['medianUs'],None),
+           ('SLH-DSA-SHA2-128s，当前部署','Trail of Bits Go / SHA-NI',median('PricingSign/SLH'),median('Pricing/SLH_Valid'),60000)]
+    rows=''.join(f'<tr><td>{name}</td><td>{backend}</td><td>{cell(sign,sign_base,i==0)}</td><td>{cell(verify,verify_base,i==0)}</td><td>{gas:,} gas</td></tr>' if gas is not None else
+                 f'<tr><td>{name}</td><td>{backend}</td><td>{cell(sign,sign_base)}</td><td>{cell(verify,verify_base)}</td><td>未部署</td></tr>'
+                 for i,(name,backend,sign,verify,gas) in enumerate(cases))
+    cpu=html.escape(primary[0]['environmentBefore']['cpu'])
+    go=html.escape(primary[0]['runtime']['go'])
+    compiler=html.escape(data['builds']['deployed-portable']['compiler'])
+    return f'''<h2 id="x86-performance">Linux x86_64：实际预编译与优化对照</h2>
+<p>{data['checkedAt'][:10]} · {cpu} · 8 vCPU / 标称 64 GiB · {go} / CGO。空闲节点，未运行 Validator、Bundler 或发压程序；单核绑定、单执行 P、锁定 OS 线程，GC 开启。这里使用<strong>进程 CPU</strong>，包括 Go 后台与 GC 开销。</p>
+<div class="scroll"><table><thead><tr><th>算法 / 实现</th><th>底层后端</th><th>签名 CPU</th><th>有效验签 Run CPU</th><th>当前预编译定价</th></tr></thead><tbody>{rows}</tbody></table></div>
+<p>签名以 ECDSA Sign 为 baseline；预编译以 <strong>ECRECOVER</strong> 为 baseline，计入恢复公钥、计算地址或 PQ 输入解析与验签。已部署后端主值合并两颗核、GC=100 的 {sum(r["rounds"] for r in primary)} 轮样本取中位数；AVX2 另测 {native["rounds"]} 轮。另有 {sum(r["rounds"] for r in deployed if r["gc"]==50)} 轮 GC=50 对照，共 {sum(r["rounds"] for r in data["runs"])} 轮、{sum(len(r["rows"]) for r in data["runs"])} 个计时组。密钥生成不计时，签名不参与预编译定价。</p>
+<details><summary>编译、优化与可比范围</summary>
+<ul><li><strong>ML：</strong>同一 mldsa-native v2.0.0，部署后端为 <code>OPT=0 AUTO=0</code>、<code>-O3 -fno-fast-math</code>；优化对照为 <code>OPT=1 AUTO=1</code>、<code>-O3 -mavx2 -mbmi2 -mpopcnt -mtune=generic -fno-fast-math</code>，通过上游功能测试与 KAT。AVX2 有效验签约快 {median('Pricing/ML_Valid')/native['summary']['Pricing/ML_Valid']['medianUs']:.2f} 倍，尚未替换部署后端。</li>
+<li><strong>SLH：</strong>Trail of Bits Go v0.1.0；profile 确认使用 SHA-NI，仍有地址编码、复制和 Go 分配开销。此处签名测 Go 实现，不是钱包使用的快速签名后端。</li>
+<li><strong>构建：</strong>{compiler}；Go 正常优化，无 <code>-N -l</code>，<code>GOAMD64=v1</code> 不关闭 SHA-NI 等运行时分派；CGO 默认 <code>-O2 -g</code>，ML 静态库独立使用上述参数。</li>
+<li><strong>范围：</strong>两组都使用 32 bytes 消息，但 macOS 测优化 C 库的 Sign / Verify、线程 CPU 且关闭 GC；x86_64 测实际客户端 Run、进程 CPU 且开启 GC。硬件、后端和 ECDSA 操作不同，不能据此判断 ARM 与 x86_64 谁更快。</li></ul></details>
+<p>当前实现的复核支持保留 ML 的 10,000 gas、SLH 的 60,000 gas 实验价格；优化后端不自动改变价格。定价公式、负例、标准与公开评测核查见<a href="../chain-bench/pricing/linux-x86_64/report.html">详细报告</a>，另附<a href="../chain-bench/pricing/linux-x86_64/results.json">原始样本</a>和<a href="../../tools/chain-bench/pricing/README.md">复现说明</a>。</p>'''
+
 def render(data):
     foundations = {
         'ECDSA-secp256k1': ('椭圆曲线离散对数问题', False, '不属于 PQC 标准', '不适用'),
@@ -251,12 +285,14 @@ def render(data):
     observed_falcon=f"{min(r['signature_observed_min_bytes'] for r in falcon_rows)}–{max(r['signature_observed_max_bytes'] for r in falcon_rows)}"
 
     source_links=''.join(f'<li><a href="{spec["repository"]}/tree/{spec["commit"]}">{html.escape(spec["version"])} · {spec["commit"][:12]}</a></li>' for spec in data['build']['identity']['sources'].values())
-    page=f'''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Go 签名算法对比 · {profile}</title>
+    page=f'''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>签名算法与预编译性能对比</title>
 <style>body{{font:15px/1.75 system-ui;max-width:1440px;margin:32px auto;padding:0 24px;color:#243447}}h1,h2{{line-height:1.4}}table{{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}}td,th{{padding:10px;border:1px solid #dce3eb;text-align:right;vertical-align:top}}td:first-child,th:first-child,td:last-child{{text-align:left}}th{{background:#edf3f8}}.scroll{{overflow:auto}}a{{color:#146caa}}.note{{padding:16px;background:#edf4fa;border-left:4px solid #3477a4}}details{{margin:24px 0}}pre{{white-space:pre-wrap}}small{{color:#526477}}.algorithm{{min-width:180px}}.algorithm small{{display:block;margin-top:4px;font-size:12px;line-height:1.5;overflow-wrap:anywhere}}</style>
-<h1>签名算法对比 · Go 接口</h1><p>{html.escape(env['cpu'])} · {profile} · {html.escape(data['started_at'].split('T')[0])}</p>
-<div class="note">本报告为 BSC 的 ERC-4337 抗量子账户选型提供参考，比较签名大小与本机计算成本。六项算法共用 Go 接口，每次签名 / 验签调用一次 C 后端，计入 Go 和 CGO 开销；不含密钥生成和可复用对象创建。完整交易 gas 见<a href="../chain-bench/report.html">链路报告</a>。</div>
-<h2>测试结果</h2><p>耗时越小越快；签名和验签分别以本次 ECDSA 为 baseline。每批先计算单次平均耗时，每轮取各批中位数，主表再取各轮中位数。</p>
+<h1>签名算法与预编译性能对比</h1>
+<div class="note">汇集 BSC 抗量子账户实验的存储编码与计算性能。<a href="#mac-performance">macOS 算法基准</a>比较六种签名；<a href="#x86-performance">Linux x86_64 实测</a>比较三种实际客户端预编译及优化后端。两组分别设置 baseline。完整交易 gas 见<a href="../chain-bench/report.html">链路报告</a>。</div>
+<h2 id="mac-performance">macOS arm64：算法基准</h2><p>{html.escape(env['cpu'])} · {profile} · {html.escape(data['started_at'].split('T')[0])}。六项算法共用 Go 接口，每次调用一次 C 后端，计入 Go / CGO 开销，不含密钥生成与可复用对象创建；主指标为线程 CPU，Go GC 关闭。</p>
+<p>耗时越小越快；签名和验签分别以本组 ECDSA 为 baseline，验签使用已知公钥。每批先计算单次平均耗时，每轮取各批中位数，主表再取各轮中位数。</p>
 <div class="scroll"><table><thead><tr><th rowspan="2">算法 / 参数</th><th colspan="3" style="text-align:center">存储</th><th colspan="2" style="text-align:center">计算</th><th rowspan="2">备注</th></tr><tr><th>私钥编码</th><th>公钥</th><th>签名</th><th>签名 CPU</th><th>验签 CPU</th></tr></thead><tbody>{rows}</tbody></table></div>
+{x86_performance()}
 <h2>权衡与启发</h2>
 <p><strong>本项目可优先探索“ERC-4337 智能账户承载 PQ 金库”的路径，重点比较 ML-DSA-44 与 SLH-DSA-SHA2-128s。</strong>前者侧重较低的计算和数据成本，后者提供基于哈希的安全假设。算法选择之外，还要结合完整交易费用、授权设计和钱包使用成本判断。</p>
 <ol>
@@ -273,7 +309,7 @@ def render(data):
 <p><strong>优先保护高价值资产，是迁移顺序，不是小额账户的安全保证。</strong>可以先保护储备资金、项目金库和重要管理权限，再逐步覆盖日常账户。量子攻击若成本较高，攻击者通常更有动力选择预期收益高的目标；但未来成本尚不确定，小额账户也可能控制大额资产的授权，不能只按账户余额判断风险。</p>
 <p><strong>本地验证到哪里，方案就说明到哪里。</strong>当前已验证 PQ 签名、Bundler、EntryPoint 和智能账户的创建与转账链路；账户固定公钥和验证器，没有升级、恢复或换钥入口，也尚未实现完整金库产品。v2 / v4 依赖修改后的 BSC 客户端提供实验预编译，不能直接部署到未支持这些预编译的网络；v1 的 Solidity 验签无需新增 PQ 预编译，但成本较高。本地 Bundler 使用实验预算，联通成功不代表兼容公共 Bundler，详见<a href="../chain-bench/report.html">链路报告</a>和<a href="../../erc4337-wallet/README.md">钱包说明</a>。</p>
 <p>生产金库还需覆盖所有资产转出与权限变更路径：传统签名不能通过升级、恢复、管理员权限或已有代币授权绕过 PQ 校验。ERC-4337 本身不提供抗量子保证，账户授权改造也不解决 BSC 共识、P2P 和 Bundler 外层交易的量子风险。</p>
-<h2>测试说明与参考</h2>
+<h2>macOS 算法基准：说明与参考</h2>
 <p><strong>结果用于本机实现对比。</strong>耗时排名不代表安全等级，不能直接换算交易 gas，也不能与链路报告的 CPU 数据直接横比。</p>
 <p><strong>安全标注。</strong>“抗量子”指在相应参数与安全假设下抵抗目前已知的量子攻击，不是无条件安全。NIST 类别 1–5 不是直接标注的 bit 安全强度，ECDSA 不适用；标准发布也不代表本实验实现通过 FIPS 认证。128s / 128f 同属类别 1，ML-DSA-44 / 65 分属类别 2 / 3。</p>
 <p><strong>大小口径。</strong>“存储”指编码大小，不是对象内存或链上存储 gas。ML 私钥为展开编码，不应与 32 bytes 种子备份直接比较；SLH 的 64 bytes 私钥含 32 bytes 公钥；ECDSA 的 64 bytes 签名不含恢复位。Falcon 公钥 / 私钥省略固定的 1-byte 头，完整编码为 897 / 1,281 bytes；签名保留头部。617–667 bytes 是本适配器接受范围，本轮实测 {observed_falcon} bytes，并非通用长度上限或 TVM 的固定 666-byte 槽。</p>

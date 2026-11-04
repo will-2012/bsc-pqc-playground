@@ -2,6 +2,8 @@
 
 2026-10-27，macOS arm64 / Apple M1 Pro 本地实测。这里比较真实 BSC 预编译与 ERC-4337 交易；[密码学基准](../crypto-bench/comparison.html)比较本机 Sign / Verify 接口，两者的实现与计时口径不同。v6 新增 SLH-DSA-SHA2-128f，旧版本与原始记录保留。
 
+x86_64 实测及当前实验价格复核见 [AMD 节点定价报告](pricing/linux-x86_64/report.html)。以下保留原 macOS 数据。
+
 128f 与 128s 都是 NIST 类别 1。128f 显著加快签名生成，但签名从 7,856 bytes 增至 17,088 bytes；在这条链路里，验签和 calldata 费用更高，转账并不更便宜。
 
 ## 账户存储实验
