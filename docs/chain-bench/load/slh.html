@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SLH-DSA-SHA2-128s：账户创建与转账压测</title>
+<style>
+body{max-width:1120px;margin:40px auto;padding:0 24px;font:16px/1.8 system-ui;color:#24364b}
+h1{font-size:28px}h2{font-size:21px;margin-top:30px}
+.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{padding:9px;border:1px solid #d8e2ee;text-align:left}th{background:#edf4fa}
+.note{background:#edf8f2;border-left:4px solid #399776;padding:14px 18px}
+a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
+</style>
+<h1>SLH-DSA-SHA2-128s：账户创建与转账压测</h1>
+<p class="note"><strong>完整链路约 30.6 UserOp/s，直接提交约 224 UserOp/s。</strong>前者主要受模拟与打包限制，后者已用满混部署机器的 CPU，主要开销在 Bench 签名；两者都不是独立链容量。</p>
+<h2>环境与口径</h2>
+<p>2026-11-03–04，三台 Linux x86_64 机器，每台 8 个逻辑 CPU，同机运行 Bench、Bundler 和 Validator。链数据与 ML 测试沿用同一环境，区块 gas 上限为 2.1 亿，出块间隔 450 ms。账户采用 v7 storage 合约，复用现有 SLH 预编译；算法为 Pure SLH-DSA-SHA2-128s、空上下文。基于 <code>2ba468f</code>，叠加本次可选 SIMD 签名后端；链上合约与预编译不变。</p>
+<p>每个账户保留独立公私钥和部署记录；私钥为 64 bytes、公钥为 32 bytes、签名为 7,856 bytes。准备阶段生成密钥并预充值，创建阶段通过真实 UserOperation 部署合约。转账从完整一万账户池中随机选择其他账户作为收款方，排除自身。密钥、连接配置和原始日志仅保留在私有运行目录。</p>
+<p>转账每轮派发 300 秒后等待回执收敛。表中实际 UserOp/s＝最终确认数 ÷ 300 秒；gas 与整机 CPU 取运行第 30–290 秒内的完整监控窗口。成功回执与最终化分别观察，目标 QPS 是发送上限。各档为单轮摸底，不将小幅差异解释为稳定收益。</p>
+<h2>账户准备与创建</h2>
+<p>一万账户分配为 3334 / 3333 / 3333。准备阶段使用每台 8 个 Worker、64 在途、总目标 100 QPS，约 123 秒完成，零失败、零未决。准备窗口整机 CPU 均值约 71%，主要由 Bench 消耗，gas 约 0.4%。这是客户端准备与充值成本。</p>
+<div class="table"><table>
+<tr><th>目标 QPS</th><th>Worker / 节点</th><th>在途 / 节点</th><th>该阶段新增账户</th><th>窗口回执均值</th><th>整机 CPU</th><th>最大出块间隔</th></tr>
+<tr><td>18</td><td>4</td><td>8</td><td>2,567</td><td>7.87 /s</td><td>26.2%</td><td>450 ms</td></tr>
+<tr><td>18</td><td>4</td><td>32</td><td>3,978</td><td>13.14 /s</td><td>41.3%</td><td>450 ms</td></tr>
+<tr><td>36</td><td>4</td><td>32</td><td>3,455</td><td>12.42 /s</td><td>39.5%</td><td>450 ms</td></tr>
+</table></div>
+<p>三阶段连续使用同一账户池，新增数合计 10,000，均无失败和未决。首段观测满 300 秒后主动停压、排空；第二段派发 300 秒；最后一段完成剩余账户。窗口回执均值分别来自 24 / 26 / 24 个完整监控窗口，各客户端均处于第 30–290 秒内。新增账户数包含各段收尾，不能除以同一个时长。已创建账户在续建时跳过，不重复部署。</p>
+<p><strong>更多在途请求改善了创建速度，继续抬高目标未带来收益。</strong>首段签名调用均值约 360 ms、回执等待约 2 s，8 个在途操作基本占满。调至 32 后，窗口吞吐从约 7.87 增至 13.14 个/秒；再将目标翻倍，吞吐没有明显提高。链 gas 仍约 1%–2%、CPU 未满，后续应优先验证模拟与批次等待，而不是增加链预算。</p>
+<p>Factory 操作仍按原有规则验证；已部署账户的有界并行验证不适用于带 Factory 的创建操作。没有放宽信誉、存储访问、nonce 或签名检查。每次创建成功后核对代码与链上公钥；最终还逐台核对账户标志、密钥编码、公私钥对应关系及地址、公钥唯一性。</p>
+<h2>随机互转：完整 Bundler 链路</h2>
+<p>基线使用 OpenSSL 常驻签名器，每台 4 个 Worker、32 在途、每 Worker 缓存上限 512 个账户；Bundler 的第二次验证并发为 4，每包预算 12M gas，保留 safe-mode。每笔重新签名并本地验签，通过 Bundler、EntryPoint、账户及预编译后核对成功回执。</p>
+<div class="table"><table>
+<thead><tr><th>签名后端</th><th>目标 UserOp/s</th><th>实际 UserOp/s</th><th>确认数</th><th>失败 / 未决</th><th>Gas 均值</th><th>整机 CPU</th><th>最大间隔</th></tr></thead>
+<tbody id="transfer-results">
+<tr><td>OpenSSL</td><td>10</td><td>9.96</td><td>2,989</td><td>0 / 0</td><td>0.70%</td><td>29.8%</td><td>450 ms</td></tr>
+<tr><td>OpenSSL</td><td>20</td><td>19.81</td><td>5,942</td><td>0 / 0</td><td>1.39%</td><td>52.9%</td><td>450 ms</td></tr>
+<tr><td>OpenSSL</td><td>40</td><td>21.15</td><td>6,344</td><td>0 / 0</td><td>1.49%</td><td>59.1%</td><td>450 ms</td></tr>
+<tr><td>AVX2</td><td>20</td><td>19.90</td><td>5,971</td><td>0 / 0</td><td>1.40%</td><td>39.8%</td><td>450 ms</td></tr>
+<tr><td>AVX2</td><td>40</td><td>21.66</td><td>6,499</td><td>0 / 0</td><td>1.50%</td><td>44.4%</td><td>450 ms</td></tr>
+</tbody></table></div>
+<p><strong>签名加速主要降低了 CPU，未解除这组配置的吞吐限制。</strong>相同 4 Worker、32 在途下，40 QPS 档整机 CPU 从 59.1% 降至 44.4%，实际吞吐仅从 21.15 增至 21.66。原 OpenSSL 40 QPS 档的一份 10 秒 Validator CPU 样本中，约 64% 位于 <code>debug_traceCall</code>，约 25% 位于后台 GC，SLH 验签约 4%；这些是重叠调用栈的累计占比，不能相加。</p>
+<h2>增加并发与调整运行时</h2>
+<p>先扩大等待窗口，再分别对照签名实现、GC 和打包前验证并发。下表均为完整 Bundler 链路；缓存仍为每 Worker 512 个账户，每包预算 12M gas。</p>
+<div class="table"><table>
+<tr><th>签名后端</th><th>目标 UserOp/s</th><th>Worker / 在途（每台）</th><th>实际 GC / 验证并发</th><th>实际 UserOp/s</th><th>确认数</th><th>Gas 均值</th><th>整机 CPU</th></tr>
+<tr><td>AVX2</td><td>40</td><td>4 / 128</td><td>50 / 4</td><td>26.67</td><td>8,001</td><td>1.84%</td><td>54.6%</td></tr>
+<tr><td>AVX2</td><td>80</td><td>8 / 256</td><td>50 / 4</td><td>26.65</td><td>7,996</td><td>1.82%</td><td>61.8%</td></tr>
+<tr><td>AVX2</td><td>80</td><td>8 / 256</td><td>300 / 4</td><td>28.16</td><td>8,447</td><td>1.84%</td><td>51.2%</td></tr>
+<tr><td>AVX-512</td><td>80</td><td>8 / 256</td><td>300 / 4</td><td>28.16</td><td>8,448</td><td>1.82%</td><td>47.4%</td></tr>
+<tr><td>AVX-512</td><td>80</td><td>8 / 256</td><td>300 / 8</td><td>30.60</td><td>9,181</td><td>1.97%</td><td>51.8%</td></tr>
+</table></div>
+<p>各轮失败和未决均为 0，最大出块间隔均为 450 ms。后四轮 RPC 执行截止时间为 30 s；后三轮另设 Go 内存软限额 8 GiB。整机 CPU 下降不等于吞吐同比增加：更快的签名器释放了 CPU，但完整链路仍停留在约 28–31 UserOp/s。模拟、批次等待与提交调度仍需进一步拆分，不能只归因于 Bench 签名。</p>
+<p><strong>先查真实错误，再调超时。</strong>8 Worker、256 在途的首次升压触发默认 5 s 的 <code>eth_call</code> 执行截止时间：<code>execution aborted (timeout = 5s)</code>，外层却显示参数错误。该轮未完成，排空已接受操作后单独复测 30 s 截止时间，不计入上表。延长截止时间不增加算力，也不改变链上 gas 与验证规则。</p>
+<p><strong>配置必须核对实际值。</strong>最初通过环境变量设置 GOGC=300，但 BSC 启动按 cache 配置将其覆盖为 50，因此不计作 GC=300 实验。表中的 300 是通过运行时接口设置、核对旧值后得到的对照；8 GiB 是软限额。此项只是实验参数，不写入默认配置。</p>
+<h2>隔离 Bundler 的直接提交对照</h2>
+<p>对已创建账户逐笔签署真实 UserOperation，每笔外层交易提交一个 <code>handleOps</code> 操作。保留链上签名、nonce、权限、执行及成功事件检查，不经过 Bundler 模拟与打包，因此不能当作完整 Bundler 吞吐。各档每台 128 在途；显式 gas 上限为 call 30,000、verification 300,000、preVerification 200,000、outer 900,000。</p>
+<div class="table"><table>
+<tr><th>签名后端</th><th>目标 UserOp/s</th><th>Worker / 节点</th><th>实际 UserOp/s</th><th>确认数</th><th>失败 / 未决</th><th>Gas 均值</th><th>整机 CPU</th><th>最大间隔</th></tr>
+<tr><td>AVX2</td><td>40</td><td>4</td><td>39.66</td><td>11,897</td><td>0 / 0</td><td>2.96%</td><td>23.7%</td><td>450 ms</td></tr>
+<tr><td>AVX2</td><td>80</td><td>4</td><td>78.26</td><td>23,478</td><td>0 / 0</td><td>5.81%</td><td>45.2%</td><td>450 ms</td></tr>
+<tr><td>AVX2</td><td>160</td><td>8</td><td>151.30</td><td>45,389</td><td>0 / 0</td><td>11.21%</td><td>89.5%</td><td>450 ms</td></tr>
+<tr><td>AVX2</td><td>320</td><td>8</td><td>169.67</td><td>50,901</td><td>0 / 0</td><td>12.61%</td><td>99.95%</td><td>450 ms</td></tr>
+<tr><td>AVX2</td><td>320</td><td>16</td><td>166.17</td><td>49,850</td><td>0 / 0</td><td>12.35%</td><td>100.0%</td><td>450 ms</td></tr>
+<tr><td>AVX-512</td><td>320</td><td>8</td><td>224.06</td><td>67,217</td><td>0 / 0</td><td>16.68%</td><td>99.7%</td><td>450 ms</td></tr>
+<tr><td>AVX-512</td><td>320</td><td>16</td><td>218.92</td><td>65,675</td><td>0 / 0</td><td>16.28%</td><td>99.8%</td><td>450 ms</td></tr>
+</table></div>
+<p><strong>直接提交后，主要瓶颈转到客户端签名和混部署 CPU。</strong>AVX2 从 160 升至 320 QPS，实际仅从 151.30 增至 169.67，CPU 接近 100%；16 Worker 没有提高吞吐。AVX-512 在相同 8 Worker、128 在途下提高到 224.06，但 16 Worker 仍无收益。两种后端的直接提交对照均使用实际 GC=50；AVX-512 轮另设 8 GiB Go 内存软限额，AVX2 轮未设此限额。</p>
+<p>224.06 档中，每台 Bench 约占 6.7–6.8 个逻辑核，Validator 约占 1.1 个，整机 CPU 约 99.7%，gas 仅 16.7%。另在 AVX2 的 160 QPS 档做 10 秒进程采样，原生签名器占 Bench CPU 时间约 88%。因此，更快签名能提高发压能力；继续增加 Worker 只会争抢同机资源，下一步应将 Bench 与 Validator 分机再测。</p>
+<h2>签名器优化对照</h2>
+<p>同一台空载测试机器、同一 32 bytes 消息接口的小样本中，OpenSSL 签名加本地验签约 297 ms，AVX2 约 111 ms；原 JavaScript 实现约 1,344–1,387 ms。每组仅 4 条消息，用于定位开销，不能直接推算整条链路的加速倍数。</p>
+<p>AVX2 实现来自 <a href="https://github.com/sphincs/parallel-sphincsplus/tree/1e2cc8e7015b03e82465479c5ebb69520e83d971">parallel-sphincsplus 固定提交</a>，已通过上游密钥生成、签名已知答案、SHA-512 和上下文测试，以及跨实现验签和篡改负例。算法、参数、签名大小不变；每个签名进程只用一个 OS 线程，在内部并行计算独立哈希，使用系统随机数。链上仍由原预编译验签。</p>
+<p>AVX-512 实现采用同仓库的<a href="https://github.com/sphincs/parallel-sphincsplus/tree/e1f3b647773c7faf15947a12e8f0b21123a9a76e">另一固定提交</a>，同样通过上游测试与跨实现验签，并完成真实账户创建和转账验收。构建脚本固定源提交、归档摘要和编译参数，记录二进制摘要；各后端显式选择，不自动替换基线。后端对照固定账户池，各轮并发与运行时参数分别列明。</p>
+<h2>核查与收尾</h2>
+<p>先检查一万账户的独立密钥、公私钥关系及地址唯一性，再核对交易日志与链上回执。代表性的完整链路与直接提交轮次逐条检查操作哈希、发送者与 nonce 组合无重复；这些代表轮次各抽 96 笔独立复算签名哈希、跨实现验签，并核对收款调用、链上公钥、成功事件及规范最终化区块。原始日志和核查记录保留在私有运行目录。</p>
+<p>压测结束后停止 Bench，保留账户池、密钥和链数据；撤回临时源码覆盖、RPC、GC、内存和验证并发调整，检查 Validator / Bundler、交易池和最终化。可复用的签名后端与有限 RPC 截止时间通过显式选项提供。</p>
+<p><a href="../../../tools/chain-bench/load/README.md">运行与调参</a> · <a href="performance.html">ECDSA / ML 排查记录</a></p>
+</html>

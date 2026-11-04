@@ -153,6 +153,10 @@ class Cluster:
             and devnet.digest(WORK / "bsc-pqc-slh-signer") == info["slh_signer_sha256"],
             "Build artifact checksum mismatch",
         )
+        for backend in ("avx2", "avx512"):
+            if info.get(f"slh_{backend}_signer_sha256"):
+                require(devnet.digest(WORK / f"bsc-pqc-slh-{backend}-signer") == info[f"slh_{backend}_signer_sha256"],
+                        "SLH SIMD signer checksum mismatch")
         require(
             all(h["arch"] == info["arch"] for h in self.c["hosts"]),
             "First release requires hosts matching the Linux build architecture",
@@ -175,6 +179,11 @@ class Cluster:
         signer_dest.mkdir(parents=True, exist_ok=True)
         for file in ("bsc-pqc-slh-signer", "bsc-pqc-slh-signer.json"):
             shutil.copy2(WORK / file, signer_dest / file)
+        for backend in ("avx2", "avx512"):
+            if info.get(f"slh_{backend}_signer_sha256"):
+                name = f"bsc-pqc-slh-{backend}-signer"
+                for file in (name, name + ".json"):
+                    shutil.copy2(WORK / file, signer_dest / file)
         dest = app / "one-box/.runtime/build/v4"
         dest.mkdir(parents=True)
         for file in ("geth", "binary.json", "pq-wallet", "mldsa-public.json"):
@@ -401,6 +410,8 @@ class Cluster:
                     "--override." + fork,
                     str(forks["passed"] if fork in ("lorentz", "maxwell") else forks["latest"]),
                 ]
+            if "rpc_evm_timeout_seconds" in self.c:
+                args += ["--rpc.evmtimeout", str(self.c["rpc_evm_timeout_seconds"]) + "s"]
         archive = folder.with_suffix(".tar.gz")
         with tarfile.open(archive, "w:gz") as t:
             for item in folder.iterdir():
@@ -658,11 +669,11 @@ class Cluster:
     def configure(self):
         old = self.state.get("inventory")
         require(old, "Deploy first")
-        mutable = {"cache_mb", "gas_limit", "gas_price_wei", "bench"}
+        mutable = {"cache_mb", "gas_limit", "gas_price_wei", "bench", "rpc_evm_timeout_seconds"}
         require(
             {k: v for k, v in old.items() if k not in mutable}
             == {k: v for k, v in self.c.items() if k not in mutable},
-            "Only cache, gas settings and bench settings can change; use new environment for topology/forks",
+            "Only cache, gas, RPC timeout and bench settings can change; use new environment for topology/forks",
         )
         self.state["ready"] = False
         self.save()
@@ -770,7 +781,7 @@ def main():
     p.add_argument("--qps", type=float, default=100, help="Total target send rate across all bench clients")
     p.add_argument("--workers", type=int, default=8, help="Worker threads per bench client")
     p.add_argument("--ml-backend", choices=["process", "persistent"], default="process", help="ML signer process reuse; fresh signatures and local verification remain enabled")
-    p.add_argument("--slh-backend", choices=["noble", "openssl"], default="noble", help="SLH signing backend; chain verification is unchanged")
+    p.add_argument("--slh-backend", choices=["noble", "openssl", "avx2", "avx512"], default="noble", help="SLH signing backend; SIMD requires a compatible Linux x86_64 release")
     p.add_argument("--max-inflight", type=int, help="Outstanding operations per bench client; defaults to workers")
     p.add_argument("--cache-accounts", type=int, default=64, help="Cached accounts per worker; 0 disables caching")
     p.add_argument("--fund-wei", default="100000000000000000")

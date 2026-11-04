@@ -171,6 +171,13 @@ def build():
     signer_module = importlib.util.module_from_spec(signer_spec)
     signer_spec.loader.exec_module(signer_module)
     signer_module.build(WORK / "bsc-pqc-slh-signer")
+    for backend in ("avx2", "avx512"):
+        signer = WORK / f"bsc-pqc-slh-{backend}-signer"
+        if signer_module.supports_simd(backend) and shutil.which("c++"):
+            signer_module.build(signer, backend)
+        else:
+            signer.unlink(missing_ok=True)
+            signer.with_suffix(".json").unlink(missing_ok=True)
     commit = prepare_sources()
     source, log = WORK / "bsc", WORK / "build.log"
     package = source / "crypto/pqmldsa"
@@ -277,6 +284,9 @@ def build():
             "ml_backend": "portable C OPT=0 AUTO=0",
             "helper_sha256": digest(WORK / "pq-wallet"),
             "slh_signer_sha256": digest(WORK / "bsc-pqc-slh-signer"),
+            **{f"slh_{backend}_signer_sha256": digest(WORK / f"bsc-pqc-slh-{backend}-signer")
+               if (WORK / f"bsc-pqc-slh-{backend}-signer").exists() else None
+               for backend in ("avx2", "avx512")},
             "library_sha256": digest(package / "libmldsa44.a"),
         },
     )

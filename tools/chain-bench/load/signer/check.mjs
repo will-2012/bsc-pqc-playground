@@ -8,6 +8,8 @@ const hex = b => '0x' + Buffer.from(b).toString('hex');
 const keys = slh.keygen();
 const native = new SlhSigner(process.argv[2] || binary);
 try {
+  assert.throws(() => native.sign('private-test-input', '0x' + '00'.repeat(32)),
+    error => error.message === 'Invalid SLH secret key encoding');
   const messages = Array.from({length: 4}, (_, i) => new Uint8Array(32).fill(i));
   const start = performance.now();
   const signatures = await Promise.all(messages.map(m => native.sign(hex(keys.secretKey), hex(m))));

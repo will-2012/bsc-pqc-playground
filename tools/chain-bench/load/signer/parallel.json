@@ -1,0 +1,16 @@
+{
+  "avx2": {
+    "repository": "https://github.com/sphincs/parallel-sphincsplus",
+    "commit": "1e2cc8e7015b03e82465479c5ebb69520e83d971",
+    "url": "https://codeload.github.com/sphincs/parallel-sphincsplus/tar.gz/1e2cc8e7015b03e82465479c5ebb69520e83d971",
+    "sha256": "fa743cc7448b69fc245d6f4ba98a3a31c055689086222bfb0c693369d37caf7d",
+    "license": "CC0-1.0"
+  },
+  "avx512": {
+    "repository": "https://github.com/sphincs/parallel-sphincsplus",
+    "commit": "e1f3b647773c7faf15947a12e8f0b21123a9a76e",
+    "url": "https://codeload.github.com/sphincs/parallel-sphincsplus/tar.gz/e1f3b647773c7faf15947a12e8f0b21123a9a76e",
+    "sha256": "b4245fb7d0a234122f69ffd5c737980bae63aaa7a0e26c97d9c27ed1f4166806",
+    "license": "CC0-1.0"
+  }
+}

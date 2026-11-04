@@ -79,6 +79,8 @@ class ShardingTests(unittest.TestCase):
         self.assertTrue(all(s['maxInflight'] == 8 for _, s in shards(inventory(), **base)))
         self.assertTrue(all(s['maxInflight'] == 256 for _, s in shards(inventory(), max_inflight=256, **base)))
         self.assertTrue(all(s['slhBackend'] == 'openssl' for _, s in shards(inventory(), slh_backend='openssl', **base)))
+        self.assertTrue(all(s['slhBackend'] == 'avx2' for _, s in shards(inventory(), slh_backend='avx2', **base)))
+        self.assertTrue(all(s['slhBackend'] == 'avx512' for _, s in shards(inventory(), slh_backend='avx512', **base)))
         with self.assertRaises(ValueError): shards(inventory(), slh_backend='unknown', **base)
         for value in (0, -1, 4097, 1.5):
             with self.assertRaises(ValueError): shards(inventory(), max_inflight=value, **base)
@@ -140,6 +142,34 @@ class ShardingTests(unittest.TestCase):
 
 
 class HostLoadTests(unittest.TestCase):
+    def test_native_signer_is_checked_before_job_is_written(self):
+        import tempfile
+        from pathlib import Path
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        import agent
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            c = inventory()
+            spec = {'dataset': 'keys', 'run': 'prepare', 'algorithm': 'slh', 'slhBackend': 'avx512'}
+            payload = {'config': c, 'host': c['hosts'][0], 'token': 'test', 'spec': spec}
+            agent.write(root / 'owner.json', {'token': 'test'})
+            runner = root / 'current/tools/chain-bench/load/run.mjs'
+            runner.parent.mkdir(parents=True); runner.touch()
+            signer = root / 'current/one-box/.runtime/build/bsc-pqc-slh-avx512-signer'
+            with patch.object(agent, 'base', return_value=root), patch.object(agent, 'property_value', return_value='inactive'):
+                with self.assertRaisesRegex(ValueError, 'Build release'):
+                    agent.perform('load-config', payload)
+                signer.parent.mkdir(parents=True); signer.touch(); signer.chmod(0o700)
+                with patch.object(agent.subprocess, 'run', return_value=SimpleNamespace(returncode=1)):
+                    with self.assertRaisesRegex(ValueError, 'cannot run'):
+                        agent.perform('load-config', payload)
+                self.assertFalse((root / 'runtime/load-job.json').exists())
+                with patch.object(agent.subprocess, 'run', return_value=SimpleNamespace(returncode=0)) as probe:
+                    agent.perform('load-config', payload)
+                    self.assertEqual(probe.call_args.kwargs['input'], b'')
+                self.assertEqual(agent.read(root / 'runtime/load-job.json'), spec)
+
     def test_job_cannot_change_while_active_and_status_excludes_secrets(self):
         import tempfile
         from pathlib import Path

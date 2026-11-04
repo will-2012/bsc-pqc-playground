@@ -12,7 +12,7 @@ import {profiles, read, save, AccountCache, RecipientPool, failureDetails} from 
 import {prepareDirect, directCalldata, applyDirectReceipt} from './direct.mjs';
 import {receiptEvidence} from './inclusions.mjs';
 import {MlSigner} from './signer/ml-client.mjs';
-import {SlhSigner} from './signer/client.mjs';
+import {SlhSigner, avx2Binary, avx512Binary} from './signer/client.mjs';
 import {Timings} from './timing.mjs';
 import {prepareTransaction, waitForTransaction} from './transactions.mjs';
 const timings = new Timings();
@@ -29,6 +29,8 @@ const recipients = spec.recipientAddresses ? new RecipientPool(spec.recipientAdd
 const mlSigner = spec.algorithm === 'ml' && spec.mlBackend === 'persistent' ? new MlSigner() : null;
 let signer;
 if (spec.algorithm === 'slh' && spec.slhBackend === 'openssl') signer = new SlhSigner();
+if (spec.algorithm === 'slh' && spec.slhBackend === 'avx2') signer = new SlhSigner(avx2Binary);
+if (spec.algorithm === 'slh' && spec.slhBackend === 'avx512') signer = new SlhSigner(avx512Binary);
 let requestId = 0;
 const replies = new Map();
 class SendCancelled extends Error {}

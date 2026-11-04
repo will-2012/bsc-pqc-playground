@@ -26,6 +26,15 @@ def inventory():
 
 
 class InventoryTests(unittest.TestCase):
+    def test_optional_rpc_evm_timeout_is_finite(self):
+        c = inventory()
+        c["rpc_evm_timeout_seconds"] = 30
+        model.validate(c)
+        for value in (0, 301, True, 1.5, "30s"):
+            c["rpc_evm_timeout_seconds"] = value
+            with self.assertRaises(ValueError):
+                model.validate(c)
+
     def test_valid_and_isolated_names(self):
         c = model.validate(inventory())
         self.assertEqual(str(model.base(c)), "/srv/bsc-pqc/ap-pq")
@@ -180,6 +189,32 @@ class LifecycleTests(unittest.TestCase):
         self.obj.c["hosts"][0]["ports"]["rpc"] += 1
         with self.assertRaisesRegex(ValueError, "Only cache"):
             self.obj.configure()
+
+    def test_rpc_timeout_can_be_added_and_removed_by_configure(self):
+        self.obj.state["inventory"] = copy.deepcopy(self.c)
+        def overlay(host):
+            folder = self.obj.home / "overlays" / host["id"] / "node"
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / "config.toml").write_text("fixture")
+            seconds = self.c.get("rpc_evm_timeout_seconds")
+            return {"validator_args": ["--rpc.evmtimeout", f"{seconds}s"] if seconds else []}
+        with patch.object(self.obj, "control"), patch.object(self.obj, "overlay", side_effect=overlay), \
+             patch.object(self.obj, "call") as call, patch.object(self.obj, "check_chain"), \
+             patch.object(self.obj, "start_bundlers"), patch.object(self.obj, "check_load"), contextlib_redirect():
+            for value in (30, None):
+                self.c = copy.deepcopy(self.c)
+                if value is None:
+                    self.c.pop("rpc_evm_timeout_seconds")
+                else:
+                    self.c["rpc_evm_timeout_seconds"] = value
+                self.obj.c = self.c
+                call.reset_mock()
+                self.obj.configure()
+                configurations = [c for c in call.call_args_list if c.args[1] == "configure"]
+                self.assertEqual(len(configurations), 3)
+                expected = ["--rpc.evmtimeout", "30s"] if value else []
+                self.assertTrue(all(c.kwargs["validator_args"] == expected for c in configurations))
+                self.assertEqual(self.obj.state["inventory"], self.c)
 
     def test_stop_order(self):
         with patch.object(self.obj, "call", return_value={}) as call, contextlib_redirect():
@@ -478,7 +513,8 @@ class OverlayTests(unittest.TestCase):
         cluster.devnet.write(seed / "config.json", cfg)
         cluster.devnet.write(seed / "genesis.json", {})
         self.obj.state["forks"] = {"passed": 100, "latest": 200, "pq": 300}
-        self.obj.overlay(self.c["hosts"][1])
+        payload = self.obj.overlay(self.c["hosts"][1])
+        self.assertNotIn("--rpc.evmtimeout", payload["validator_args"])
         folder = self.obj.home / "overlays/ap-1"
         self.assertEqual(sorted(p.name for p in (folder / "accounts").iterdir()), ["test1", "test3"])
         self.assertEqual((folder / "node/geth/nodekey").read_text(), "fixture-node-1")
@@ -486,6 +522,9 @@ class OverlayTests(unittest.TestCase):
         self.assertIn(self.c["hosts"][1]["address"], text)
         self.assertNotIn('HTTPHost = "127.0.0.1"', text)
         self.assertIn(self.c["hosts"][0]["address"], text)
+        self.c["rpc_evm_timeout_seconds"] = 30
+        payload = self.obj.overlay(self.c["hosts"][1])
+        self.assertEqual(payload["validator_args"][-2:], ["--rpc.evmtimeout", "30s"])
 
 
 class ChainAcceptanceTests(unittest.TestCase):

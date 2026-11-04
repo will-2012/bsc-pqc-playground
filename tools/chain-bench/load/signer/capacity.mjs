@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import {Worker, isMainThread, parentPort, workerData} from 'node:worker_threads';
 import {createRequire} from 'node:module';
 import {performance} from 'node:perf_hooks';
-import {SlhSigner} from './client.mjs';
+import {SlhSigner, avx2Binary, avx512Binary} from './client.mjs';
 const require = createRequire(new URL('../../../../erc4337-wallet/package.json', import.meta.url));
 const {slh_dsa_sha2_128s: slh} = require('@noble/post-quantum/slh-dsa.js');
 const hex = b => '0x' + Buffer.from(b).toString('hex');
 if (!isMainThread) {
   const keys = slh.keygen();
-  const signer = workerData.backend === 'openssl' ? new SlhSigner() : null;
+  const native = {avx2: avx2Binary, avx512: avx512Binary};
+  const signer = workerData.backend === 'noble' ? null : new SlhSigner(native[workerData.backend]);
   try {
     const sign = async m => signer ? Buffer.from((await signer.sign(hex(keys.secretKey), hex(m))).slice(2), 'hex') : slh.sign(m, keys.secretKey);
     assert(slh.verify(await sign(new Uint8Array(32)), new Uint8Array(32), keys.publicKey));
@@ -24,7 +25,11 @@ if (!isMainThread) {
   } finally { signer?.close(); keys.secretKey.fill(0); }
 } else {
   const rows = [];
-  for (const backend of ['noble', 'openssl']) for (const workers of [1, 2, 4]) {
+  const backends = process.argv[2] ? [process.argv[2]] : ['noble', 'openssl'];
+  assert(backends.every(b => ['noble', 'openssl', 'avx2', 'avx512'].includes(b)), 'Use noble, openssl, avx2 or avx512');
+  const workerCounts = process.argv[3] ? process.argv[3].split(',').map(Number) : [1, 2, 4];
+  assert(workerCounts.every(n => Number.isSafeInteger(n) && n >= 1 && n <= 128), 'Invalid worker counts');
+  for (const backend of backends) for (const workers of workerCounts) {
     const samples = 8;
     const pool = Array.from({length: workers}, () => new Worker(new URL(import.meta.url), {workerData: {backend, samples}}));
     try {

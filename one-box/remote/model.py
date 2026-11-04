@@ -139,6 +139,9 @@ def validate(c):
         all(type(c.get(k)) is int and c[k] > 0 for k in ("cache_mb", "gas_limit", "gas_price_wei")),
         "Invalid chain resource settings",
     )
+    if "rpc_evm_timeout_seconds" in c:
+        require(type(c["rpc_evm_timeout_seconds"]) is int and 1 <= c["rpc_evm_timeout_seconds"] <= 300,
+                "rpc_evm_timeout_seconds must be 1..300")
     require(
         type(c.get("jenner_delay")) is int and c["jenner_delay"] >= 300,
         "jenner_delay must be >=300 seconds",

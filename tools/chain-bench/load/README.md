@@ -242,3 +242,17 @@ Load 准备普通交易时传入已经核对过的 chainId，避免在 nonce、g
 每笔仍对实际 UserOperation 重新签名，并在工具内使用公钥验签；不缓存签名或 nonce，不改变链上算法和 gas。请求走匿名管道，禁止 core dump；进程故障会拒绝尚未完成的请求。总排队量受 `--max-inflight` 限制。该选项同时适用于 Bundler 路线和直接提交对照。
 
 构建时执行并发顺序、交叉验签、错钥与进程退出检查；可单独运行 `node one-box/tests/ml_signer.mjs` 复核 v4 工具。高压实验仍需分开观察 Bench 和 Validator 的 CPU，不能用签名器的独立性能推算链吞吐。
+
+### SLH SIMD 签名对照
+
+Linux x86_64 可选择 `--slh-backend avx2`；支持 AVX-512F 的机器还可选 `avx512`。两者使用 [parallel-sphincsplus](https://github.com/sphincs/parallel-sphincsplus) 的不同固定提交，算法均为 Pure SLH-DSA-SHA2-128s、空上下文、7,856 bytes 签名。每个 Worker 启动一个常驻进程，以 SIMD 并行计算独立哈希；每个进程只用一个签名线程，使用系统随机数，并逐笔本地验签。
+
+```bash
+python3 tools/chain-bench/load/signer/build.py --backend avx2
+node tools/chain-bench/load/signer/capacity.mjs avx2 1,2,4,8
+# 支持 AVX-512F 时，使用独立的构建产物和结果
+python3 tools/chain-bench/load/signer/build.py --backend avx512
+node tools/chain-bench/load/signer/capacity.mjs avx512 1,2,4,8
+```
+
+远程 build 在构建机支持相应指令且提供 C++ 编译器时构建对应后端，发布包记录并核对二进制摘要。源提交与归档摘要见 `signer/parallel.json`；构建执行上游已知答案、上下文及跨实现验签测试。配置负载时先检查目标机的工具是否存在、能否启动，失败便停止分发负载，不自动换回其他后端。默认仍为 `noble`；各后端结果分列，对照相同 Worker、在途数和账户池。

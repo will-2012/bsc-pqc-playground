@@ -27,7 +27,7 @@ export function validate(s) {
   assert(['process', 'persistent'].includes(s.mlBackend), 'Invalid ML backend');
   assert(s.mlBackend === 'process' || s.algorithm === 'ml', 'Persistent ML backend requires ML');
   s.slhBackend ??= 'noble';
-  assert(['noble', 'openssl'].includes(s.slhBackend), 'Invalid SLH backend');
+  assert(['noble', 'openssl', 'avx2', 'avx512'].includes(s.slhBackend), 'Invalid SLH backend');
   s.cacheAccounts ??= 64;
   assert(Number.isSafeInteger(s.cacheAccounts) && s.cacheAccounts >= 0 && s.cacheAccounts <= 4096, 'Invalid cache capacity');
   assert(s.workers <= 64, 'At most 64 workers per client');
@@ -148,7 +148,12 @@ export function failureDetails(error) {
   for (let e = error; e && typeof e === 'object' && !seen.has(e) && seen.size < 8; e = e.cause) {
     seen.add(e);
     if (typeof e.code === 'number') result.rpcCode = e.code;
-    if (typeof e.details === 'string' && !details.includes(e.details)) details.push(e.details.slice(0, 2000));
+    if (typeof e.details === 'string') {
+      // Large RPC payloads can otherwise truncate the actual cause at the end.
+      const compact = e.details.replace(/0x[0-9a-fA-F]{80,}/g, '[payload]');
+      const detail = compact.length > 2000 ? compact.slice(0, 500) + '\n…\n' + compact.slice(-1497) : compact;
+      if (!details.includes(detail)) details.push(detail);
+    }
   }
   if (details.length) result.details = details.join('\n').slice(0, 4000);
   return result;

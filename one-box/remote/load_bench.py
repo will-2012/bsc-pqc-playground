@@ -17,7 +17,7 @@ def shards(c, *, action, algorithm, dataset, run, accounts, count, qps, workers,
     require(math.isfinite(qps) and 0 < qps <= 1_000_000, 'Invalid QPS')
     if count is None:
         count = math.ceil(qps * duration) + len(hosts) if duration and action == 'transfer' else accounts
-    require(slh_backend in ('noble', 'openssl'), 'Invalid SLH backend')
+    require(slh_backend in ('noble', 'openssl', 'avx2', 'avx512'), 'Invalid SLH backend')
     require(algorithm in ('ecdsa', 'ml', 'slh'), 'Use ecdsa, ml or slh')
     for name in (dataset, run):
         require(re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}', name), 'Invalid dataset/run name')

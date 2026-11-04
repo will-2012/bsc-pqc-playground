@@ -2,7 +2,7 @@
 
 在中控机通过 AWS SSM 管理一套独立测试链。默认三台机器，每台各运行一个 validator、Bundler 和 Bench；角色、端口及连接关系均由私有配置指定。分发沿用 node-deploy 的共享目录方式，不操作原环境的服务。
 
-入口为 `tools/cluster`，命令从仓库根目录执行。已在本地验证管理脚本、生成后的 Go 代码及可移植 ML-DSA 后端；Linux 构建、Amazon Linux 2 运行时和真实 SSM 部署仍需在中控机验收。
+入口为 `tools/cluster`，命令从仓库根目录执行。已在 Linux x86_64 中控与三节点环境验证部署和压测；更换发行版或架构时，需重新验收运行时与构建产物。
 
 ## 准备
 
@@ -24,6 +24,8 @@ chmod 600 one-box/.runtime/cluster-config/ap-pq.json
 构建依赖、客户端和合约产物均在中控机生成，首次构建需要联网下载锁定版本的依赖，无需复制 Mac 的缓存、二进制或 `.runtime`。这些命令应在包含本次远程部署代码的已提交版本上运行。
 
 填写真实实例 ID、region、私网地址、共享路径和 `deploy_root`（部署根目录）。仓库内的私有配置必须位于 Git 忽略路径；模板只含占位符。每台机器只列一次，`roles` 可以拆分，`rpc_node` 指定 Bundler 使用哪个 validator，`bundler_node` 指定 Bench 使用哪个 Bundler。首版使用同架构机器，不做交叉编译。
+
+高并发模拟可选配置 `"rpc_evm_timeout_seconds": 30`（范围 1–300），设置 Validator 的 `--rpc.evmtimeout`；未设置时沿用客户端默认值。它只调整 RPC 计算的截止时间，不改变链上 gas 或验证规则。修改或删除此字段后，通过 `tools/cluster configure --config "$CONFIG"` 应用。延长超时不会增加算力，仍需观察模拟延迟与积压。
 
 入口会查找可用的 Python 3.11+，也可通过 `BSC_PQC_PYTHON=/path/to/python3.11` 指定中控解释器。此变量仅用于中控。每个 host 可设置 `python`、`node` 为目标机解释器绝对路径（例如 `/path/to/python3.11`）；未设置时使用 SSM PATH 中的 `python3`、`node`。预检、部署和服务使用同一组解释器。
 

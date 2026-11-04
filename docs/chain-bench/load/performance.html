@@ -9,11 +9,33 @@ h1{font-size:28px}h2{font-size:21px;margin-top:30px}
 .table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14px}
 td,th{padding:9px;border:1px solid #d8e2ee;text-align:left}th{background:#edf4fa}
 .note{background:#edf8f2;border-left:4px solid #399776;padding:14px 18px}
-a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
+summary{cursor:pointer;padding:12px 0}details{border-top:1px solid #d8e2ee;margin-top:16px}a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
 </style>
 <h1>如何把压力推到链：Bench 性能排查</h1>
-<p class="note"><strong>先确认压力发得出去，再判断链是否饱和。</strong>ECDSA 从约 1,567 提升到 3,091 TPS，先碰到混部署 CPU 限制；ML 随机互转则先受 Bundler 模拟与打包限制。两者都不能作为链的吞吐上限。</p>
-
+<p class="note"><strong>先确认压力发得出去，再判断链是否饱和。</strong>ECDSA、ML-DSA-44、SLH-DSA-SHA2-128s 的本轮测试都受到链外处理或混部署资源限制，尚未测得独立 Validator 的容量上限。</p>
+<h2>三组摸底结论</h2>
+<p>三台 Linux x86_64 机器，每台 8 个逻辑 CPU，同机运行 Bench、Bundler、Validator。每种算法使用一万账户池，转账各档派发 300 秒后收齐回执。下表是代表轮次的整轮确认速率，CPU、gas 是稳态窗口均值；交易类型、gas 上限和客户端参数不同，不用于算法之间的直接性能排名。</p>
+<div class="table"><table>
+<tr><th>场景</th><th>实际速率</th><th>区块 gas 上限 / 使用率</th><th>当前限制</th></tr>
+<tr><td>ECDSA 普通转账</td><td>3,091.48 TPS</td><td>7,000 万 / 42.76%</td><td>并发调优后，Bench 与 Validator 争抢 CPU。</td></tr>
+<tr><td>ML-DSA-44，完整 Bundler 链路</td><td>36.02 UserOp/s</td><td>7,000 万 / 4.70%</td><td>模拟验签与打包；签名不是主要限制。</td></tr>
+<tr><td>ML-DSA-44，直接提交</td><td>1,075.96 UserOp/s</td><td>1.4 亿 / 88.23%</td><td>先遇 gas 预算，再遇混部署资源限制；提高至 2.1 亿未继续提速。</td></tr>
+<tr><td>SLH-DSA-SHA2-128s，完整 Bundler 链路</td><td>30.60 UserOp/s</td><td>2.1 亿 / 1.97%</td><td>模拟与批次处理仍限制吞吐；签名加速主要降低 CPU。</td></tr>
+<tr><td>SLH-DSA-SHA2-128s，直接提交</td><td>224.06 UserOp/s</td><td>2.1 亿 / 16.68%</td><td>整机 CPU 约 99.7%，主要消耗在 Bench 签名。</td></tr>
+</table></div>
+<p>普通交易统计 TPS，PQ 统计 UserOperation；多个操作可以打入一笔外层交易。直接提交每笔仍有真实 PQ 签名和链上验签，但不经过 Bundler 模拟与打包。<a href="slh.html">SLH 完整记录</a>；ECDSA 与 ML 的逐档数据见下方。</p>
+<h2>可复用的能力与调参边界</h2>
+<div class="table"><table>
+<tr><th>能力</th><th>适用范围</th><th>使用原则</th></tr>
+<tr><td>Worker 与在途数分开设置，固定时长派发</td><td>ECDSA / ML / SLH</td><td>Worker 提供计算并行，在途数覆盖 RPC 和回执等待；CPU 满后增加线程通常无益。</td></tr>
+<tr><td>阶段耗时、回执对齐、交易池与机器监控</td><td>三类场景</td><td>区分发不出、模拟慢和链上积压；保留失败根因及未决记录。</td></tr>
+<tr><td>显式 chainId、减少替换扫描</td><td>普通转账与 PQ 预充值</td><td>减少辅助 RPC，保留广播前记录与成功回执检查。</td></tr>
+<tr><td>常驻签名器；SLH 可选 OpenSSL / AVX2 / AVX-512</td><td>ML / SLH</td><td>显式启用、检查目标机兼容性；逐笔新签名和本地验签，不缓存签名或 nonce。</td></tr>
+<tr><td>精简 tracer 采集、关闭无用日志、有界并行验证</td><td>ML / SLH 的 Bundler 链路</td><td>保留 safe-mode；并行预取只覆盖满足约束的已部署账户，入包检查仍按顺序执行。</td></tr>
+<tr><td>有限 RPC 截止时间</td><td>PQ 高并发模拟</td><td>先核对真正超时层，再单项调整。超时延长不增加算力，默认值不变。</td></tr>
+</table></div>
+<p><a href="../../../tools/chain-bench/load/README.md">运行与调参</a>。以下保留各阶段对照和未采用方案，供复查因果关系。</p>
+<details><summary><strong>ECDSA：逐档加压与客户端优化</strong></summary>
 <h2>ECDSA 实验与口径</h2>
 <p>2026-11-03，三台 Linux x86_64 机器，每台 8 个逻辑 CPU，同机运行 Bench、Validator 与 Bundler。使用共计 10,000 个已有 ECDSA 账户，轮转向已有地址转账；普通转账不经过 Bundler。每轮派发 300 秒，随后等待回执收敛。基础代码版本为 <code>9561951</code>。</p>
 <p>下表“实际 TPS”＝接受数 ÷ 300 秒；所有完成轮次的最终确认数均与接受数相等。它与状态页包含收尾时间的平均速率不同。Gas 和 CPU 取各客户端运行 30–290 秒内的完整监控窗口；整机 CPU 为三台均值。原始日志、账户与连接配置保留在私有运行目录，此处仅记录脱敏摘要，不包含部署清单。</p>
@@ -45,6 +67,8 @@ a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
 <p><strong>只等待原交易的回执。</strong>Bench 独占实验账户，不会主动替换交易，因此关闭 viem 的替换扫描，避免额外查询交易和整块。仍核对回执哈希和成功状态，保留超时、广播前持久化及未决请求处理。若有人在外部替换交易，原哈希不能确认就必须核对，不能把替换交易视为成功。</p>
 <p>这两项覆盖 ECDSA 普通交易及 PQ 准备阶段的普通充值；ML / SLH 的 UserOperation 路径不变。并发参数已有独立入口，默认值保持不变，不将本次 32 worker / 2,048 在途数当作通用配置。</p>
 
+</details>
+<details><summary><strong>ML：创建、模拟与 Bundler 调优</strong></summary>
 <h2>ML 创建阶段：先排除打包与模拟开销</h2>
 <p><strong>链空闲不代表 UserOperation 可以及时上链。</strong>一次 ML 批量创建中，8 个操作组成的外层交易声明 20,156,364 gas，超过客户端的 16,777,216 单笔上限。Bundler 反复重试，表现为已接收、迟迟没有回执。降低每包预算后恢复上链；打包同时需要检查交易字节数和外层 gas，不能只累加操作的执行 gas。</p>
 <p><strong>模拟成本可能高于签名成本。</strong>同轮签名约 10 ms，Validator 的 10 秒 CPU 采样中约 70% 落在 JavaScript tracer 路径。原 tracer 在采集阶段对每条指令复制最多三个栈值，但历史检查只读取 EXTCODE 指令的地址操作数。只保留必要读取后，三个真实创建操作在相同历史区块上的完整 trace 结果一致，单次耗时由 439–562 ms 降至 193–228 ms。此处是小样本定位结果，全链路收益需另测；safe-mode 与检查规则保持不变。</p>
@@ -103,8 +127,10 @@ a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
 
 <p><strong>逐包提前提交没有明显收益。</strong>验证并发 4、目标 50 UserOp/s、128 在途的同口径 300 秒实验，将“整轮验证完成后提交”改为“每包验证完成即提交”：确认 10,620 笔，实际 35.40 UserOp/s，失败和未决均为 0。相比原来的 34.95 UserOp/s，只相差约 1.3%，不足以证明收益；该调度改动已撤回。</p>
 
+</details>
+<details><summary><strong>ML：直接提交与区块 gas 预算对照</strong></summary>
 <h2>隔离链容量：直接提交真实 PQ 操作</h2>
-<p>这组对照绕过 Bundler 的估算与模拟，每笔外层交易提交一个真实 ML-DSA-44 UserOperation；EntryPoint、账户权限、nonce、预编译验签与执行检查均保留。它测链的承载能力，不代表 Bundler 全链路吞吐，也不能把两条路线的差值全部归因于模拟。</p>
+<p>这组对照绕过 Bundler 的估算与模拟，每笔外层交易提交一个真实 ML-DSA-44 UserOperation；EntryPoint、账户权限、nonce、预编译验签与执行检查均保留。它用于隔离模拟开销、继续增加链上压力，不代表 Bundler 全链路吞吐，也不能把两条路线的差值全部归因于模拟。</p>
 <p>同一 10,000 账户随机互转池，每台 8 个 Worker、256 在途、512 个缓存账户，每档派发 300 秒。固定 call / verification / pre-verification / outer gas 为 30,000 / 300,000 / 150,000 / 750,000；区块 gas 上限 70,000,000，出块间隔 450 ms。表中实际速率为最终确认数除以派发窗口，失败和未决均为 0。</p>
 <div class="table"><table>
 <tr><th>签名方式</th><th>目标 UserOp/s</th><th>实际 UserOp/s</th><th>确认数</th><th>Gas 均值</th><th>整机 CPU</th><th>Bench CPU / 节点</th><th>最大间隔</th></tr>
@@ -135,9 +161,10 @@ a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
 <p>实际速率包含派发窗口内的账户缓存预热。1,600 QPS 档的一份 10 秒 Validator CPU 样本中，Keccak 占约 25%，CGO 调用约 9%，GC 对象扫描累计约 21%。此时已在测试链上执行负载，但 Bench 与 Validator 共用 CPU，仍不能把当前吞吐当作独立节点极限。</p>
 
 <p><strong>继续增加 gas，没有继续增加吞吐。</strong>统一取运行第 150–290 秒内的 14 个完整监控窗口：7,000 万档成功回执均值约 604 UserOp/s；1.4 亿、1,024 在途约 1,158 UserOp/s；2.1 亿两轮分别约 1,166、1,117 UserOp/s。对应后半程 gas 约 92.6%、88.9%、59.3%、57.1%。1.4 亿升至 2.1 亿时并发参数不变，新增预算没有带来明显收益。</p>
-<p><strong>目前压到的是混部署容量边界。</strong>高压窗口整机 CPU 约 90%–95%，Bench 与 Validator 各占数个核；2.1 亿复测时，一台 Validator 的指标快照显示区块执行 p95 约 245 ms、导入 p95 约 315 ms。该快照不是整轮统计。链仍保持 450 ms 出块，不能据此宣称链本身只能处理约 1,200 UserOp/s。下一步应分离发送端与出块节点，再测独立链容量；不再单纯增加 gas 上限。</p>
+<p><strong>本轮压到的是混部署容量边界。</strong>高压窗口整机 CPU 约 90%–95%，Bench 与 Validator 各占数个核；2.1 亿复测时，一台 Validator 的指标快照显示区块执行 p95 约 245 ms、导入 p95 约 315 ms。该快照不是整轮统计。链仍保持 450 ms 出块，不能据此宣称链本身只能处理约 1,200 UserOp/s。下一步应分离发送端与出块节点，再测独立链容量；不再单纯增加 gas 上限。</p>
 <p>2.1 亿两轮均观察到个别客户端短暂积累至在途上限、随后自行恢复，期间链继续出块。具体原因尚未定位，可能影响整轮均值，因此保留原始结果，不把首轮较低平均值解释为提高 gas 必然降低性能。所有轮次最终失败和未决均为 0；监控未观察到 out-of-turn 或 slash。最后一轮抽查 200 笔签名操作，覆盖 200 个收款地址、133 笔跨分片转账，无自转账，并核对 3 笔规范区块回执。收尾时三台交易池清空、最终化推进、Validator / Bundler 正常，Bench 已停止；仅用于实验的常驻签名临时覆盖已撤回，常驻签名通过显式选项启用。</p>
 
+</details>
 <h2>下一轮怎么排查</h2>
 <ol>
 <li><strong>建立空载基线。</strong>确认出块、safe / finalized、peer、交易池与监控覆盖正常。先等监控初始化完成，再启动 load，避免初始化阶段的环境锁冲突。</li>
@@ -152,6 +179,8 @@ a{color:#086ab5}code{background:#f0f3f6;padding:2px 4px}
 <tr><td>accepted 足够，但回执速率跟不上，池子持续增长</td><td>出块和执行、费用与 nonce、传播及 RPC；PQ 还需检查 Bundler 模拟、准入和分包。</td></tr>
 <tr><td>整机 CPU 满，Bench 占比高</td><td>先将 Bench 与 Validator 分机，再测链的独立上限；仅增加线程可能加重竞争。</td></tr>
 <tr><td>签名耗时高，尤其是 SLH</td><td>先做独立签名容量对照，比较后端与 worker 数；保留真实签名和验签。签名加速不代表链上处理能力提高。</td></tr>
+<tr><td>高并发下出现模拟或参数错误</td><td>先查底层 RPC 原因。HTTP 请求、追踪与 <code>eth_call</code> 的执行截止时间是不同设置；外层可能把执行超时包装成账户参数错误。保留根因，停止并核对已发送操作后再调整。</td></tr>
+<tr><td>配置已写入，但性能没有相应变化</td><td>核对实际运行时值。BSC 启动时可能按 cache 大小重设 GC，环境变量不一定生效；记录应用前的值与恢复结果，不把未生效配置当作调优收益。</td></tr>
 </table></div>
 <p><code>timings</code> 是并发调用的墙钟耗时，包含等待和调度，不能相加当作 CPU 时间。服务 CPU 的 100% 表示约一个逻辑核，整机 CPU 的 100% 表示全部核；两者口径不同。在途数可用“目标速率 × 端到端时延”作起点，再按实测调整。</p>
 <p><strong>下一步重点：</strong>将 Bench 与 Validator 分机部署，确认 RPC 带宽和访问路径，再继续阶梯升压。前述 ECDSA 结果说明混部署环境可以完成约 3,091 TPS 的一轮测试，不代表链已饱和，也不代表 PQ 交易吞吐。</p>

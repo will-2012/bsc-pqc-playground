@@ -183,6 +183,8 @@ test('SLH backend is explicit and defaults to the existing implementation', () =
   const base = {action: 'transfer', algorithm: 'slh', dataset: 'a', run: 'r', accounts: 2, count: 2, workers: 1, qps: 10, startAt: 0, fundWei: '100', valueWei: '1'};
   assert.equal(validate({...base}).slhBackend, 'noble');
   assert.equal(validate({...base, slhBackend: 'openssl'}).slhBackend, 'openssl');
+  assert.equal(validate({...base, slhBackend: 'avx2'}).slhBackend, 'avx2');
+  assert.equal(validate({...base, slhBackend: 'avx512'}).slhBackend, 'avx512');
   assert.throws(() => validate({...base, slhBackend: 'unknown'}));
 });
 
@@ -236,6 +238,12 @@ test('private failure details retain nested RPC codes without dumping request ob
   assert.deepEqual(failureDetails(error),{error:'UserOperation rejected',rpcCode:-32504,details:'factory admission limit'});
   assert.equal(failureDetails(new Error('timeout')).error,'timeout');
   assert.equal(failureDetails({message:'x',details:'a'.repeat(10000)}).details.length,2000);
+  const payload = '0x' + 'ab'.repeat(16000);
+  const detail = failureDetails({shortMessage:'Invalid parameters',
+    details: JSON.stringify({message:'Request body: ' + payload, details:'execution aborted (timeout = 5s)'})}).details;
+  assert(detail.includes('execution aborted (timeout = 5s)'));
+  assert(!detail.includes(payload));
+  assert(failureDetails({details:'a'.repeat(10000)+'root cause'}).details.endsWith('root cause'));
 });
 
 test('persistent ML signing is opt-in and cannot select another algorithm', () => {

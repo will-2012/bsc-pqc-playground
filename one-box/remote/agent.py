@@ -423,6 +423,14 @@ def perform(action, p):
                     for key in ("dataset", "run"):
                         require(isinstance(spec.get(key), str) and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}", spec[key]), "Invalid load path")
                     require((b / "current/tools/chain-bench/load/run.mjs").is_file(), "Upgrade release to include load runner")
+                    backend = spec.get("slhBackend", "noble")
+                    if spec.get("algorithm") == "slh" and backend in ("openssl", "avx2", "avx512"):
+                        name = "bsc-pqc-slh-signer" if backend == "openssl" else f"bsc-pqc-slh-{backend}-signer"
+                        signer = b / "current/one-box/.runtime/build" / name
+                        require(signer.is_file() and os.access(signer, os.X_OK), "Build release with the selected SLH signer")
+                        probe = subprocess.run([str(signer)], input=b"", stdout=subprocess.DEVNULL,
+                                               stderr=subprocess.DEVNULL, timeout=10)
+                        require(probe.returncode == 0, "Selected SLH signer cannot run on this host")
                     write(job, spec)
                 result = {"configured": True}
         elif action == "rpc":
